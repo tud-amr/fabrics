@@ -3,11 +3,11 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import casadi as ca
 
-from damper import Damper
-from leaf import Leaf
-from rootGeometry import RootGeometry
-from functions import createMapping, generateLagrangian, generateEnergizer
-from plottingGeometries import plotTraj, animate, plotMultipleTraj, plot, plotMulti
+from optFabrics.damper import Damper
+from optFabrics.leaf import Leaf
+from optFabrics.rootGeometry import RootGeometry
+from optFabrics.functions import createMapping, generateLagrangian, generateEnergizer
+from optFabrics.plottingGeometries import plotTraj, animate, plotMultipleTraj, plot, plotMulti
 
 q = ca.SX.sym("q", 2)
 qdot = ca.SX.sym("qdot", 2)
@@ -100,8 +100,7 @@ def createDamper(forcingLeave):
     damper = Damper(forcingLeave, beta_fun, eta_fun, le, lex, q, qdot)
     return damper
 
-
-if __name__ == "__main__":
+def main():
     (lxup, lxlow, lyup, lylow) = setBoundaryLeaves()
     lforcing = forcingLeaf()
     lcol = createCollisionAvoidance()
@@ -137,3 +136,5 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(3, 2, figsize=(10, 15))
     plotMulti(sols, aniSols, fig, ax)
 
+if __name__ == "__main__":
+    main()

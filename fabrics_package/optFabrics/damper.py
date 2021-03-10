@@ -1,5 +1,5 @@
 import casadi as ca
-from functions import generateEnergizer
+from optFabrics.functions import generateEnergizer
 
 class Damper(object):
 

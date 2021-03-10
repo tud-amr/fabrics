@@ -7,3 +7,4 @@ setup(
                       'numpy',
                       'matplotlib']
 )
+

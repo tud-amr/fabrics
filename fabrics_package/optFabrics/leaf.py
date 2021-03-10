@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from functions import createMapping
+from optFabrics.functions import createMapping
 
 class Leaf(object):
     def __init__(self, name, phi, M, h, x, xdot, q, qdot):
