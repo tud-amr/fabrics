@@ -65,21 +65,22 @@ def createCollisionAvoidance():
 def forcingLeaf():
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
-    q_d = np.array([-2.5, -3.75])
+    x_d = np.array([-2.5, -3.75])
     k = 5.0
     alpha_psi = 10.0
     alpha_m = 0.75
     m = np.array([0.3, 2.0])
 
-    phi = q - q_d
+    fk = q
+    phi = fk - x_d
     psi = k * (ca.norm_2(x) + 1/alpha_psi * ca.log(1 + ca.exp(-2*alpha_psi * ca.norm_2(x))))
     M_forcing = ((m[1] - m[0]) * ca.exp(-(alpha_m * ca.norm_2(x))**2) + m[0]) * np.identity(2)
     h_forcing = ca.mtimes(M_forcing, ca.gradient(psi, x))
-    damper = createDamper()
+    damper = createDamper(x, xdot, x_d)
     lforcing = Leaf("forcing", phi, M_forcing, h_forcing, x, xdot, q, qdot, damper)
     return lforcing
 
-def createDamper():
+def createDamper(x, xdot, x_d):
     ale = ca.SX.sym("ale", 1)
     alex = ca.SX.sym("alex", 1)
     ele = ca.SX.sym('ele', 1)
@@ -89,16 +90,15 @@ def createDamper():
     a_shift = 0.5
     r = 1.5
     b = np.array([0.01, 6.5])
-    q_d = np.array([-2.5, -3.75])
-    beta_switch = 0.5 * (ca.tanh(-a_beta * (ca.norm_2(q - q_d) - r)) + 1)
+    beta_switch = 0.5 * (ca.tanh(-a_beta * (ca.norm_2(x - x_d) - r)) + 1)
     beta = beta_switch * b[1] + b[0] + ca.fmax(0.0, alex - ale)
     eta = 0.5 * (ca.tanh(-a_eta*(ele - elex) - a_shift) + 1)
-    le = 0.5 * ca.norm_2(qdot)**2
-    lex = 0.25 * ca.norm_2(qdot)**2
+    le = 0.5 * ca.norm_2(xdot)**2
+    lex = 0.25 * ca.norm_2(xdot)**2
     # Functions
-    beta_fun = ca.Function("beta", [q, qdot, ale, alex], [beta])
+    beta_fun = ca.Function("beta", [x, xdot, ale, alex], [beta])
     eta_fun = ca.Function("eta", [ele, elex], [eta])
-    damper = Damper(beta_fun, eta_fun, le, lex, q, qdot)
+    damper = Damper(beta_fun, eta_fun, le, lex, x, xdot)
     return damper
 
 def main():
@@ -113,6 +113,7 @@ def main():
     rg_col_limits = RootGeometry([lcol, lyup, lylow, lxup, lxlow], 2)
     rg_col_limits_forced = RootGeometry([lcol, lyup, lylow, lxup, lxlow, lforcing], 2)
     geos = [rg, rg_forced, rg_limits, rg_forced_limits, rg_col_limits, rg_col_limits_forced]
+    geos =[rg_forced]
     # solve
     dt = 0.05
     T = 16.0
