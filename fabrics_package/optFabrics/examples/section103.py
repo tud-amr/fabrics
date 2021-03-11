@@ -75,10 +75,11 @@ def forcingLeaf():
     psi = k * (ca.norm_2(x) + 1/alpha_psi * ca.log(1 + ca.exp(-2*alpha_psi * ca.norm_2(x))))
     M_forcing = ((m[1] - m[0]) * ca.exp(-(alpha_m * ca.norm_2(x))**2) + m[0]) * np.identity(2)
     h_forcing = ca.mtimes(M_forcing, ca.gradient(psi, x))
-    lforcing = Leaf("forcing", phi, M_forcing, h_forcing, x, xdot, q, qdot)
+    damper = createDamper()
+    lforcing = Leaf("forcing", phi, M_forcing, h_forcing, x, xdot, q, qdot, damper)
     return lforcing
 
-def createDamper(forcingLeave):
+def createDamper():
     ale = ca.SX.sym("ale", 1)
     alex = ca.SX.sym("alex", 1)
     ele = ca.SX.sym('ele', 1)
@@ -97,23 +98,21 @@ def createDamper(forcingLeave):
     # Functions
     beta_fun = ca.Function("beta", [q, qdot, ale, alex], [beta])
     eta_fun = ca.Function("eta", [ele, elex], [eta])
-    damper = Damper(forcingLeave, beta_fun, eta_fun, le, lex, q, qdot)
+    damper = Damper(beta_fun, eta_fun, le, lex, q, qdot)
     return damper
 
 def main():
     (lxup, lxlow, lyup, lylow) = setBoundaryLeaves()
     lforcing = forcingLeaf()
     lcol = createCollisionAvoidance()
-    damper = createDamper(lforcing)
     rg = RootGeometry([], 2)
-    rg_forced = RootGeometry([lforcing], 2, damper=damper)
+    rg_forced = RootGeometry([lforcing], 2)
     rg_limits = RootGeometry([lyup, lylow, lxup, lxlow], 2)
-    rg_forced_limits = RootGeometry([lyup, lylow, lxup, lxlow, lforcing], 2, damper=damper)
+    rg_forced_limits = RootGeometry([lyup, lylow, lxup, lxlow, lforcing], 2)
     rg_col = RootGeometry([lcol], 2)
     rg_col_limits = RootGeometry([lcol, lyup, lylow, lxup, lxlow], 2)
-    rg_col_limits_forced = RootGeometry([lcol, lyup, lylow, lxup, lxlow, lforcing], 2, damper=damper)
+    rg_col_limits_forced = RootGeometry([lcol, lyup, lylow, lxup, lxlow, lforcing], 2)
     geos = [rg, rg_forced, rg_limits, rg_forced_limits, rg_col_limits, rg_col_limits_forced]
-    #geos = [rg_col, rg_col_limits]
     # solve
     dt = 0.05
     T = 16.0
@@ -133,7 +132,7 @@ def main():
             if i == 0:
                 aniSols.append(sol)
         sols.append(geoSols)
-    fig, ax = plt.subplots(3, 2, figsize=(10, 15))
+    fig, ax = plt.subplots(3, 2, figsize=(7, 13))
     plotMulti(sols, aniSols, fig, ax)
 
 if __name__ == "__main__":
