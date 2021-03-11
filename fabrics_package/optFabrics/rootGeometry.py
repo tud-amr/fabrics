@@ -32,10 +32,9 @@ class RootGeometry(object):
         self._rhs = -self._h + self._d
 
     def augment(self):
-        self._rhs_aug[0] = self._qdot[0]
-        self._rhs_aug[1] = self._qdot[1]
-        self._rhs_aug[2] = self._rhs[0]
-        self._rhs_aug[3] = self._rhs[1]
+        for i in range(self._n):
+            self._rhs_aug[i] = self._qdot[i]
+            self._rhs_aug[i + self._n] = self._rhs[i]
 
     def contDynamics(self, z, t):
         self.update(z[0:self._n], z[self._n:2*self._n])
