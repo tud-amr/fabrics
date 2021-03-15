@@ -11,6 +11,8 @@ https://arxiv.org/abs/2008.02399
 
 There is also a python package to be used to develop custom leaves.
 Install the package through pip, using 
-'cd fabrics_package'
-'pip3 install -e .'
+'''bash
+cd fabrics_package
+pip3 install -e .
+'''
 
