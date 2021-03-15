@@ -113,7 +113,7 @@ def main():
     rg_col_limits = RootGeometry([lcol, lyup, lylow, lxup, lxlow], 2)
     rg_col_limits_forced = RootGeometry([lcol, lyup, lylow, lxup, lxlow, lforcing], 2)
     geos = [rg, rg_forced, rg_limits, rg_forced_limits, rg_col_limits, rg_col_limits_forced]
-    geos =[rg_forced]
+    geos =[rg_forced_limits]
     # solve
     dt = 0.05
     T = 16.0

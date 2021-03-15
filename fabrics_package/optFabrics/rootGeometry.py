@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.integrate import odeint
 
+from optFabrics.leaf import TimeVariantLeaf
+
 class RootGeometry(object):
     def __init__(self, leaves, n, damper=None):
         self._n = n
@@ -14,13 +16,17 @@ class RootGeometry(object):
         self._damper = damper
         self._d = np.zeros(n)
 
-    def update(self, q, qdot):
+    def update(self, q, qdot, t=None):
         self._q = q
         self._qdot = qdot
         self._M = np.zeros((self._n, self._n))
         h_int = np.zeros(self._n)
         for leaf in self._leaves:
-            (M_leaf, h_leaf) = leaf.pull(q, qdot)
+            isTimeVariant = isinstance(leaf, TimeVariantLeaf)
+            if isTimeVariant:
+                (M_leaf, h_leaf) = leaf.pull(q, qdot, t)
+            else:
+                (M_leaf, h_leaf) = leaf.pull(q, qdot)
             self._M += M_leaf
             h_int += np.dot(M_leaf, h_leaf)
         self._h = np.dot(np.linalg.pinv(self._M), h_int)
@@ -37,7 +43,7 @@ class RootGeometry(object):
             self._rhs_aug[i + self._n] = self._rhs[i]
 
     def contDynamics(self, z, t):
-        self.update(z[0:self._n], z[self._n:2*self._n])
+        self.update(z[0:self._n], z[self._n:2*self._n], t)
         self.setRHS()
         self.augment()
         zdot = self._rhs_aug

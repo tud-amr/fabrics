@@ -47,15 +47,24 @@ def plotMulti(sols, aniSols, fig, ax):
     )
     plt.show()
 
-def plot(sols):
+def plot(sols, fig, ax):
     n = len(sols)
-    fig, ax = plt.subplots(2, 2, figsize=(10, 10))
     ax = [a for b in ax for a in b]
     fig.suptitle("Optimization Fabrics")
+    n = len(sols[0])
     (lines, points) = plotTraj(sols, ax[:n])
     ani = animation.FuncAnimation(
-        fig, animate, 1000,
+        fig, animate, n,
         fargs=[sols, lines, points],
         interval=10, blit=True
     )
     plt.show()
+
+def plotObstacle(obst, axs):
+    x = obst[0]
+    r = obst[1]
+    axs = [a for b in axs for a in b]
+    for ax in axs:
+        o = plt.Circle(x, r, color='r')
+        ax.add_patch(o)
+
