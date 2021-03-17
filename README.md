@@ -3,6 +3,10 @@
 Optimization fabrics can be used to formulate local motion planning in form of trees with various task definining leaves.
 The work is based on findings in https://arxiv.org/abs/2008.02399 .
 
+Point Robot             |  Planar Robot
+:-------------------------:|:-------------------------:
+![Optimization Fabrics for point robots](./assets/demo.gif) | ![Optimization Fabrics for point robots](./assets/three_arm.gif) 
+
 ## Tutorials
 
 This repository contains brief examples corresponding to the theory presented in "Optimization Fabrics" by Ratliff et al.
