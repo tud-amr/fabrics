@@ -43,7 +43,7 @@ class RootGeometry(object):
                 self._M_forcing += M_leaf
                 self._f_forcing += f_leaf
                 self._fe_forcing += fe_leaf
-                x, _, _, _, _ = leaf._diffMap.forwardMap(q, qdot)
+                x, _, _, _, _ = leaf._diffMap.forwardMap(q, qdot, t)
             else:
                 self._M_geometry += M_leaf
                 self._f_geometry += f_leaf

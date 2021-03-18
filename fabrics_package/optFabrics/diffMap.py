@@ -12,7 +12,7 @@ class DiffMap(object):
     def variables(self):
         return (self._x, self._xdot)
 
-    def forwardMap(self, q, qdot):
+    def forwardMap(self, q, qdot, t):
         x = np.array(self.phi_fun(q))[:, 0]
         J = self.J_fun(q)
         Jdot = self.Jdot_fun(q, qdot)

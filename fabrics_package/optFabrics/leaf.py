@@ -18,7 +18,7 @@ class Leaf(object):
         self.f_fun = ca.Function("f_" + name, [self._x, self._xdot], [f])
 
     def pull(self, q, qdot, t):
-        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot)
+        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot, t)
         M = self.M_fun(x, xdot)
         f = self.f_fun(x, xdot)
         fe = self.fe_fun(x, xdot)
@@ -46,7 +46,7 @@ class DampedLeaf(ForcingLeaf):
         self._damper = damper
 
     def pull(self, q, qdot, t):
-        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot)
+        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot, t)
         M = self.M_fun(x, xdot)
         M_pulled = np.dot(Jt, np.dot(M, J))
         h = self.h_fun(x, xdot)
@@ -77,6 +77,17 @@ def createAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m
     n = x.size(1)
     phi = fk - x_d
     dm = DiffMap("attractor", phi, q, qdot, x, xdot)
+    psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
+    M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
+    le = ca.dot(xdot, ca.mtimes(M, xdot))
+    damper = createDamper(x, xdot, le)
+    lforcing = ForcingLeaf("attractor", dm, le, psi)
+    return lforcing
+
+def createTimeVariantAttractor(q, qdot, x, xdot, x_d, t, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
+    n = x.size(1)
+    phi = fk - x_d
+    dm = TimeVariantDiffMap("attractor", phi, q, qdot, x, xdot, t)
     psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
     M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
     le = ca.dot(xdot, ca.mtimes(M, xdot))
