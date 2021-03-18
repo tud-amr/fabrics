@@ -23,6 +23,9 @@ cd fabrics_package
 pip3 install -e .
 ```
 
+## Related works and websites
+https://sites.google.com/nvidia.com/geometric-fabrics
+
 ## Time Variant (beta)
 
 ![Optimization Fabrics for time-variant potentials](./assets/timeVariant.gif) 
