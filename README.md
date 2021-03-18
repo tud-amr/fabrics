@@ -23,3 +23,6 @@ cd fabrics_package
 pip3 install -e .
 ```
 
+## Time Variant (beta)
+
+![Optimization Fabrics for time-variant potentials](./assets/timeVariant.gif) 
