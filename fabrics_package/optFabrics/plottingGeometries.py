@@ -107,9 +107,15 @@ def plot2DRobot(qs, fig, ax, dim):
     ani = animation.FuncAnimation(
         fig, animate2DRobot, n, 
         fargs=[qs, dim, ax],
-        interval=10, blit=True, repeat=True
+        interval=10, blit=True, repeat=True, save_count=10
     )
     plt.show()
+    print("Saving the figure can take several minutes")
+    fileName = input("Enter filename or 'no'\n")
+    if fileName != 'no':
+        print("Saving the figure ...")
+        writerVideo = animation.FFMpegWriter(fps=60)
+        ani.save(fileName, writer=writerVideo)
 
 def plot(sols, fig, ax):
     n = len(sols)
