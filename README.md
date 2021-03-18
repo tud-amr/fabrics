@@ -24,7 +24,16 @@ pip3 install -e .
 ```
 
 ## Related works and websites
+# websites
 https://sites.google.com/nvidia.com/geometric-fabrics
+# paper
+https://arxiv.org/abs/2010.14750
+https://arxiv.org/abs/2008.02399
+https://arxiv.org/abs/2010.14745
+https://arxiv.org/abs/2010.15676
+https://arxiv.org/abs/1801.02854
+
+
 
 ## Time Variant (beta)
 
