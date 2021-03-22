@@ -60,7 +60,10 @@ class RootGeometry(object):
         for i in range(n):
             self._rhs_aug[i] = self._qdot[i]
             self._rhs_aug[i + n] = self._rhs[i]
-        self._M_aug[n:2*n, n:2*n] = self._M_forcing + self._M_geometry
+        M = self._M_forcing + self._M_geometry
+        if np.linalg.cond(M) > 1e5:
+            M += np.identity(n) * 0.01
+        self._M_aug[n:2*n, n:2*n] = M
 
     def contDynamics(self, z, t):
         self.update(z[0:self._n], z[self._n:2*self._n], t)

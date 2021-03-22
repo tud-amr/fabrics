@@ -2,6 +2,7 @@ import casadi as ca
 import numpy as np
 from optFabrics.functions import generateEnergizer, generateLagrangian
 from optFabrics.diffMap import DiffMap
+from optFabrics.execEnergy import ExecutionEnergy
 
 class Damper(object):
 
@@ -25,13 +26,10 @@ class Damper(object):
         return (alex, beta)
 
 class RootDamper(object):
-    def __init__(self, q, qdot, beta_fun, eta_fun, lex):
+    def __init__(self, q, qdot, beta_fun, eta_fun, exEn):
         self.beta_fun = beta_fun
         self.eta_fun = eta_fun
-        (M, f) = generateLagrangian(lex, q, qdot, "ex")
-        self.Mex_fun = ca.Function("Mex", [q, qdot], [M])
-        self.fex_fun = ca.Function("fex", [q, qdot], [f])
-        self.Lex_fun = ca.Function("Lex", [q, qdot], [lex])
+        self._exEn = exEn
 
     def alpha(self, f, fe, M, q, qdot):
         a1 = np.dot(qdot, np.dot(M, qdot))
@@ -40,27 +38,26 @@ class RootDamper(object):
 
     def damp(self, f_geometry, f_forcing, fe_geometry, fe_forcing, M_geometry, M_forcing, q, qdot, x):
         ale0 = self.alpha(f_geometry, fe_forcing, M_forcing, q, qdot)
-        Mex = self.Mex_fun(q, qdot)
-        fex = self.fex_fun(q, qdot)
-        alex0 = self.alpha(f_geometry, fex, Mex, q, qdot)
-        alexpsi = self.alpha(f_geometry + f_forcing, fex, Mex, q, qdot)
-        lex = self.Lex_fun(q, qdot)
+        alex0 = self._exEn.alpha(q, qdot, f_geometry)
+        alexpsi = self._exEn.alpha(q, qdot, f_geometry + f_forcing)
+        lex = self._exEn.energy(q, qdot)
         eta = self.eta_fun(lex)
         alex = eta * alex0 + (1 - eta) * alexpsi
         beta = self.beta_fun(x, ale0, alex)
         return (alex, beta)
 
-def createRootDamper(q, qdot, x, a_eta=0.5, a_beta=0.5, a_shift=0.5, r=1.5, b=np.array([0.03, 6.5])):
+def createRootDamper(q, qdot, x_forcing, diffMap_ex, x_ex, xdot_ex,  a_eta=0.5, a_beta=0.5, a_shift=0.5, r=1.5, b=np.array([0.03, 6.5])):
     ale = ca.SX.sym("ale", 1)
     alex = ca.SX.sym("alex", 1)
     elex = ca.SX.sym('elex', 1)
-    beta_switch = 0.5 * (ca.tanh(-a_beta * (ca.norm_2(x) - r)) + 1)
+    beta_switch = 0.5 * (ca.tanh(-a_beta * (ca.norm_2(x_forcing) - r)) + 1)
     beta = beta_switch * b[1] + b[0] + ca.fmax(0.0, alex - ale)
     eta = 0.5 * (ca.tanh(-a_eta*(elex) - a_shift) + 1)
-    lex = ca.dot(qdot, qdot)
-    beta_fun = ca.Function("beta", [x, ale, alex], [beta])
+    lex = ca.dot(xdot_ex, xdot_ex)
+    exEn = ExecutionEnergy("exEn", diffMap_ex, lex)
+    beta_fun = ca.Function("beta", [x_forcing, ale, alex], [beta])
     eta_fun = ca.Function("eta", [elex], [eta])
-    damper = RootDamper(q, qdot, beta_fun, eta_fun, lex)
+    damper = RootDamper(q, qdot, beta_fun, eta_fun, exEn)
     return damper
 
 def createDamper(x, xdot, le, a_eta=0.5, a_beta=0.5, a_shift=0.5, r=1.5, b=np.array([0.03, 6.5])):

@@ -8,6 +8,7 @@ from optFabrics.leaf import Leaf
 from optFabrics.rootGeometry import RootGeometry
 from optFabrics.functions import createMapping, generateLagrangian, generateEnergizer
 from optFabrics.plottingGeometries import plotTraj, animate, plotMultipleTraj, plot, plotMulti
+from optFabrics.diffMap import DiffMap
 
 from optFabrics.leaf import createAttractor, createCollisionAvoidance, createJointLimits, createTimeVariantAttractor
 
@@ -36,7 +37,12 @@ def main():
     lforcing = createTimeVariantAttractor(q, qdot, x, xdot, x_d, t, fk, k=5.0)
     x_d = np.array([-2.0, 1.0])
     lforcingstatic = createAttractor(q, qdot, x, xdot, x_d, fk, k=5.0)
-    rootDamper = createRootDamper(q, qdot, x)
+    # damper
+    x_ex = ca.SX.sym("x_ex", 2)
+    xdot_ex = ca.SX.sym("xdot_ex", 2)
+    phi_ex = q
+    diffMap_ex = DiffMap("ex_map", phi_ex, q, qdot, x_ex, xdot_ex)
+    rootDamper = createRootDamper(q, qdot, x, diffMap_ex, x_ex, xdot_ex)
     le_root = 1.0/2.0 * ca.dot(qdot, qdot)
     rg = RootGeometry([], le_root, 2)
     rg_forced = RootGeometry([lforcing], le_root, 2, damper=rootDamper)

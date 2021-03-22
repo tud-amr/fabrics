@@ -1,15 +1,16 @@
 import gym
-import reacher_simple
+import nLinkReacher
 import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import casadi as ca
 
-from optFabrics.leaf import Leaf, createAttractor, createCollisionAvoidance, createTimeVariantAttractor
+from optFabrics.leaf import Leaf, createAttractor, createCollisionAvoidance, createTimeVariantAttractor, createJointLimits
 from optFabrics.rootGeometry import RootGeometry
 from optFabrics.damper import createRootDamper
 from optFabrics.plottingGeometries import plot2DRobot, plotMultiple2DRobot
+from optFabrics.diffMap import DiffMap
 
 def forwardKinematics(q, n):
     l = np.array([1.0, 1.0, 1.0])
@@ -33,6 +34,9 @@ class FabricController():
         x = ca.SX.sym("x", m)
         xdot = ca.SX.sym("xdot", m)
         fk = forwardKinematics(q, n)[indices]
+        upper_lim = np.array([2.0 * np.pi/3.0 for i in range(n)])
+        lower_lim = -upper_lim
+        llimits = createJointLimits(q, qdot, upper_lim, lower_lim)
         lcols = []
         for i in range(n):
             fk_col = forwardKinematics(q, i+1)
@@ -41,9 +45,14 @@ class FabricController():
                 r_obst = r_obsts[j]
                 lcols.append(createCollisionAvoidance(q, qdot, fk_col, x_obst, r_obst))
         lforcing = createTimeVariantAttractor(q, qdot, x, xdot, x_d, t, fk, k=5.0)
-        rootDamper = createRootDamper(q, qdot, x)
+        x_ex = ca.SX.sym("x_ex", 2)
+        xdot_ex = ca.SX.sym("xdot_ex", 2)
+        phi_ex = forwardKinematics(q, n)[0:2]
+        #phi_ex = q
+        diffMap_ex = DiffMap("exec_map", phi_ex, q, qdot, x_ex, xdot_ex)
+        rootDamper = createRootDamper(q, qdot, x, diffMap_ex, x_ex, xdot_ex)
         le_root = 1.0/2.0 * ca.dot(qdot, qdot)
-        self._rg_forced = RootGeometry([lforcing] + lcols, le_root, n, damper=rootDamper)
+        self._rg_forced = RootGeometry([lforcing] + lcols + llimits, le_root, n, damper=rootDamper)
 
     def computeAction(self, z, t):
         zdot = self._rg_forced.contDynamics(z, t)
@@ -53,45 +62,35 @@ class FabricController():
 
 def main():
     ## setting up the problem
-    n = 2
     t = ca.SX.sym("t", 1)
-    x_d = ca.vertcat(1.2 + 0.5 * ca.cos(0.5 * t), 1.0 * ca.sin(0.5 * t))
+    x_d = ca.vertcat(1.3 + 0.3 * ca.cos(0.5 * t), 1.0 * ca.sin(0.5 * t))
     indices = [0, 1]
     x_obsts = [np.array([0.5, 0.8]), np.array([1.2, -0.5])]
     x_obsts = [np.array([0.8, 0.8]), np.array([1.7, -1.1])]
     r_obsts = [0.5, 0.2]
     r_obsts = [0.2, 0.2]
-    con1 = FabricController(n, x_d, t, indices, [], [])
-    con2 = FabricController(n, x_d, t, indices, x_obsts, r_obsts)
+    con1 = FabricController(2, x_d, t, indices, [], [])
+    con2 = FabricController(2, x_d, t, indices, x_obsts[1:2], r_obsts[1:2])
     con3 = FabricController(3, x_d, t, indices, [], [])
     con4 = FabricController(3, x_d, t, indices, x_obsts, r_obsts)
     cons = [con1, con2, con3, con4]
-    envs = []
-    envs.append(gym.make('reacher-two-acc-v0'))
-    envs.append(gym.make('reacher-two-acc-v0'))
-    envs.append(gym.make('reacher-three-acc-v0'))
-    envs.append(gym.make('reacher-three-acc-v0'))
-    #env.render()
     dims = [2, 2, 3, 3]
-    n_steps = 1500
+    n_steps = 2500
     qs = []
     ## running the simulation
     for i in range(len(cons)):
         con = cons[i]
-        env = envs[i]
         dim = dims[i]
-        env.setDt(0.01)
+        env = gym.make('nLink-reacher-acc-v0', n=dim, dt=0.01)
         ob = env.reset()
         print("Starting episode")
         q = np.zeros((dim, n_steps))
         t = 0.0
         for i in range(n_steps):
-            if i % 1000 == 0:
+            if i % 100 == 0:
                 print('time step : ', i)
             t += env._dt
-            #time.sleep(env._dt)
             action = con.computeAction(ob, t)
-            #env.render()
             ob, reward, done, info = env.step(action)
             q[:, i] = ob[0:dim]
         qs.append(q)

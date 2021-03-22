@@ -8,6 +8,7 @@ from optFabrics.leaf import Leaf
 from optFabrics.rootGeometry import RootGeometry
 from optFabrics.functions import createMapping, generateLagrangian, generateEnergizer
 from optFabrics.plottingGeometries import plotTraj, animate, plotMultipleTraj, plot, plotMulti
+from optFabrics.diffMap import DiffMap
 
 from optFabrics.leaf import createAttractor, createCollisionAvoidance, createJointLimits, createQuadraticAttractor, createExponentialAttractor
 
@@ -25,16 +26,25 @@ def main():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     fk = forwardKinematics(q)
+    # colision avoidance and limit avoidance
     lim_up, lim_low = limits()
     x_obst = np.array([0.0, 0.2])
     r_obst = 2.0
     lcol = createCollisionAvoidance(q, qdot, fk, x_obst, r_obst)
     limitLeaves = createJointLimits(q, qdot, lim_up, lim_low)
+    # forcing leaf
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
     x_d = np.array([-3.0, -2.0])
     lforcing = createAttractor(q, qdot, x, xdot, x_d, fk, k=5.0)
-    rootDamper = createRootDamper(q, qdot, x)
+    # execution energy
+    x_ex = ca.SX.sym("x_ex", 2)
+    xdot_ex = ca.SX.sym("xdot_ex", 2)
+    phi_ex = q
+    diffMap_ex = DiffMap("exec_map", phi_ex, q, qdot, x_ex, xdot_ex)
+    # damper
+    rootDamper = createRootDamper(q, qdot, x, diffMap_ex, x_ex, xdot_ex)
+    # various systems
     le_root = 1.0/2.0 * ca.dot(qdot, qdot)
     rg = RootGeometry([], le_root, 2)
     rg_forced = RootGeometry([lforcing], le_root, 2, damper=rootDamper)

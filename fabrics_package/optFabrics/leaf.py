@@ -16,6 +16,7 @@ class Leaf(object):
         # placeholder for h_fun
         f = np.zeros(self._x.size(1))
         self.f_fun = ca.Function("f_" + name, [self._x, self._xdot], [f])
+        self._name = name
 
     def pull(self, q, qdot, t):
         x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot, t)

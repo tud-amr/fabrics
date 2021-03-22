@@ -10,6 +10,7 @@ from optFabrics.leaf import Leaf, createAttractor, createCollisionAvoidance, cre
 from optFabrics.rootGeometry import RootGeometry
 from optFabrics.damper import createRootDamper
 from optFabrics.plottingGeometries import plot2DRobot, plotMultiple2DRobot
+from optFabrics.diffMap import DiffMap
 
 def forwardKinematics(q, x_base, n):
     l = 1.0
@@ -49,7 +50,11 @@ class FabricController():
                 r_obst = r_obsts[j]
                 lcols.append(createCollisionAvoidance(q, qdot, fk_col, x_obst, r_obst))
         lforcing = createAttractor(q, qdot, x, xdot, x_d, fk, k=5.0)
-        rootDamper = createRootDamper(q, qdot, x)
+        x_ex = ca.SX.sym("x_ex", 2)
+        xdot_ex = ca.SX.sym("xdot_ex", 2)
+        phi_ex = forwardKinematics(q, x_base, n)[0:2]
+        diffMap_ex = DiffMap("exec_map", phi_ex, q, qdot, x_ex, xdot_ex)
+        rootDamper = createRootDamper(q, qdot, x, diffMap_ex, x_ex, xdot_ex)
         le_root = 1.0/2.0 * ca.dot(qdot, qdot)
         self._rg_forced = RootGeometry([lforcing] + lcols, le_root, n, damper=rootDamper)
 
@@ -61,7 +66,7 @@ class FabricController():
 
 def main():
     ## setting up the problem
-    n = 8
+    n = 3
     x_d = np.array([-4.0, 2.7])
     indices = [0, 1]
     x_obsts = [np.array([0.5, 0.8]), np.array([1.2, -0.5])]
