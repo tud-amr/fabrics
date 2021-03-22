@@ -65,6 +65,26 @@ def plotRobot(q, n, ax):
         patches.append(ax.add_patch(links[i]))
     return patches
 
+def animateMultiple2DRobot(num, qss, ns, axs):
+    lines = []
+    patches = []
+    for i in range(len(qss)):
+        n = ns[i]
+        ax = axs[i]
+        qs = qss[i]
+        q = qs[:, num]
+        lenTrail = 50
+        start = max(0, num - lenTrail)
+        x_ee = np.zeros((lenTrail, 2))
+        line = ax.plot(0, 0, color='r')[0]
+        for j in range(lenTrail):
+            index = min(len(qs[0]) - 1, start+j)
+            x_ee[j] = forwardKinematics(qs[:, index], n)[0:2]
+        line.set_data(x_ee[:, 0], x_ee[:, 1])
+        lines.append(line)
+        patches += plotRobot(q, n, ax)
+    return lines + patches
+
 def animate2DRobot(num, qs, n, ax):
     q = qs[:, num]
     lenTrail = 50
@@ -116,6 +136,25 @@ def plot2DRobot(qs, fig, ax, dim):
         print("Saving the figure ...")
         writerVideo = animation.FFMpegWriter(fps=60)
         ani.save(fileName, writer=writerVideo)
+
+def plotMultiple2DRobot(qss, fig, axs, dims):
+    fig.suptitle("Optimization Fabrics")
+    ax_flat = [a for b in axs for a in b]
+    for i in range(len(qss)):
+        ax = ax_flat[i]
+        qs = qss[i]
+        dim = dims[i]
+        n = len(qs[0])
+        x_ee = np.zeros((n, 2))
+        for j in range(len(qs[0])):
+            x_ee[j] = forwardKinematics(qs[:, j], dim)[0:2]
+        ax.plot(x_ee[:, 0], x_ee[:, 1])
+    ani = animation.FuncAnimation(
+        fig, animateMultiple2DRobot, n, 
+        fargs=[qss, dims, ax_flat],
+        interval=10, blit=True, repeat=True, save_count=10
+    )
+    plt.show()
 
 def plot(sols, fig, ax):
     n = len(sols)
