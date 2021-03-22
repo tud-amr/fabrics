@@ -1,0 +1,136 @@
+import gym
+import reacher_simple
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+import casadi as ca
+
+from optFabrics.leaf import Leaf, createAttractor, createCollisionAvoidance, createTimeVariantAttractor
+from optFabrics.rootGeometry import RootGeometry
+from optFabrics.damper import createRootDamper
+from optFabrics.plottingGeometries import plot2DRobot, plotMultiple2DRobot
+
+def forwardKinematics(q, n):
+    l = np.array([1.0, 1.0, 1.0])
+    fkx = 0.0
+    fky = 0.2
+    for i in range(n):
+        angle = 0.0
+        for j in range(i+1):
+            angle += q[j]
+        fkx += ca.cos(angle) * l[i]
+        fky += ca.sin(angle) * l[i]
+    fk = ca.vertcat(fkx, fky)
+    return fk
+
+class FabricController():
+    def __init__(self, n, x_d, t, indices, x_obsts, r_obsts):
+        self._n = n
+        q = ca.SX.sym("q", n)
+        qdot = ca.SX.sym("qdot", n)
+        m = len(indices)
+        x = ca.SX.sym("x", m)
+        xdot = ca.SX.sym("xdot", m)
+        fk = forwardKinematics(q, n)[indices]
+        lcols = []
+        for i in range(n):
+            fk_col = forwardKinematics(q, i+1)
+            for j in range(len(x_obsts)):
+                x_obst = x_obsts[j]
+                r_obst = r_obsts[j]
+                lcols.append(createCollisionAvoidance(q, qdot, fk_col, x_obst, r_obst))
+        lforcing = createTimeVariantAttractor(q, qdot, x, xdot, x_d, t, fk, k=5.0)
+        rootDamper = createRootDamper(q, qdot, x)
+        le_root = 1.0/2.0 * ca.dot(qdot, qdot)
+        self._rg_forced = RootGeometry([lforcing] + lcols, le_root, n, damper=rootDamper)
+
+    def computeAction(self, z, t):
+        zdot = self._rg_forced.contDynamics(z, t)
+        u = zdot[self._n:2 * self._n]
+        return u
+
+
+def main():
+    ## setting up the problem
+    n = 2
+    t = ca.SX.sym("t", 1)
+    x_d = ca.vertcat(1.2 + 0.5 * ca.cos(0.5 * t), 1.0 * ca.sin(0.5 * t))
+    indices = [0, 1]
+    x_obsts = [np.array([0.5, 0.8]), np.array([1.2, -0.5])]
+    x_obsts = [np.array([0.8, 0.8]), np.array([1.7, -1.1])]
+    r_obsts = [0.5, 0.2]
+    r_obsts = [0.2, 0.2]
+    con1 = FabricController(n, x_d, t, indices, [], [])
+    con2 = FabricController(n, x_d, t, indices, x_obsts, r_obsts)
+    con3 = FabricController(3, x_d, t, indices, [], [])
+    con4 = FabricController(3, x_d, t, indices, x_obsts, r_obsts)
+    cons = [con1, con2, con3, con4]
+    envs = []
+    envs.append(gym.make('reacher-two-acc-v0'))
+    envs.append(gym.make('reacher-two-acc-v0'))
+    envs.append(gym.make('reacher-three-acc-v0'))
+    envs.append(gym.make('reacher-three-acc-v0'))
+    #env.render()
+    dims = [2, 2, 3, 3]
+    n_steps = 1500
+    qs = []
+    ## running the simulation
+    for i in range(len(cons)):
+        con = cons[i]
+        env = envs[i]
+        dim = dims[i]
+        env.setDt(0.01)
+        ob = env.reset()
+        print("Starting episode")
+        q = np.zeros((dim, n_steps))
+        t = 0.0
+        for i in range(n_steps):
+            if i % 1000 == 0:
+                print('time step : ', i)
+            t += env._dt
+            #time.sleep(env._dt)
+            action = con.computeAction(ob, t)
+            #env.render()
+            ob, reward, done, info = env.step(action)
+            q[:, i] = ob[0:dim]
+        qs.append(q)
+    ## Plotting the results
+    fig, ax = plt.subplots(2, 2, figsize=(10, 10))
+    ax[0][0].set_xlim([-3, 3])
+    ax[0][0].set_ylim([-3, 3])
+    ax[0][1].set_xlim([-3, 3])
+    ax[0][1].set_ylim([-3, 3])
+    ax[1][0].set_xlim([-3, 3])
+    ax[1][0].set_ylim([-3, 3])
+    ax[1][1].set_xlim([-3, 3])
+    ax[1][1].set_ylim([-3, 3])
+    obsts = []
+    for j in range(len(x_obsts)):
+        x_obst = x_obsts[j]
+        r_obst = r_obsts[j]
+        obsts.append(plt.Circle(x_obst, radius=r_obst, color='r'))
+        ax[0][1].add_patch(obsts[j])
+    obsts = []
+    for j in range(len(x_obsts)):
+        x_obst = x_obsts[j]
+        r_obst = r_obsts[j]
+        obsts.append(plt.Circle(x_obst, radius=r_obst, color='r'))
+        ax[1][1].add_patch(obsts[j])
+    """
+    if len(indices) == 2:
+        goal = plt.Circle(x_d, radius=0.02, color='g')
+        ax[0][0].add_patch(goal)
+    elif len(indices) == 1:
+        if indices[0] == 0:
+            x = [x_d, x_d]
+            y = [-5, 5]
+            goal = ax[0][0].plot(x, y, color='g')
+        elif indices[0] == 1:
+            y = [x_d, x_d]
+            x = [-5, 5]
+            goal = ax[0][0].plot(x, y, color='g')
+    """
+    plotMultiple2DRobot(qs, fig, ax, dims)
+if __name__ == "__main__":
+    main()

@@ -23,6 +23,12 @@ cd fabrics_package
 pip3 install -e .
 ```
 
+## Gym Agents
+
+Open-AI gym agents can be controlled using fabrics. Planar cases can be found in
+gym_agents. They require the installation of 
+[planarEnvs](https://gitlab.tudelft.nl/mspahn/planarenvs).
+
 ## Related works and websites
 # websites
 https://sites.google.com/nvidia.com/geometric-fabrics
