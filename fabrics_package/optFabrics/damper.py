@@ -46,7 +46,15 @@ class RootDamper(object):
         beta = self.beta_fun(x, ale0, alex)
         return (alex, beta)
 
-def createRootDamper(q, qdot, x_forcing, diffMap_ex, x_ex, xdot_ex,  a_eta=0.5, a_beta=0.5, a_shift=0.5, r=1.5, b=np.array([0.03, 6.5])):
+class ConstantRootDamper(object):
+    def __init__(self, beta):
+        self._beta = beta
+
+    def damp(self, f_geometry, f_forcing, fe_geometry, fe_forcing, M_geometry, M_forcing, q, qdot, x):
+        return (0.0, self._beta)
+
+def createRootDamper(q, qdot, m, diffMap_ex, x_ex, xdot_ex, a_eta=0.5, a_beta=0.5, a_shift=0.5, r=1.5, b=np.array([0.03, 6.5])):
+    x_forcing = ca.SX.sym("x_forcing", m)
     ale = ca.SX.sym("ale", 1)
     alex = ca.SX.sym("alex", 1)
     elex = ca.SX.sym('elex', 1)
@@ -59,6 +67,9 @@ def createRootDamper(q, qdot, x_forcing, diffMap_ex, x_ex, xdot_ex,  a_eta=0.5, 
     eta_fun = ca.Function("eta", [elex], [eta])
     damper = RootDamper(q, qdot, beta_fun, eta_fun, exEn)
     return damper
+
+def createConstantRootDamper(beta):
+    return ConstantRootDamper(beta)
 
 def createDamper(x, xdot, le, a_eta=0.5, a_beta=0.5, a_shift=0.5, r=1.5, b=np.array([0.03, 6.5])):
     ale = ca.SX.sym("ale", 1)
