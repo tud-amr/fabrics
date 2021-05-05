@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from optFabrics.functions import generateLagrangian, createTimeVariantMapping
+from optFabrics.functions import generateLagrangian, createTimeVariantMapping, generateHamiltonian
 from optFabrics.damper import createDamper
 from optFabrics.diffMap import DiffMap, TimeVariantDiffMap
 
@@ -10,10 +10,12 @@ class Leaf(object):
         self._diffMap = diffMap
         self._x, self._xdot = diffMap.variables()
         (Me, fe) = generateLagrangian(le, self._x, self._xdot, name)
+        self.he_fun = generateHamiltonian(le, self._x, self._xdot, name)
+        self.le_fun = ca.Function("le_" + name, [self._x, self._xdot], [le])
         self._Me = Me
         self.M_fun = ca.Function("M_" + name, [self._x, self._xdot], [Me])
         self.fe_fun = ca.Function("fe_" + name, [self._x, self._xdot], [fe])
-        # placeholder for h_fun
+        # placeholder
         f = np.zeros(self._x.size(1))
         self.f_fun = ca.Function("f_" + name, [self._x, self._xdot], [f])
         self._name = name
@@ -24,9 +26,14 @@ class Leaf(object):
         f = self.f_fun(x, xdot)
         fe = self.fe_fun(x, xdot)
         M_pulled = np.dot(Jt, np.dot(M, J))
-        f_pulled = np.dot(Jt, f - np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
-        fe_pulled = np.dot(Jt, fe - np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
-        return (M_pulled, f_pulled, fe_pulled)
+        f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
+        fe_pulled = np.dot(Jt, fe + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
+        le = self.le_fun(x, xdot)
+        he = self.he_fun(x, xdot)
+        return (M_pulled, f_pulled, fe_pulled, he)
+
+    def name(self):
+        return self._name
 
 class GeometryLeaf(Leaf):
     def __init__(self, name, diffMap, le, h):
@@ -40,6 +47,7 @@ class ForcingLeaf(Leaf):
         super(ForcingLeaf, self).__init__(name, diffMap, le)
         f = ca.mtimes(self._Me, ca.gradient(psi, self._x))
         self.f_fun = ca.Function("f_" + name, [self._x, self._xdot], [f])
+        self.he_fun = ca.Function("he_" + name, [self._x, self._xdot], [psi])
 
 class DampedLeaf(ForcingLeaf):
     def __init__(self, name, diffMap, le, psi, damper):
@@ -56,7 +64,8 @@ class DampedLeaf(ForcingLeaf):
         h -= d
         h_int = np.dot(Jt, np.dot(M, (h - np.dot(Jdot, qdot))))[:, 0]
         h_pulled = np.dot(np.linalg.pinv(M_pulled), h_int)
-        return (M_pulled, h_pulled)
+        le = self.le_fun(x, xdot)
+        return (M_pulled, h_pulled, le)
 
 class TimeVariantLeaf(DampedLeaf):
     def __init__(self, name, timeVariantdiffMap, le, psi, damper):
@@ -74,82 +83,74 @@ class TimeVariantLeaf(DampedLeaf):
         h_pulled = np.dot(np.linalg.pinv(M_pulled), h_int)
         return (M_pulled, h_pulled)
 
-def createAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
-    n = x.size(1)
-    phi = fk - x_d
-    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
-    psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
-    M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
-    damper = createDamper(x, xdot, le)
-    lforcing = ForcingLeaf("attractor", dm, le, psi)
-    return lforcing
+class DynamicLeaf(Leaf):
+    def __init__(self, name, diffMap, le, psi, xd_ca, xd_t, t_ca, beta=1.0):
+        super(DynamicLeaf, self).__init__(name, diffMap, le)
+        f = ca.mtimes(self._Me, ca.gradient(psi, self._x))
+        self._beta = beta
+        self.f_fun = ca.Function("f_" + name, [self._x, self._xdot, xd_ca], [f])
+        xd_dot_t = ca.jacobian(xd_t, t_ca)
+        xd_ddot_t = ca.jacobian(xd_dot_t, t_ca)
+        self.xd_fun = ca.Function("xd_" + name, [t_ca], [xd_t])
+        self.xd_dot_fun = ca.Function("xd_dot_" + name, [t_ca], [xd_dot_t])
+        self.xd_ddot_fun = ca.Function("xd_ddot_" + name, [t_ca], [xd_ddot_t])
 
-def createTimeVariantAttractor(q, qdot, x, xdot, x_d, t, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
-    n = x.size(1)
-    phi = fk - x_d
-    dm = TimeVariantDiffMap("attractor", phi, q, qdot, x, xdot, t)
-    psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
-    M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
-    damper = createDamper(x, xdot, le)
-    lforcing = ForcingLeaf("attractor", dm, le, psi)
-    return lforcing
+    def pull(self, q, qdot, t):
+        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot, t)
+        self._Jt = Jt
+        xd = np.array(self.xd_fun(t))[:, 0]
+        xd_dot = np.array(self.xd_dot_fun(t))[:, 0]
+        self._xd_dot = xd_dot
+        xd_ddot = np.array(self.xd_ddot_fun(t))[:, 0]
+        M = self.M_fun(x, xdot)
+        fe = np.array(self.fe_fun(x, xdot))[:, 0]
+        f_psi = np.array(self.f_fun(x, xdot, xd))[:, 0]
+        f_d = np.dot(M, xd_ddot)
+        # this damping should not be necessary
+        #b_d = self._beta * (xdot - xd_dot)
+        #f = f_psi - f_d + b_d
+        f = f_psi - f_d
+        M_pulled = np.dot(Jt, np.dot(M, J))
+        f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))
+        fe_pulled = np.dot(Jt, fe + np.dot(M, np.dot(Jdot, qdot)))
+        he = self.he_fun(x, xdot)
+        return (M_pulled, f_pulled, fe_pulled, he)
 
-def createQuadraticAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
-    n = x.size(1)
-    phi = fk - x_d
-    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
-    psi = ca.norm_2(x)**2
-    #M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    M = np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
-    damper = createDamper(x, xdot, le)
-    lforcing = DampedLeaf("forcing", dm, le, psi, damper)
-    return lforcing
+    def bxddot(self, beta):
+        val = -np.dot(self._Jt, beta * self._xd_dot)[:, 0]
+        return val
 
-def createExponentialAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
-    n = x.size(1)
-    phi = fk - x_d
-    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
-    psi = ca.exp(0.2 * ca.norm_2(x)**2)
-    #M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    M = np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
-    damper = createDamper(x, xdot, le)
-    lforcing = DampedLeaf("forcing", dm, le, psi, damper)
-    return lforcing
+class SplineLeaf(Leaf):
+    def __init__(self, name, diffMap, le, psi, xd, spline, T, beta=1.0):
+        super(SplineLeaf, self).__init__(name, diffMap, le)
+        f = ca.mtimes(self._Me, ca.gradient(psi, self._x))
+        self._spline = spline
+        self._beta = beta
+        self._scaling = 1/T
+        self.f_fun = ca.Function("f_" + name, [self._x, xd], [f])
 
-def createCollisionAvoidance(q, qdot, fk, x_obst, r_obst, lam=0.25, a=np.array([0.4, 0.2, 20.0, 5.0])):
-    x = ca.SX.sym("x", 1)
-    xdot = ca.SX.sym('xdot', 1)
-    phi = ca.norm_2(fk - x_obst) / r_obst - 1
-    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
-    psi_col = a[0] / (x**2) + a[1] * ca.log(ca.exp(-a[2] * (x - a[3])) + 1)
-    s_col = 0.5 * (ca.tanh(-10 * xdot) + 1)
-    h = xdot ** 2 * lam * ca.gradient(psi_col, x)
-    le = 0.5 * s_col * xdot**2 * lam/x
-    lcol = GeometryLeaf("col_avo", dm, le, h)
-    return lcol
+    def pull(self, q, qdot, t):
+        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot, t)
+        self._Jt = Jt
+        M = self.M_fun(x, xdot)
+        fe = self.fe_fun(x, xdot)
+        t_ref = min(self._scaling * t, 1)
+        xds = self._spline.derivatives(t_ref, order=2)
+        xd = np.array(xds[0])
+        xd_dot = self._scaling * np.array(xds[1])
+        xd_ddot = self._scaling**2 * np.array(xds[2])
+        f_psi = self.f_fun(x, xd)
+        f_d = np.dot(M, xd_ddot)
+        b_d = self._beta * (xdot - xd_dot)
+        f = f_psi - f_d + b_d
+        #f = -f_d + f_psi + beta * (xdot - xd_dot)
+        M_pulled = np.dot(Jt, np.dot(M, J))
+        f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
+        fe_pulled = np.dot(Jt, fe + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
+        he = self.he_fun(x, xdot)
+        return (M_pulled, f_pulled, fe_pulled, he)
 
-def createJointLimits(q, qdot, upper_lim, lower_lim, a=np.array([0.4, 0.2, 20.0, 5.0]), lam=0.25):
-    n = q.size(1)
-    x = ca.SX.sym("x", 1)
-    xdot = ca.SX.sym('xdot', 1)
-    psi_lim = a[0] / (x**2) + a[1] * ca.log(ca.exp(-a[2] * (x - a[3])) + 1)
-    s_lim = 0.5 * (ca.tanh(-10 * xdot) + 1)
-    h = xdot ** 2 * s_lim * lam * ca.gradient(psi_lim, x)
-    le = 0.5 * xdot**2 * lam/x
-    leaves = []
-    for i in range(n):
-        q_min = lower_lim[i]
-        q_max = upper_lim[i]
-        phi_min = q[i] - q_min
-        phi_max = q_max - q[i]
-        dm_min = DiffMap("limitmin_" + str(i), phi_min, q, qdot, x, xdot)
-        dm_max = DiffMap("limitmax_" + str(i), phi_max, q, qdot, x, xdot)
-        lqmin = GeometryLeaf("qmin_" + str(i), dm_min, le, h)
-        lqmax = GeometryLeaf("qmax_" + str(i), dm_max, le, h)
-        leaves.append(lqmin)
-        leaves.append(lqmax)
-    return leaves
+    def bxddot(self, xd_dot, beta):
+        val = -np.dot(self._Jt, beta * xd_dot)[:, 0]
+        return val
+
