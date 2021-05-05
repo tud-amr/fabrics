@@ -5,12 +5,13 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import casadi as ca
+from optFabrics.controllers.staticController import StaticController
 
-from optFabrics.leaf import Leaf, createAttractor, createCollisionAvoidance, createTimeVariantAttractor
-from optFabrics.rootGeometry import RootGeometry
-from optFabrics.damper import createRootDamper
-from optFabrics.plottingGeometries import plot2DRobot, plotMultiple2DRobot
-from optFabrics.diffMap import DiffMap
+from robotPlot import RobotPlot
+from numpyFk import numpyMobileFk
+from casadiFk import casadiMobileFk
+
+from obstacle import Obstacle
 
 def forwardKinematics(q, x_base, n):
     l = 1.0
@@ -67,16 +68,23 @@ class FabricController():
 def main():
     ## setting up the problem
     n = 3
-    x_d = np.array([-4.0, 2.7])
-    indices = [0, 1]
-    x_obsts = [np.array([0.5, 0.8]), np.array([1.2, -0.5])]
-    r_obsts = [0.5, 0.2]
-    con1 = FabricController(n, x_d, indices, [], [])
-    cons = [con1]
+    q_ca = ca.SX.sym("q", n)
+    qdot_ca = ca.SX.sym("qdot", n)
+    x_d = np.array([-2.5, 0.5])
+    fk = casadiMobileFk(q_ca, 1.0, n)[0:2]
+    # construct fabric controller
+    fabCon = StaticController(n, q_ca, qdot_ca)
+    fabCon.addAttractor(x_d, 2, fk)
+    obsts = [Obstacle(np.array([-1.5, 0.8]), 0.3), Obstacle(np.array([1.2, -0.5]), 0.2)]
+    for i in range(n+1):
+        fk_col = casadiMobileFk(q_ca, 1.0, i)[0:2]
+        fabCon.addObstacles(obsts, fk_col)
+    fabCon.addDamper(n, q_ca)
+    fabCon.assembleRootGeometry()
+    cons = [fabCon]
     envs = []
     envs.append(gym.make('mobile-robot-acc-v0', n=n-1, dt = 0.01))
-    #env.render()
-    dims = [3]
+    dims = [n]
     n_steps = 1500
     qs = []
     ## running the simulation
@@ -86,18 +94,29 @@ def main():
         dim = dims[i]
         ob = env.reset()
         print("Starting episode")
-        q = np.zeros((dim, n_steps))
+        q = np.zeros((n_steps, dim))
         t = 0.0
         for i in range(n_steps):
-            if i % 1000 == 0:
+            if i % 100 == 0:
                 print('time step : ', i)
             t += env._dt
-            time.sleep(env._dt)
+            #time.sleep(env._dt)
             action = con.computeAction(ob, t)
             #action = np.zeros(3)
-            env.render()
+            #env.render()
             ob, reward, done, info = env.step(action)
-            q[:, i] = ob[0:dim]
+            q[i, :] = ob[0:dim]
         qs.append(q)
+
+    fk_fun = lambda q, n : numpyMobileFk(q, 1.0, n)
+    robotPlot = RobotPlot(qs, fk_fun, 3, types=[2])
+    robotPlot.initFig(2, 2)
+    robotPlot.plot()
+    t_ca = ca.SX.sym("t")
+    x_goal = ca.Function("goal", [t_ca], [x_d])
+    robotPlot.addObstacle([0], obsts)
+    robotPlot.addGoal([0], x_goal)
+    robotPlot.makeAnimation(n_steps)
+    robotPlot.show()
 if __name__ == "__main__":
     main()
