@@ -32,4 +32,4 @@ jobs:
         run: python tests/agents/simpleAgentTest.py
 
       - name: Test examples
-        run: python gym_agents/running/panda/pandaAgent.py
+        run: python gym_agents/running/panda/pandaAgent.py 10
