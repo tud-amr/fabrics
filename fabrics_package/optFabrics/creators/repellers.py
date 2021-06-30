@@ -4,13 +4,25 @@ from optFabrics.leaf import *
 def createCollisionAvoidance(q, qdot, fk, x_obst, r_obst, lam=0.25, a=np.array([0.4, 0.2, 20.0, 5.0])):
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym('xdot', 1)
-    phi = ca.norm_2(fk - x_obst) / r_obst - 1
+    phi = ca.norm_2(fk - x_obst)/r_obst - 1
     dm = DiffMap("attractor", phi, q, qdot, x, xdot)
     psi_col = a[0] / (x**2) + a[1] * ca.log(ca.exp(-a[2] * (x - a[3])) + 1)
-    s_col = 0.5 * (ca.tanh(-10 * xdot) + 1)
-    h = xdot ** 2 * lam * ca.gradient(psi_col, x)
+    s_col = -0.5 * (ca.sign(xdot) - 1)
+    h = (xdot ** 2) * lam * ca.gradient(psi_col, x)
     le = 0.5 * s_col * xdot**2 * lam/x
     lcol = GeometryLeaf("col_avo", dm, le, h)
+    return lcol
+
+def createPlaneAvoidance(q, qdot, fk, plane, lam=0.25, a=np.array([0.4, 0.2, 20.0, 5.0])):
+    x = ca.SX.sym("x", 1)
+    xdot = ca.SX.sym('xdot', 1)
+    phi = ca.norm_2(fk - plane)
+    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
+    psi_col = a[0] / (x**2) + a[1] * ca.log(ca.exp(-a[2] * (x - a[3])) + 1)
+    s_col = -0.5 * (ca.sign(xdot) - 1)
+    h = ca.norm_2(xdot) ** 2 * lam * ca.gradient(psi_col, x)
+    le = 0.5 * s_col * xdot**2 * lam/x
+    lcol = GeometryLeaf("plane_avo", dm, le, h)
     return lcol
 
 def createTimeVariantCollisionAvoidance(q, qdot, fk, t, x_obst, r_obst, lam=0.25, a=np.array([0.4, 0.2, 20.0, 5.0])):
@@ -19,18 +31,18 @@ def createTimeVariantCollisionAvoidance(q, qdot, fk, t, x_obst, r_obst, lam=0.25
     phi = ca.norm_2(fk - x_obst) / r_obst - 1
     dm = TimeVariantDiffMap("attractor", phi, q, qdot, x, xdot, t)
     psi_col = a[0] / (x**2) + a[1] * ca.log(ca.exp(-a[2] * (x - a[3])) + 1)
-    s_col = 0.5 * (ca.tanh(-10 * xdot) + 1)
+    s_col = -0.5 * (ca.sign(xdot) - 1)
     h = xdot ** 2 * lam * ca.gradient(psi_col, x)
     le = 0.5 * s_col * xdot**2 * lam/x
     lcol = GeometryLeaf("col_avo", dm, le, h)
     return lcol
 
-def createJointLimits(q, qdot, upper_lim, lower_lim, a=np.array([0.4, 0.2, 20.0, 5.0]), lam=0.25):
+def createJointLimits(q, qdot, upper_lim, lower_lim, a=np.array([3.0, 0.0, 5.0, 2.0]), lam=0.25):
     n = len(lower_lim)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym('xdot', 1)
     psi_lim = a[0] / (x**2) + a[1] * ca.log(ca.exp(-a[2] * (x - a[3])) + 1)
-    s_lim = 0.5 * (ca.tanh(-10 * xdot) + 1)
+    s_lim = -0.5 * (ca.sign(xdot) - 1)
     h = xdot ** 2 * s_lim * lam * ca.gradient(psi_lim, x)
     le = 0.5 * xdot**2 * lam/x
     leaves = []

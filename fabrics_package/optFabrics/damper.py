@@ -42,8 +42,8 @@ class RootDamper(object):
         alexpsi = self._exEn.alpha(q, qdot, f_geometry + f_forcing)
         lex = self._exEn.energy(q, qdot)
         eta = self.eta_fun(lex)
-        alex = eta * alex0 + (1 - eta) * alexpsi
-        beta = self.beta_fun(x, ale0, alex)
+        alex = float(eta * alex0 + (1 - eta) * alexpsi)
+        beta = float(self.beta_fun(x, ale0, alex))
         return (alex, beta)
 
 class ConstantRootDamper(object):

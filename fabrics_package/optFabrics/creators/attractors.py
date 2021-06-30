@@ -3,23 +3,7 @@ from optFabrics.leaf import *
 
 def createAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
     n = x.size(1)
-    phi = fk - x_d
-    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
-    psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
-    M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
-    damper = createDamper(x, xdot, le)
-    lforcing = ForcingLeaf("attractor", dm, le, psi)
-    return lforcing
-
-def createGroundRobotAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
-    n = x.size(1)
-    phi = fk - x_d
-    h = ca.vertcat(ca.cos(q[2]), ca.sin(q[2]))
-    d = ca.vertcat(x_d[0] - fk[0], x_d[1] - fk[1])
-    angle = np.arctan(h[1]/h[0]) - np.arctan(d[1]/d[0])
-    angleFiltered = (0.5 * (ca.tanh(10.0 * (ca.fabs(angle) - 0.7)) + 1)) * angle
-    phi = ca.vertcat(phi, angleFiltered)
+    phi = ca.fabs(fk - x_d)
     dm = DiffMap("attractor", phi, q, qdot, x, xdot)
     psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
     M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
@@ -60,26 +44,17 @@ def createDynamicAttractor(q, qdot, x, xdot, xd_ca, xd_t, t_ca, fk, k=5.0):
     ldynamic = DynamicLeaf("attractor", dm, le, psi, xd_ca, xd_t, t_ca, beta=5.0)
     return ldynamic
 
-def createSplineAttractor(q, qdot, x, xdot, spline, T, fk,  k=5.0):
+def createSplineAttractor(q, qdot, x, xdot, spline, T, dt, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
     n = x.size(1)
     phi = fk
     dm = DiffMap("attractor", phi, q, qdot, x, xdot)
     xd_ca = ca.SX.sym("xd", n)
-    psi = k * ca.norm_2(x - xd_ca)**2
+    #psi = k * ca.norm_2(x - xd_ca)
+    psi = k * (ca.norm_2(x - xd_ca) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x - xd_ca))))
     M = np.identity(n)
     le = 0.5 * ca.dot(xdot, ca.mtimes(M, xdot))
-    lspline = SplineLeaf("spline_attractor", dm, le, psi, xd_ca, spline, T, beta=1.0)
+    lspline = SplineLeaf("spline_attractor", dm, le, psi, xd_ca, spline, T, dt, beta=1.0)
     return lspline
-
-def createSpeedAttractor(q, qdot, x, xdot, xdot_d, J, k=5.0, a_psi=10.0, a_m=0.75, m=np.array([0.3, 2.0])):
-    n = x.size(1)
-    phi = ca.mtimes(J, qdot) - xdot_d
-    dm = DiffMap("attractor", phi, q, qdot, x, xdot)
-    psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
-    M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
-    lforcing = ForcingLeaf("attractor", dm, le, psi)
-    return lforcing
 
 def createQuadraticAttractor(q, qdot, x, xdot, x_d, t, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):
     n = x.size(1)

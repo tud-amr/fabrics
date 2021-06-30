@@ -1,9 +1,12 @@
 import casadi as ca
 import numpy as np
+import math
 
 from optFabrics.functions import generateLagrangian, createTimeVariantMapping, generateHamiltonian
 from optFabrics.damper import createDamper
 from optFabrics.diffMap import DiffMap, TimeVariantDiffMap
+
+from splineFunctions import project
 
 class Leaf(object):
     def __init__(self, name, diffMap, le):
@@ -25,11 +28,29 @@ class Leaf(object):
         M = self.M_fun(x, xdot)
         f = self.f_fun(x, xdot)
         fe = self.fe_fun(x, xdot)
+        if np.linalg.norm(f) > 1000 :
+            print("name : ", self.name())
+            print('f : ', f)
+            print("M : ", M)
+            print('fe : ', fe)
+            print('x : ', x)
+            print('xdot : ', xdot)
+        """
+        if self.name() == "col_avo":
+            print("name : ", self.name())
+            print('x : ', x)
+            print('xdot : ', xdot)
+            print("f : ", f)
+        """
         M_pulled = np.dot(Jt, np.dot(M, J))
         f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
         fe_pulled = np.dot(Jt, fe + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
         le = self.le_fun(x, xdot)
         he = self.he_fun(x, xdot)
+        if np.linalg.norm(fe_pulled) < 1e-10:
+            fe_pulled = np.zeros(len(fe_pulled))
+        if np.linalg.norm(f_pulled) < 1e-10:
+            f_pulled = np.zeros(len(f_pulled))
         return (M_pulled, f_pulled, fe_pulled, he)
 
     def name(self):
@@ -39,6 +60,7 @@ class GeometryLeaf(Leaf):
     def __init__(self, name, diffMap, le, h):
         super(GeometryLeaf, self).__init__(name, diffMap, le)
         f = ca.mtimes(self._Me, h)
+        self.h_fun = ca.Function("h_" + name, [self._x, self._xdot], [h])
         self.f_fun = ca.Function("f_" + name, [self._x, self._xdot], [f])
 
 class ForcingLeaf(Leaf):
@@ -121,12 +143,66 @@ class DynamicLeaf(Leaf):
         return val
 
 class SplineLeaf(Leaf):
-    def __init__(self, name, diffMap, le, psi, xd, spline, T, beta=1.0):
+    def __init__(self, name, diffMap, le, psi, xd, spline, T, dt, beta=1.0):
         super(SplineLeaf, self).__init__(name, diffMap, le)
+        f = ca.mtimes(self._Me, ca.gradient(psi, self._x))
+        ctrlDim = len(spline.ctrlpts[0])
+        self._spline = spline
+        self._beta = beta
+        self._scaling = 1/T
+        self._dt = dt
+        nbEvals = 10000
+        points = np.array(spline.evaluate_list([1/nbEvals * i for i in range(nbEvals)]))
+        spline_length = sum([np.linalg.norm(points[i] - points[i-1]) for i in range(1, nbEvals)])
+        self._vn = 1.5 * spline_length*self._scaling
+        self._vn = 0.3
+        #print(self._vn)
+        self.f_fun = ca.Function("f_" + name, [self._x, xd], [f])
+
+    def pull(self, q, qdot, t):
+        x, xdot, J, Jt, Jdot = self._diffMap.forwardMap(q, qdot, t)
+        self._Jt = Jt
+        M = self.M_fun(x, xdot)
+        fe = self.fe_fun(x, xdot)
+        t_ideal = t * self._scaling
+        t_close = project(x, self._spline)
+        t_ref = min((t_ideal + t_close)/2, 1)
+        xds = self._spline.derivatives(t_ref, order=2)
+        xd = np.array(xds[0])
+        v_s = max(0.0, self._vn * (-1 *((t_ref/0.5) - 1)**2 + 1))
+        a_s = max(0.0, self._vn * (-2 *((t_ref/0.5) - 1)))
+        #print("x : ", x, " , x_d : ", xd)
+        xd_dot = v_s * np.array(xds[1])
+        xd_ddot = a_s * np.array(xds[2])
+        self._xd_dot = xd_dot
+        f_psi = self.f_fun(x, xd)
+        f_d = np.dot(M, xd_ddot)
+        #b_d = self._beta * (xdot - xd_dot)
+        f = f_psi# - f_d
+        #f = -f_d + f_psi + beta * (xdot - xd_dot)
+        M_pulled = np.dot(Jt, np.dot(M, J))
+        f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
+        fe_pulled = np.dot(Jt, fe + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
+        he = self.he_fun(x, xdot)
+        return (M_pulled, f_pulled, fe_pulled, he)
+
+    def bxddot(self, beta):
+        val = -np.dot(self._Jt, beta * self._xd_dot)
+        return val
+
+class DiffDriveSplineLeaf(Leaf):
+    def __init__(self, name, diffMap, le, psi, xd, spline, T, beta=1.0):
+        super(DiffDriveSplineLeaf, self).__init__(name, diffMap, le)
         f = ca.mtimes(self._Me, ca.gradient(psi, self._x))
         self._spline = spline
         self._beta = beta
         self._scaling = 1/T
+        nbEvals = 10000
+        points = np.array(spline.evaluate_list([1/nbEvals * i for i in range(nbEvals)]))
+        spline_length = sum([np.linalg.norm(points[i] - points[i-1]) for i in range(1, nbEvals)])
+        self._vn = 1.5 * spline_length*self._scaling
+        self._vn = 0.3
+        #print(self._vn)
         self.f_fun = ca.Function("f_" + name, [self._x, xd], [f])
 
     def pull(self, q, qdot, t):
@@ -135,14 +211,20 @@ class SplineLeaf(Leaf):
         M = self.M_fun(x, xdot)
         fe = self.fe_fun(x, xdot)
         t_ref = min(self._scaling * t, 1)
-        xds = self._spline.derivatives(t_ref, order=2)
-        xd = np.array(xds[0])
-        xd_dot = self._scaling * np.array(xds[1])
-        xd_ddot = self._scaling**2 * np.array(xds[2])
+        xds = self._spline.derivatives(t_ref, order=4)
+        thetad = math.atan2(xds[1][1], xds[1][0])
+        thetad_dot = math.atan2(xds[2][1], xds[2][0])
+        thetad_ddot = math.atan2(xds[3][1], xds[3][0])
+        xd = np.array([xds[0][0], xds[0][1], thetad])
+        v_s = max(0.0, self._vn * (-1 *((t_ref/0.5) - 1)**2 + 1))
+        a_s = max(0.0, self._vn * (-2 *((t_ref/0.5) - 1)))
+        xd_dot = v_s * np.array([xds[1][0], xds[1][1], thetad_dot])
+        xd_ddot = a_s * np.array([xds[2][0], xds[2][1], thetad_ddot])
+        self._xd_dot = xd_dot
         f_psi = self.f_fun(x, xd)
         f_d = np.dot(M, xd_ddot)
-        b_d = self._beta * (xdot - xd_dot)
-        f = f_psi - f_d + b_d
+        #b_d = self._beta * (xdot - xd_dot)
+        f = f_psi# - f_d
         #f = -f_d + f_psi + beta * (xdot - xd_dot)
         M_pulled = np.dot(Jt, np.dot(M, J))
         f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))[:, 0] # the minus ...
@@ -150,7 +232,7 @@ class SplineLeaf(Leaf):
         he = self.he_fun(x, xdot)
         return (M_pulled, f_pulled, fe_pulled, he)
 
-    def bxddot(self, xd_dot, beta):
-        val = -np.dot(self._Jt, beta * xd_dot)[:, 0]
+    def bxddot(self, beta):
+        val = -np.dot(self._Jt, beta * self._xd_dot)
         return val
 

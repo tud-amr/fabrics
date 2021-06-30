@@ -2,8 +2,8 @@ import casadi as ca
 import numpy as np
 
 # fabrics
-from optFabrics.creators.attractors import createAttractor, createRedundancySolver
-from optFabrics.creators.repellers import createCollisionAvoidance
+from optFabrics.creators.attractors import *
+from optFabrics.creators.repellers import *
 from optFabrics.rootGeometry import RootGeometry
 from optFabrics.damper import createRootDamper
 from optFabrics.diffMap import DiffMap
@@ -15,13 +15,18 @@ class StaticController(object):
         self._q_ca = q_ca
         self._qdot_ca = qdot_ca
         self._leaves = []
+        self._m_forcing = 0
+        self._rootDamper = None
 
-    def addAttractor(self, xd, m, fk):
+    def addAttractor(self, xd, m, fk, k=5.0):
         x = ca.SX.sym("x", m)
         xdot = ca.SX.sym("xdot", m)
-        self._m_forcing = m
-        attractor = createAttractor(self._q_ca, self._qdot_ca, x, xdot, xd, fk)
+        self._m_forcing += m
+        attractor = createAttractor(self._q_ca, self._qdot_ca, x, xdot, xd, fk, k=k)
         self._leaves.append(attractor)
+
+    def addLeaf(self, leaf):
+        self._leaves.append(leaf)
 
     def addRedundancyRes(self):
         q0 = np.zeros(self._n)
@@ -39,11 +44,15 @@ class StaticController(object):
             self._q_ca, self._qdot_ca, self._m_forcing, diffMap_ex, x_ex, xdot_ex
         )
 
-    def assembleRootGeometry(self):
-        le_root = 1.0 / 2.0 * ca.dot(self._qdot_ca, self._qdot_ca)
-        self._rootGeo = RootGeometry(
-            self._leaves, le_root, self._n, damper=self._rootDamper
-        )
+    def assembleRootGeometry(self, m=1):
+        le_root = 1.0 / 2.0 * ca.dot(self._qdot_ca, ca.mtimes(m, self._qdot_ca))
+        if self._rootDamper:
+            self._rootGeo = RootGeometry(
+                self._leaves, le_root, self._n, self._q_ca, self._qdot_ca, damper=self._rootDamper
+            )
+        else:
+            self._rootGeo = RootGeometry(
+                self._leaves, le_root, self._n, self._q_ca, self._qdot_ca)
 
     def addObstacles(self, obsts, fk):
         lcols = []
@@ -54,6 +63,14 @@ class StaticController(object):
                 createCollisionAvoidance(self._q_ca, self._qdot_ca, fk, x_obst, r_obst)
             )
         self._leaves += lcols
+
+    def addPlane(self, plane, fk):
+        lplane = createPlaneAvoidance(self._q_ca, self._qdot_ca, fk, plane)
+        self._leaves.append(lplane)
+
+    def addJointLimits(self, lower_lim, upper_lim):
+        limit_leaves =  createJointLimits(self._q_ca, self._qdot_ca, upper_lim, lower_lim)
+        self._leaves += limit_leaves
 
     def computeAction(self, z, t):
         zdot = self._rootGeo.contDynamics(z, t)
