@@ -1,5 +1,7 @@
 ### Fabrics
 
+[![Build and Agents](https://github.com/maxspahn/fabrics/actions/workflows/agents.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/agents.yml)
+
 Optimization fabrics can be used to formulate local motion planning in form of trees with various task definining leaves.
 The work is based on findings in https://arxiv.org/abs/2008.02399 .
 
