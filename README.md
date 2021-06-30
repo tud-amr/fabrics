@@ -18,15 +18,15 @@ numpy, matplotlib.pyplot and casadi.
 
 There is also a python package to be used to develop custom leaves.
 # Dependencies
-Dependencies are installed directly through pip.
-You need to install robotUtils package before: https://github.com/maxspahn/robotUtils
+Beside some common packages, the examples depend on several custom packages.
+They are installed using the pip installation.
 
 # Installation
 
 Install the package through pip, using 
 ```bash
-cd fabrics_package
-pip3 install -e .
+pip3 install -r requirements.txt
+pip3 install -e fabrics_package
 ```
 
 ## Gym Agents

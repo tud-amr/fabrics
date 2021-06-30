@@ -1,5 +1,5 @@
 pytest~=5.3
-robotUtils @ git+https://github.com/maxspahn/robotUtils.git@be1b99c3ad73d03556346b46e91a5b596d3b738b
+-e git+https://github.com/maxspahn/robotUtils.git#egg=robotUtils
 casadi==3.5.1
 gym==0.17.3
 numpy==1.19.5
