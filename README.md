@@ -17,6 +17,12 @@ numpy, matplotlib.pyplot and casadi.
 ## Python Package
 
 There is also a python package to be used to develop custom leaves.
+# Dependencies
+Dependencies are installed directly through pip.
+You need to install robotUtils package before: https://github.com/maxspahn/robotUtils
+
+# Installation
+
 Install the package through pip, using 
 ```bash
 cd fabrics_package
