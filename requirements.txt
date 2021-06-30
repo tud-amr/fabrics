@@ -1,5 +1,6 @@
 pytest~=5.3
 -e git+https://github.com/maxspahn/robotUtils.git#egg=robotUtils
+-e git+https://github.com/maxspahn/gym_envs_planar.git#egg=planarEnvs
 casadi==3.5.1
 gym==0.17.3
 numpy==1.19.5
