@@ -237,6 +237,7 @@ def main():
     rootGeo1 = RootGeometry([leaf1])
     rootGeo2 = RootGeometry([leaf2])
     geos = [rootGeo1, geo1_exp, rootGeo2, geo2_exp]
+    geos = [rootGeo1]
     y0s = [-2 + 0.5 * i for i in range(8)]
     q0_dot = np.array([-1.0, 0.0])
     t = np.arange(0.0, 50.00, 0.02)
@@ -252,37 +253,39 @@ def main():
             geoSols.append(geo.computePath(z0, t))
         sols.append(geoSols)
     sol1 = sols[0][6]
-    sol2 = sols[1][6]
-    sol3 = sols[2][6]
-    sol4 = sols[3][6]
+    #sol2 = sols[1][6]
+    #sol3 = sols[2][6]
+    #sol4 = sols[3][6]
     # plotting
     fig, ax = plt.subplots(2, 2, figsize=(10, 10))
     fig.suptitle("Energization a geometry")
     ax[0][0].set_title("Variant A with pull")
-    ax[0][1].set_title("Variant A with explicit geometry")
-    ax[1][0].set_title("Variant B with pull")
-    ax[1][1].set_title("Variant B with explicit geometry")
+    #ax[0][1].set_title("Variant A with explicit geometry")
+    #ax[1][0].set_title("Variant B with pull")
+    #ax[1][1].set_title("Variant B with explicit geometry")
     obst1 = plt.Circle(q_obst, radius=r_obst, color='r')
-    obst2 = plt.Circle(q_obst, radius=r_obst, color='r')
-    obst3 = plt.Circle(q_obst, radius=r_obst, color='r')
-    obst4 = plt.Circle(q_obst, radius=r_obst, color='r')
+    #obst2 = plt.Circle(q_obst, radius=r_obst, color='r')
+    #obst3 = plt.Circle(q_obst, radius=r_obst, color='r')
+    #obst4 = plt.Circle(q_obst, radius=r_obst, color='r')
     ax[0][0].add_patch(obst1)
-    ax[0][1].add_patch(obst2)
-    ax[1][0].add_patch(obst3)
-    ax[1][1].add_patch(obst4)
+    ##ax[0][1].add_patch(obst2)
+    #ax[1][0].add_patch(obst3)
+    #ax[1][1].add_patch(obst4)
     plotMultipleTraj(sols[0], ax[0][0], fig)
-    plotMultipleTraj(sols[1], ax[0][1], fig)
-    plotMultipleTraj(sols[2], ax[1][0], fig)
-    plotMultipleTraj(sols[3], ax[1][1], fig)
-    (x, y, line, point) = plotTraj(sol1, ax[0][0], fig, ani = True)
-    (x2, y2, line2, point2) = plotTraj(sol2, ax[0][1], fig, ani = True)
-    (x3, y3, line3, point3) = plotTraj(sol3, ax[1][0], fig, ani = True)
-    (x4, y4, line4, point4) = plotTraj(sol4, ax[1][1], fig, ani = True)
+    #plotMultipleTraj(sols[1], ax[0][1], fig)
+    #plotMultipleTraj(sols[2], ax[1][0], fig)
+    #plotMultipleTraj(sols[3], ax[1][1], fig)
+    #(x, y, line, point) = plotTraj(sol1, ax[0][0], fig, ani = True)
+    #(x2, y2, line2, point2) = plotTraj(sol2, ax[0][1], fig, ani = True)
+    #(x3, y3, line3, point3) = plotTraj(sol3, ax[1][0], fig, ani = True)
+    #(x4, y4, line4, point4) = plotTraj(sol4, ax[1][1], fig, ani = True)
+    """
     ani = animation.FuncAnimation(
         fig, update, len(x),
         fargs=[x, y, line, point, x2, y2, line2, point2, x3, y3, line3, point3, x4, y4, line4, point4],
         interval=10, blit=True
     )
+    """
     plt.show()
 
 
