@@ -5,4 +5,4 @@ numpy==1.19.5
 -e git+https://github.com/maxspahn/robotUtils.git#egg=robotUtils
 -e git+https://github.com/maxspahn/gym_envs_planar.git#egg=planarEnvs
 -e git+https://github.com/maxspahn/gym_envs_urdf.git#egg=urdfEnvs
--e git+git@github.com:maxspahn/urdf2casadi.git@111f4e6881b342b6398e91506700db5bdcc277e5#egg=urdf2casadi
+-e git+https://github.com/maxspahn/urdf2casadi.git#egg=urdf2casadi
