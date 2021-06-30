@@ -139,7 +139,7 @@ class DynamicLeaf(Leaf):
         return (M_pulled, f_pulled, fe_pulled, he)
 
     def bxddot(self, beta):
-        val = -np.dot(self._Jt, beta * self._xd_dot)[:, 0]
+        val = -np.dot(self._Jt, beta * self._xd_dot)
         return val
 
 class SplineLeaf(Leaf):

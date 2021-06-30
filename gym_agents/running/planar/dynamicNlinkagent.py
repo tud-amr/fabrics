@@ -20,9 +20,6 @@ def main():
     t_ca = ca.SX.sym("t")
     x_d = ca.vertcat(1.5 + 0.7 * ca.sin(w * t_ca), 2 * ca.cos(w * t_ca))
     # construct fabric controller
-    obsts = [Obstacle(np.array([1.3, 0.6]), 0.3),
-                Obstacle(np.array([0.75, -1.0]), 0.2), 
-                Obstacle(np.array([-0.5, -0.5]), 0.2)]
     obsts = [Obstacle(np.array([1.5, 2.0]), 0.3)]
     # construct fabric controller
     ns = [3, 4]
@@ -33,16 +30,9 @@ def main():
         qdot_ca = ca.SX.sym("qdot", n)
         fk = casadiFk(q_ca, n)[0:2]
         con = DynamicController(n, q_ca, qdot_ca)
-        con.addAttractor(x_d, t_ca, 2, fk)
-        lower_lim = np.ones(n) * -3 * np.pi/4.0
-        upper_lim = np.ones(n) * 3 * np.pi/4.0
-        #con.addJointLimits(lower_lim, upper_lim)
-        con.addRedundancyRes()
+        con.addAttractor(x_d, t_ca, 2, fk, k=20.0)
         con.addDamper(n, q_ca)
-        for i in range(n+1):
-            fk_col = casadiFk(q_ca, i)[0:2]
-            con.addObstacles(obsts, fk_col)
-        con.assembleRootGeometry()
+        con.assembleRootGeometry(m=0.1)
         cons.append(con)
         dims.append(n)
     for n in ns:
@@ -50,16 +40,15 @@ def main():
         qdot_ca = ca.SX.sym("qdot", n)
         fk = casadiFk(q_ca, n)[0:2]
         con = DynamicController(n, q_ca, qdot_ca)
-        con.addAttractor(x_d, t_ca, 2, fk)
-        lower_lim = np.ones(n) * -3 * np.pi/4.0
-        upper_lim = np.ones(n) * 3 * np.pi/4.0
-        con.addRedundancyRes()
-        #con.addJointLimits(lower_lim, upper_lim)
+        con.addAttractor(x_d, t_ca, 2, fk, k=20.0)
         con.addDamper(n, q_ca)
-        con.assembleRootGeometry()
+        for i in range(n+1):
+            fk_col = casadiFk(q_ca, i)[0:2]
+            con.addObstacles(obsts, fk_col)
+        con.assembleRootGeometry(m=0.1)
         cons.append(con)
         dims.append(n)
-    n_steps = 5000
+    n_steps = 1000
     dt = 0.01
     qs = []
     ## running the simulation
@@ -77,8 +66,8 @@ def main():
             t += env._dt
             try:
                 action = con.computeAction(ob, t)
-            except:
-                print("failed")
+            except Exception as e:
+                print("failed", e)
                 break
             #env.render()
             ob, reward, done, info = env.step(action)
@@ -90,7 +79,7 @@ def main():
     robotPlot.initFig(2, 2)
     x_goal = ca.Function("x_goal", [t_ca], [x_d])
     robotPlot.addGoal([0, 1, 2, 3], x_goal)
-    robotPlot.addObstacle([0, 1], obsts)
+    robotPlot.addObstacle([2, 3], obsts)
     robotPlot.plot()
     robotPlot.makeAnimation(n_steps)
     robotPlot.show()

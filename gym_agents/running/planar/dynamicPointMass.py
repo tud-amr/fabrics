@@ -29,7 +29,7 @@ def main():
     obsts = [Obstacle(np.array([0.5, 0.8]), 0.3), Obstacle(np.array([1.2, -0.5]), 0.2)]
     fabCon.addObstacles(obsts, fk)
     fabCon.addDamper(2, fk)
-    fabCon.assembleRootGeometry()
+    fabCon.assembleRootGeometry(m=0.1)
     # setup environment
     cons = [fabCon]
     n_steps = 1000

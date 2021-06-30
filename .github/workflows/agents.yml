@@ -28,5 +28,8 @@ jobs:
         run: pip install -e fabrics_package
 
       # Runs a set of commands using the runners shell
-      - name: Test examples
+      - name: Test testAgents
         run: python tests/agents/simpleAgentTest.py
+
+      - name: Test examples
+        run: python gym_agents/running/panda/pandaAgent.py

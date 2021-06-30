@@ -17,12 +17,12 @@ class DynamicController(object):
         self._leaves = []
         self._m_forcing = 0
 
-    def addAttractor(self, xd_t, t_ca, m, fk):
+    def addAttractor(self, xd_t, t_ca, m, fk,k=5.0):
         x = ca.SX.sym("x", m)
         xdot = ca.SX.sym("xdot", m)
         xd_ca = ca.SX.sym("xd", m)
         self._m_forcing += m
-        attractor = createDynamicAttractor(self._q_ca, self._qdot_ca, x, xdot, xd_ca, xd_t, t_ca, fk)
+        attractor = createDynamicAttractor(self._q_ca, self._qdot_ca, x, xdot, xd_ca, xd_t, t_ca, fk,k=k)
         self._leaves.append(attractor)
 
     def addStaticAttractor(self, xd, m, fk, k=5):

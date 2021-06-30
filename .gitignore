@@ -1,3 +1,5 @@
 playground/
 *.swp
 src/
+__pycache__/*
+*.pyc
