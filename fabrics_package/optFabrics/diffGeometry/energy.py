@@ -2,6 +2,7 @@ import casadi as ca
 import numpy as np
 
 from optFabrics.diffGeometry.spec import Spec
+from optFabrics.diffGeometry.diffMap import DifferentialMap
 
 class Lagrangian(object):
     """description"""
@@ -36,8 +37,14 @@ class Lagrangian(object):
         assert isinstance(x, np.ndarray)
         assert isinstance(xdot, np.ndarray)
         l = float(self._l_fun(x, xdot))
-        M, f = self._S.evaluate(x, xdot)
+        M, f, _ = self._S.evaluate(x, xdot)
         return M, f, l
+
+    def pull(self, dm : DifferentialMap):
+        assert isinstance(dm, DifferentialMap)
+        l_subst = ca.substitute(self._l, self._x, dm._phi)
+        l_pulled = ca.substitute(l_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
+        return Lagrangian(l_pulled, dm._q, dm._qdot)
 
 class FinslerStructure(Lagrangian):
     def __init__(self, lg : ca.SX, x : ca.SX, xdot : ca.SX):

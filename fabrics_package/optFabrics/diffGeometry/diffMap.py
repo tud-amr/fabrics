@@ -20,7 +20,7 @@ class DifferentialMap:
         assert isinstance(q, np.ndarray)
         assert isinstance(qdot, np.ndarray)
         funs = self._fun(q, qdot)
-        x = np.array(funs[0])
+        x = np.array(funs[0])[:, 0]
         J = np.array(funs[1])
         Jdot = np.array(funs[2])
         return x, J, Jdot

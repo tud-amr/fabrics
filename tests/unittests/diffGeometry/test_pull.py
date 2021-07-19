@@ -30,7 +30,7 @@ def test_pullback(simple_spec, simple_differentialMap):
     s_pulled.concretize()
     q = np.array([1.7, -np.pi/3])
     qdot = np.array([1.2, 1.3])
-    M, f = s_pulled.evaluate(q, qdot)
+    M, f, _ = s_pulled.evaluate(q, qdot)
     """manually computed result"""
     cost = np.cos(q[1])
     sint = np.sin(q[1])
@@ -54,7 +54,7 @@ def test_pullback(simple_spec, simple_differentialMap):
     assert M[1, 0] == 0
     assert M[0, 1] == 0
     assert M[1, 1] == pytest.approx(q[0]**2)
-    assert f[0] == pytest.approx(f1[0] + f2[0])
-    assert f[1] == pytest.approx(f1[1] + f2[1])
+    assert f[0] == pytest.approx(f1[0] - f2[0])
+    assert f[1] == pytest.approx(f1[1] - f2[1])
 
 

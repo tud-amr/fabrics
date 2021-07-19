@@ -1,5 +1,6 @@
 import casadi as ca
 import numpy as np
+import inspect
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 
@@ -35,7 +36,8 @@ class Spec:
         self._xdot = xdot
 
     def concretize(self):
-        self._funs = ca.Function("M", [self._x, self._xdot], [self._M, self._f])
+        xddot = ca.mtimes(ca.pinv(self._M), -self._f)
+        self._funs = ca.Function("M", [self._x, self._xdot], [self._M, self._f, xddot])
 
     def evaluate(self, x : np.ndarray, xdot : np.ndarray):
         assert isinstance(x, np.ndarray)
@@ -43,10 +45,11 @@ class Spec:
         funs = self._funs(x, xdot)
         M_eval = np.array(funs[0])
         f_eval = np.array(funs[1])[:, 0]
-        return [M_eval, f_eval]
+        xddot_eval = np.array(funs[2])[:, 0]
+        return [M_eval, f_eval, xddot_eval]
 
     def __add__(self, b):
-        assert type(self) == type(b)
+        assert isinstance(b, Spec)
         if b._x.size() != self._x.size():
             raise SpecException(
                 "Attempted summation invalid",
@@ -67,10 +70,12 @@ class Spec:
         M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, dm._J))
         f_1 = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, ca.mtimes(dm._Jdot, dm._qdot)))
         f_2 = ca.mtimes(ca.transpose(dm._J), self._f)
-        f_pulled = f_1 + f_2
+        f_pulled = -f_1 + f_2
         M_pulled_subst = ca.substitute(M_pulled, self._x, dm._phi)
+        M_pulled_subst2 = ca.substitute(M_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
         f_pulled_subst = ca.substitute(f_pulled, self._x, dm._phi)
-        return Spec(M_pulled_subst, f_pulled_subst, dm._q, dm._qdot)
+        f_pulled_subst2 = ca.substitute(f_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
+        return Spec(M_pulled_subst2, f_pulled_subst2, dm._q, dm._qdot)
 
 
 
