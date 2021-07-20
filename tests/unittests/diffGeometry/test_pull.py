@@ -46,7 +46,7 @@ def test_pullback(simple_spec, simple_differentialMap):
         [0, -r * tdot],
         [r * tdot, r*rdot]
         ])
-    f2 = np.dot(JtMJdot, qdot)
+    f2 = -np.dot(JtMJdot, qdot)
     """"""
     assert ca.is_equal(s_pulled._x, dm._q)
     assert ca.is_equal(s_pulled._xdot, dm._qdot)
