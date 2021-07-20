@@ -4,6 +4,14 @@ import numpy as np
 from optFabrics.diffGeometry.spec import Spec
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 
+class LagrangianException(Exception):
+    def __init__(self, expression, message):
+        self._expression = expression
+        self._message = message
+
+    def what(self):
+        return self._expression + ": " + self._message
+
 class Lagrangian(object):
     """description"""
 
@@ -15,6 +23,29 @@ class Lagrangian(object):
         self._x = x
         self._xdot = xdot
         self.applyEulerLagrange()
+
+    @classmethod
+    def fromSpec(cls, l : ca.SX, s : Spec):
+        lag = cls(l, s._x, s._xdot)
+        lag._s = s
+        return lag
+
+    def __add__(self, b):
+        assert isinstance(b, Lagrangian)
+        if b._x.size() != self._x.size():
+            raise LagrangianException(
+                "Attempted summation invalid",
+                "Different dimensions: "
+                + str(b._x.size())
+                + " vs. "
+                + str(self._x.size()),
+            )
+        if not (ca.is_equal(b._x, self._x)):
+            raise LagrangianException(
+                "Attempted summation invalid",
+                "Different variables: " + str(b._x) + " vs. " + str(self._x),
+            )
+        return Lagrangian.fromSpec(self._l + b._l, self._s + b._s)
 
     def applyEulerLagrange(self):
         dL_dx = ca.gradient(self._l, self._x)

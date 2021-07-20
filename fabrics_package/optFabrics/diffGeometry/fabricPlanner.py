@@ -21,7 +21,6 @@ class FabricPlanner:
         assert isinstance(s, Spec)
         s_energized = s.energize(le)
         s_pulled = s_energized.pull(dm)
-        print("s_pulled : ", s_pulled)
         self._spec += s_pulled
 
     def concretize(self):

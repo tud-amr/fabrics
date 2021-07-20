@@ -3,6 +3,7 @@ import numpy as np
 import inspect
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.variables import eps
 
 
 class SpecException(Exception):
@@ -36,7 +37,7 @@ class Spec:
         self._xdot = xdot
 
     def concretize(self):
-        xddot = ca.mtimes(ca.pinv(self._M), -self._f)
+        xddot = ca.mtimes(ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f)
         self._funs = ca.Function("M", [self._x, self._xdot], [self._M, self._f, xddot])
 
     def evaluate(self, x : np.ndarray, xdot : np.ndarray):
@@ -70,17 +71,11 @@ class Spec:
         M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, dm._J))
         f_1 = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, ca.mtimes(dm._Jdot, dm._qdot)))
         f_2 = ca.mtimes(ca.transpose(dm._J), self._f)
-        f_pulled = -f_1 + f_2
+        f_pulled = f_1 + f_2
         M_pulled_subst = ca.substitute(M_pulled, self._x, dm._phi)
         M_pulled_subst2 = ca.substitute(M_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
         f_pulled_subst = ca.substitute(f_pulled, self._x, dm._phi)
         f_pulled_subst2 = ca.substitute(f_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
+        print("spec pull")
         return Spec(M_pulled_subst2, f_pulled_subst2, dm._q, dm._qdot)
-
-
-
-
-
-
-
 
