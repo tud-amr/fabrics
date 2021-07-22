@@ -4,6 +4,8 @@ import numpy as np
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.spec import Spec
+from optFabrics.diffGeometry.geometry import Geometry
+from optFabrics.diffGeometry.energized_geometry import EnergizedGeometry
 
 class FabricPlanner:
     """description"""
@@ -15,11 +17,11 @@ class FabricPlanner:
         f = ca.SX(np.zeros((self._n, 1)))
         self._spec = Spec(M, f, x, xdot)
 
-    def addTask(self, dm : DifferentialMap, le : Lagrangian, s : Spec):
+    def addTask(self, dm : DifferentialMap, le : Lagrangian, g : Geometry):
         assert isinstance(dm, DifferentialMap)
         assert isinstance(le, Lagrangian)
-        assert isinstance(s, Spec)
-        s_energized = s.energize(le)
+        assert isinstance(g, Geometry)
+        s_energized = EnergizedGeometry(g, le)
         s_pulled = s_energized.pull(dm)
         self._spec += s_pulled
 

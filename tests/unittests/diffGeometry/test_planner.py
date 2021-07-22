@@ -27,7 +27,7 @@ def simple_task():
     lg = 1/x * s * xdot
     l = FinslerStructure(lg, x, xdot)
     h = 0.5 / (x ** 2) * xdot
-    geo = Geometry(h, x, xdot)
+    geo = Geometry(h = h, x = x, xdot = xdot)
     return planner, dm, l, geo
 
 @pytest.fixture
@@ -44,7 +44,7 @@ def simple_2dtask():
     lg = 1/x * s * xdot
     l = FinslerStructure(lg, x, xdot)
     h = 0.5 / (x ** 2) * xdot
-    geo = Geometry(h, x, xdot)
+    geo = Geometry(h = h, x = x, xdot = xdot)
     return planner, dm, l, geo
 
 def test_simple_planner(simple_planner):

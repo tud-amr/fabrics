@@ -14,6 +14,20 @@ class SpecException(Exception):
     def what(self):
         return self._expression + ": " + self._message
 
+def checkCompatability(a, b):
+    if a._x.size() != b._x.size():
+        raise SpecException(
+            "Operation invalid",
+            "Different dimensions: "
+            + str(a._x.size())
+            + " vs. "
+            + str(b._x.size()),
+        )
+    if not (ca.is_equal(a._x, b._x)):
+        raise SpecException(
+            "Operation invalid",
+            "Different variables: " + str(a._x) + " vs. " + str(b._x),
+        )
 
 class Spec:
     """description"""
@@ -51,19 +65,7 @@ class Spec:
 
     def __add__(self, b):
         assert isinstance(b, Spec)
-        if b._x.size() != self._x.size():
-            raise SpecException(
-                "Attempted summation invalid",
-                "Different dimensions: "
-                + str(b._x.size())
-                + " vs. "
-                + str(self._x.size()),
-            )
-        if not (ca.is_equal(b._x, self._x)):
-            raise SpecException(
-                "Attempted summation invalid",
-                "Different variables: " + str(b._x) + " vs. " + str(self._x),
-            )
+        checkCompatability(self, b)
         return Spec(self._M + b._M, self._f + b._f, self._x, self._xdot)
 
     def pull(self, dm : DifferentialMap):
