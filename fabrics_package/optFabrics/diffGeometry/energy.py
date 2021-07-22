@@ -27,7 +27,7 @@ class Lagrangian(object):
     @classmethod
     def fromSpec(cls, l : ca.SX, s : Spec):
         lag = cls(l, s._x, s._xdot)
-        lag._s = s
+        lag._S = s
         return lag
 
     def __add__(self, b):
@@ -45,7 +45,7 @@ class Lagrangian(object):
                 "Attempted summation invalid",
                 "Different variables: " + str(b._x) + " vs. " + str(self._x),
             )
-        return Lagrangian.fromSpec(self._l + b._l, self._s + b._s)
+        return Lagrangian.fromSpec(self._l + b._l, self._S + b._S)
 
     def applyEulerLagrange(self):
         dL_dx = ca.gradient(self._l, self._x)

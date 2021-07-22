@@ -39,6 +39,42 @@ def energization_example_pulled():
     le = Lagrangian(l, x, xdot)
     return geo, le, dm
 
+@pytest.fixture
+def two_energizations():
+    x = ca.SX.sym("x", 2)
+    xdot = ca.SX.sym("xdot", 2)
+    h = 0.5 * ca.norm_2(xdot)**2/ (x ** 2 + eps)
+    geo = Geometry(h, x, xdot)
+    l1 = 0.5 * ca.dot(x, x) * ca.dot(xdot, xdot)
+    le1 = Lagrangian(l1, x, xdot)
+    l2 = 2.5 * ca.dot(xdot, xdot) / ca.dot(x, x)
+    le2 = Lagrangian(l2, x, xdot)
+    return geo, le1, le2
+
+@pytest.fixture
+def two_different_spaces():
+    q = ca.SX.sym("q", 2)
+    qdot = ca.SX.sym("qdot", 2)
+    # polar coordinates
+    x1 = ca.SX.sym("x", 2)
+    xdot1 = ca.SX.sym("xdot", 2)
+    phi1 = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
+    dm1 = DifferentialMap(q, qdot, phi1)
+    h1 = 0.5 * ca.norm_2(xdot1)**2/ (x1 ** 2 + eps)
+    geo1 = Geometry(h1, x1, xdot1)
+    l1 = 0.5 * ca.dot(x1, x1) * ca.dot(xdot1, xdot1)
+    le1 = Lagrangian(l1, x1, xdot1)
+    # space of q[1]
+    x2 = ca.SX.sym("x", 1)
+    xdot2 = ca.SX.sym("xdot", 1)
+    phi2 = q[1]
+    dm2 = DifferentialMap(q, qdot, phi2)
+    h2 = 0.5 * ca.norm_2(xdot2)**2/ (x2 ** 2 + eps)
+    geo2 = Geometry(h2, x2, xdot2)
+    l2 = 0.5 * ca.dot(x2, x2) * ca.dot(xdot2, xdot2)
+    le2 = Lagrangian(l2, x2, xdot2)
+    return geo1, le1, dm1, geo2, le2, dm2
+
 def test_simple_spec(simple_geometry):
     simple_geometry.concretize()
     x = np.array([1.0])
@@ -133,6 +169,96 @@ def test_pull_energized(energization_example_pulled):
     assert f_p_w[1] == pytest.approx(f_p_w_test[1])
     assert qddot[0] == pytest.approx(qddot_w_alpha[0], abs=1e-6)
     assert qddot[1] == pytest.approx(qddot_w_alpha[1], abs=1e-6)
+    xddot_p = np.dot(J, qddot) + np.dot(Jdot, qdot)
+    assert xddot_p[0] == pytest.approx(xddot[0])
+    assert xddot_p[1] == pytest.approx(xddot[1])
+
+def test_sum_energization(two_energizations):
+    geo, le1, le2 = two_energizations
+    en_1 = geo.energize(le1)
+    en_2 = geo.energize(le2)
+    we_1 = geo.addMetric(le1)
+    we_2 = geo.addMetric(le2)
+    en = en_1 + en_2
+    we = we_1 + we_2
+    en.concretize()
+    we.concretize()
+    x = np.array([0.2, -0.8])
+    xdot = np.array([-0.5, -1.4])
+    M_en, f_en, xddot_en = en.evaluate(x, xdot)
+    M_we, f_we, xddot_we, alpha_we = we.evaluate(x, xdot)
+    xddot_we_alpha = xddot_we - alpha_we * xdot
+    assert M_en[0, 0] == pytest.approx(M_we[0, 0])
+    assert M_en[0, 1] == pytest.approx(M_we[0, 1])
+    assert M_en[1, 0] == pytest.approx(M_we[1, 0])
+    assert M_en[1, 1] == pytest.approx(M_we[1, 1])
+    assert xddot_we_alpha[0] == pytest.approx(xddot_en[0])
+    assert xddot_we_alpha[1] == pytest.approx(xddot_en[1])
+
+def test_sum_energization_man_compute_rhs(two_energizations):
+    geo, le1, le2 = two_energizations
+    en_1 = geo.energize(le1)
+    en_2 = geo.energize(le2)
+    we_1 = geo.addMetric(le1)
+    we_2 = geo.addMetric(le2)
+    en_1.concretize()
+    en_2.concretize()
+    we_1.concretize()
+    we_2.concretize()
+    en = en_1 + en_2
+    we = we_1 + we_2
+    en.concretize()
+    we.concretize()
+    x = np.array([0.2, -0.8])
+    xdot = np.array([-0.5, -1.4])
+    M_en1, f_en1, xddot_en1 = en_1.evaluate(x, xdot)
+    M_en2, f_en2, xddot_en2 = en_2.evaluate(x, xdot)
+    M_en, f_en, xddot_en = en.evaluate(x, xdot)
+    M_we1, f_we1, xddot_we1, alpha_we1 = we_1.evaluate(x, xdot)
+    M_we2, f_we2, xddot_we2, alpha_we2 = we_2.evaluate(x, xdot)
+    M_we, f_we, xddot_we, alpha_we = we.evaluate(x, xdot)
+    f_we1_we2_alpha = f_we1 + np.dot(M_we1, alpha_we1 * xdot) + f_we2 + np.dot(M_we2, alpha_we2 * xdot)
+    assert f_we1_we2_alpha[0] == pytest.approx(f_en[0])
+    assert f_we1_we2_alpha[1] == pytest.approx(f_en[1])
+
+def test_two_spaces_energization(two_different_spaces):
+    geo1, le1, dm1, geo2, le2, dm2 = two_different_spaces
+    en_1 = geo1.energize(le1).pull(dm1)
+    en_2 = geo2.energize(le2).pull(dm2)
+    we_1 = geo1.addMetric(le1).pull(dm1)
+    we_2 = geo2.addMetric(le2).pull(dm2)
+    en_1.concretize()
+    en_2.concretize()
+    we_1.concretize()
+    we_2.concretize()
+    en = en_1 + en_2
+    we = we_1 + we_2
+    en.concretize()
+    we.concretize()
+    q = np.array([0.2, -0.8])
+    qdot = np.array([-0.5, -1.4])
+    M_en1, f_en1, qddot_en1 = en_1.evaluate(q, qdot)
+    M_en2, f_en2, qddot_en2 = en_2.evaluate(q, qdot)
+    M_en, f_en, qddot_en = en.evaluate(q, qdot)
+    M_we1, f_we1, qddot_we1, alpha_we1 = we_1.evaluate(q, qdot)
+    M_we2, f_we2, qddot_we2, alpha_we2 = we_2.evaluate(q, qdot)
+    M_we, f_we, qddot_we, alpha_we = we.evaluate(q, qdot)
+    f_we1_we2_alpha = f_we1 + np.dot(M_we1, alpha_we1 * qdot) + f_we2 + np.dot(M_we2, alpha_we2 * qdot)
+    assert f_we1_we2_alpha[0] == pytest.approx(f_en[0])
+    assert f_we1_we2_alpha[1] == pytest.approx(f_en[1])
+    assert M_en[0, 0] == pytest.approx(M_we[0, 0])
+    assert M_en[0, 1] == pytest.approx(M_we[0, 1])
+    assert M_en[1, 0] == pytest.approx(M_we[1, 0])
+    assert M_en[1, 1] == pytest.approx(M_we[1, 1])
+    qddot_we_alpha = qddot_we - alpha_we * qdot
+    qddot_we_man = -np.dot(np.linalg.pinv(M_we), f_we1 + f_we2)
+    qddot_we12_alpha = -np.dot(np.linalg.pinv(M_we), f_we1_we2_alpha)
+    assert qddot_we12_alpha[0] == pytest.approx(qddot_en[0])
+    assert qddot_we12_alpha[1] == pytest.approx(qddot_en[1])
+    # !!! Important individual energization is different from combined energization
+    # onle the latter is what we need
+    assert qddot_we_alpha[0] != pytest.approx(qddot_en[0])
+    assert qddot_we_alpha[1] != pytest.approx(qddot_en[1])
 
 def test_homogeneous_degree2(simple_geometry):
     simple_geometry.concretize()

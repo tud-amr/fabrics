@@ -64,33 +64,31 @@ class Geometry(Spec):
         return h * alpha**2 == h2
 
 class EnergizedGeometry(Spec):
-
     def __init__(self, M : ca.SX, f : ca.SX, x : ca.SX, xdot : ca.SX, le : Lagrangian):
         self._le = le
         super().__init__(M, f, x, xdot)
 
-
-
 class WeightedGeometry(EnergizedGeometry):
-
     def __init__(self, M : ca.SX, f : ca.SX, x : ca.SX, xdot : ca.SX, le : Lagrangian):
         super().__init__(M, f, x, xdot, le)
-        self.computeAlpha()
 
     @classmethod
-    def fromSpec(cls, s : Spec, le : ca.SX, alpha : ca.SX):
+    def fromSpec(cls, s : Spec, le : ca.SX):
         assert isinstance(s, Spec)
-        assert isinstance(alpha, ca.SX)
         assert isinstance(le, Lagrangian)
-        weightedGeometry =  cls(s._M, s._f, s._x, s._xdot, le)
-        #weightedGeometry._alpha = alpha
-        return weightedGeometry
+        return cls(s._M, s._f, s._x, s._xdot, le)
+
+    def __add__(self, b):
+        spec = super().__add__(b)
+        le  = self._le + b._le
+        return WeightedGeometry.fromSpec(spec, le)
 
     def computeAlpha(self):
         frac = self._xdot/(eps + ca.dot(self._xdot, ca.mtimes(self._le._S._M, self._xdot)))
         self._alpha = -ca.dot(frac, self._f - self._le._S._f)
 
     def concretize(self):
+        self.computeAlpha()
         xddot = ca.mtimes(ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f)
         self._funs = ca.Function("M", [self._x, self._xdot], [self._M, self._f, xddot, self._alpha])
 
@@ -107,10 +105,8 @@ class WeightedGeometry(EnergizedGeometry):
     def pull(self, dm : DifferentialMap):
         print("Pulling weighted geometry")
         spec = super().pull(dm)
-        alpha_subst = ca.substitute(self._alpha, self._x, dm._phi)
-        alpha_subst2 = ca.substitute(alpha_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
         le_pulled = self._le.pull(dm)
-        return WeightedGeometry.fromSpec(spec, le_pulled, alpha_subst2)
+        return WeightedGeometry.fromSpec(spec, le_pulled)
 
 
 
