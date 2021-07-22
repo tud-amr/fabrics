@@ -1,6 +1,8 @@
 import casadi as ca
 import numpy as np
 
+from optFabrics.diffGeometry.variables import Jdot_sign
+
 
 class DifferentialMap:
     """description"""
@@ -13,7 +15,7 @@ class DifferentialMap:
         self._qdot = qdot
         self._phi = phi
         self._J = ca.jacobian(phi, q)
-        self._Jdot = ca.jacobian(ca.mtimes(self._J, qdot), q)
+        self._Jdot = Jdot_sign * ca.jacobian(ca.mtimes(self._J, qdot), q)
 
     def concretize(self):
         self._fun = ca.Function(

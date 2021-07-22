@@ -2,6 +2,7 @@ import pytest
 import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.variables import Jdot_sign
 
 
 def test_dm_creation():
@@ -38,7 +39,19 @@ def test_forward_mapping_polar(simple_differentialMap):
     assert J[0, 1] == -np.sin(q[1]) * q[0]
     assert J[1, 0] == np.sin(q[1])
     assert J[1, 1] == np.cos(q[1]) * q[0]
-    assert Jdot[0, 0] == -np.sin(q[1]) * qdot[1]
-    assert Jdot[0, 1] == -np.sin(q[1]) * qdot[0] - q[0] * np.cos(q[1]) * qdot[1]
-    assert Jdot[1, 0] == np.cos(q[1]) * qdot[1]
-    assert Jdot[1, 1] == np.cos(q[1]) * qdot[0] - q[0] * np.sin(q[1]) * qdot[1]
+    Jdot_test = Jdot_sign * np.array(
+        [
+            [
+                -np.sin(q[1]) * qdot[1],
+                -np.sin(q[1]) * qdot[0] - q[0] * np.cos(q[1]) * qdot[1],
+            ],
+            [
+                np.cos(q[1]) * qdot[1],
+                np.cos(q[1]) * qdot[0] - q[0] * np.sin(q[1]) * qdot[1],
+            ],
+        ]
+    )
+    assert Jdot[0, 0] == pytest.approx(Jdot_test[0, 0])
+    assert Jdot[0, 1] == pytest.approx(Jdot_test[0, 1])
+    assert Jdot[1, 0] == pytest.approx(Jdot_test[1, 0])
+    assert Jdot[1, 1] == pytest.approx(Jdot_test[1, 1])

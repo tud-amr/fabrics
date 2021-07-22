@@ -77,7 +77,8 @@ class Lagrangian(object):
         assert isinstance(dm, DifferentialMap)
         l_subst = ca.substitute(self._l, self._x, dm._phi)
         l_pulled = ca.substitute(l_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
-        return Lagrangian(l_pulled, dm._q, dm._qdot)
+        s_pulled = self._S.pull(dm)
+        return Lagrangian.fromSpec(l_pulled, s_pulled)
 
 
 class FinslerStructure(Lagrangian):

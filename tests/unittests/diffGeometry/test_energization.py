@@ -123,7 +123,6 @@ def test_pull_energized(energization_example_pulled):
     M, f, xddot = geo_energized.evaluate(x, xdot)
     M_w, f_w, xddot_w, alpha_w = geo_weighted.evaluate(x, xdot)
     xddot_w_alpha = xddot_w - alpha_w * xdot
-    fe = 2 * np.dot(np.outer(x, xdot), xdot) - np.dot(xdot, xdot) * x
     h = 0.5 * np.linalg.norm(xdot) ** 2 / (x ** 2 + eps)
     xddot_w_test = -np.dot(np.dot(np.linalg.pinv(M_w), M_w), h)
     f_w_test = np.dot(M_w, h)
@@ -242,7 +241,7 @@ def test_two_spaces_energization(two_different_spaces):
     en.concretize()
     we.concretize()
     q = np.array([0.2, -0.8])
-    qdot = np.array([-0.5, -1.4])
+    qdot = np.array([-1.1, 0.6])
     M_en1, f_en1, qddot_en1 = en_1.evaluate(q, qdot)
     M_en2, f_en2, qddot_en2 = en_2.evaluate(q, qdot)
     M_en, f_en, qddot_en = en.evaluate(q, qdot)
@@ -255,6 +254,13 @@ def test_two_spaces_energization(two_different_spaces):
         + f_we2
         + np.dot(M_we2, alpha_we2 * qdot)
     )
+    f_test = f_we1 + f_we2 + np.dot(M_we, alpha_we * qdot)
+    print(f_test)
+    print(f_we1_we2_alpha)
+    print(f_en)
+    print("alpha_we1 : ", alpha_we1)
+    print("alpha_we2 : ", alpha_we2)
+    print("alpha_we : ", alpha_we)
     assert f_we1_we2_alpha[0] == pytest.approx(f_en[0])
     assert f_we1_we2_alpha[1] == pytest.approx(f_en[1])
     assert M_en[0, 0] == pytest.approx(M_we[0, 0])
@@ -262,7 +268,6 @@ def test_two_spaces_energization(two_different_spaces):
     assert M_en[1, 0] == pytest.approx(M_we[1, 0])
     assert M_en[1, 1] == pytest.approx(M_we[1, 1])
     qddot_we_alpha = qddot_we - alpha_we * qdot
-    qddot_we_man = -np.dot(np.linalg.pinv(M_we), f_we1 + f_we2)
     qddot_we12_alpha = -np.dot(np.linalg.pinv(M_we), f_we1_we2_alpha)
     assert qddot_we12_alpha[0] == pytest.approx(qddot_en[0])
     assert qddot_we12_alpha[1] == pytest.approx(qddot_en[1])

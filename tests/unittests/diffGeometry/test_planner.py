@@ -3,7 +3,7 @@ import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.fabricPlanner import FabricPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import FinslerStructure
+from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
 
 
@@ -11,7 +11,10 @@ from optFabrics.diffGeometry.geometry import Geometry
 def simple_planner():
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    planner = FabricPlanner(x, xdot)
+    l = 0.5 * xdot**2
+    l_base = Lagrangian(l, x, xdot)
+    geo_base = Geometry(h=ca.SX(0), x=x, xdot=xdot)
+    planner = FabricPlanner(geo_base, l_base)
     return planner
 
 
@@ -21,7 +24,10 @@ def simple_task():
     qdot = ca.SX.sym("qdot", 1)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    planner = FabricPlanner(q, qdot, m=1.0)
+    l = 0.5 * ca.dot(qdot, qdot)
+    l_base = Lagrangian(l, q, qdot)
+    geo_base = Geometry(h=ca.SX(0), x=q, xdot=qdot)
+    planner = FabricPlanner(geo_base, l_base)
     phi = ca.fabs(q - 1)
     dm = DifferentialMap(q, qdot, phi)
     s = -0.5 * (ca.sign(xdot) - 1)
@@ -38,7 +44,10 @@ def simple_2dtask():
     qdot = ca.SX.sym("qdot", 2)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    planner = FabricPlanner(q, qdot, m=1.0)
+    l = 0.5 * ca.dot(qdot, qdot)
+    l_base = Lagrangian(l, q, qdot)
+    geo_base = Geometry(h=ca.SX(np.zeros(2)), x=q, xdot=qdot)
+    planner = FabricPlanner(geo_base, l_base)
     q0 = np.array([1.0, 0.0])
     phi = ca.norm_2(q - q0)
     dm = DifferentialMap(q, qdot, phi)
@@ -64,7 +73,7 @@ def test_simple_task(simple_task):
     dm = simple_task[1]
     l = simple_task[2]
     geo = simple_task[3]
-    planner.addTask(dm, l, geo)
+    planner.addGeometry(dm, l, geo)
     planner.concretize()
     q = np.array([0.0])
     qdot = np.array([2.0])
@@ -79,7 +88,7 @@ def test_simple2d_task(simple_2dtask):
     dm = simple_2dtask[1]
     l = simple_2dtask[2]
     geo = simple_2dtask[3]
-    planner.addTask(dm, l, geo)
+    planner.addGeometry(dm, l, geo)
     planner.concretize()
     # towards obstacle from [1, 1] with [0.0, -2.0] -> accelerate in positive y
     q = np.array([1.0, 1.0])

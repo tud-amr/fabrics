@@ -3,6 +3,7 @@ import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.spec import Spec, SpecException
 from optFabrics.diffGeometry.energy import Lagrangian, FinslerStructure
+from optFabrics.diffGeometry.diffMap import DifferentialMap
 
 
 @pytest.fixture
@@ -23,6 +24,20 @@ def simple_finsler_structure():
     lg = lam / x * xdot
     finslerStruct = FinslerStructure(lg, x, xdot)
     return finslerStruct
+
+
+@pytest.fixture
+def two_dimensional_lagrangian():
+    q = ca.SX.sym("q", 2)
+    qdot = ca.SX.sym("qdot", 2)
+    x = ca.SX.sym("x", 2)
+    xdot = ca.SX.sym("xdot", 2)
+    lam = 0.25
+    l = 0.5 * lam / (ca.norm_2(x)**2) * ca.norm_2(xdot)
+    lg = Lagrangian(l, x, xdot)
+    phi = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
+    dm = DifferentialMap(q, qdot, phi)
+    return lg, dm
 
 
 def test_simple_lagrangian(simple_lagrangian):
@@ -58,3 +73,27 @@ def test_simple_finsler_struct(simple_finsler_structure):
     assert l == pytest.approx(l_man[0])
     assert f == pytest.approx(f_man)
     assert M[0, 0] == pytest.approx(M_man[0])
+
+def test_pull_lagrangian(two_dimensional_lagrangian):
+    lg, dm = two_dimensional_lagrangian
+    lg.concretize()
+    dm.concretize()
+    lg_pulled = lg.pull(dm)
+    lg_pulled.concretize()
+    q = np.array([1.0, -0.23])
+    qdot = np.array([0.2, 0.6])
+    x, J, Jdot = dm.forward(q, qdot)
+    Jt = np.transpose(J)
+    xdot = np.dot(J, qdot)
+    M, f, l = lg.evaluate(x, xdot)
+    M_p, f_p, l_p = lg_pulled.evaluate(q, qdot)
+    M_p_test = np.dot(Jt, np.dot(M, J))
+    f_p_test = np.dot(Jt, f) + np.dot(Jt, np.dot(M, np.dot(Jdot, qdot)))
+    assert l == pytest.approx(l_p)
+    assert M_p_test[0, 0] == pytest.approx(M_p[0, 0])
+    assert M_p_test[0, 1] == pytest.approx(M_p[0, 1])
+    assert M_p_test[1, 0] == pytest.approx(M_p[1, 0])
+    assert M_p_test[1, 1] == pytest.approx(M_p[1, 1])
+    assert f_p_test[0] == pytest.approx(f_p[0])
+    assert f_p_test[1] == pytest.approx(f_p[1])
+

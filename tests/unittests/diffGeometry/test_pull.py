@@ -1,8 +1,9 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.spec import Spec, SpecException
+from optFabrics.diffGeometry.spec import Spec
 from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.variables import Jdot_sign
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def test_pullback(simple_spec, simple_differentialMap):
     Jt = np.array([[cost, sint], [-r * sint, r * cost]])
     f0 = np.array([-0.5 / (x1 ** 2), -0.5 / (x2 ** 2)])
     f1 = np.dot(Jt, f0)
-    JtMJdot = np.array([[0, -r * tdot], [r * tdot, r * rdot]])
+    JtMJdot = Jdot_sign * np.array([[0, -r * tdot], [r * tdot, r * rdot]])
     f2 = -np.dot(JtMJdot, qdot)
     """"""
     assert ca.is_equal(s_pulled._x, dm._q)
