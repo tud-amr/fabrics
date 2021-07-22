@@ -1,9 +1,11 @@
 import casadi as ca
 import numpy as np
 
+
 class DifferentialMap:
     """description"""
-    def __init__(self, q : ca.SX,  qdot : ca.SX, phi : ca.SX):
+
+    def __init__(self, q: ca.SX, qdot: ca.SX, phi: ca.SX):
         assert isinstance(q, ca.SX)
         assert isinstance(qdot, ca.SX)
         assert isinstance(phi, ca.SX)
@@ -14,9 +16,11 @@ class DifferentialMap:
         self._Jdot = ca.jacobian(ca.mtimes(self._J, qdot), q)
 
     def concretize(self):
-        self._fun = ca.Function("forward", [self._q, self._qdot], [self._phi, self._J, self._Jdot])
+        self._fun = ca.Function(
+            "forward", [self._q, self._qdot], [self._phi, self._J, self._Jdot]
+        )
 
-    def forward(self, q : np.ndarray, qdot : np.ndarray):
+    def forward(self, q: np.ndarray, qdot: np.ndarray):
         assert isinstance(q, np.ndarray)
         assert isinstance(qdot, np.ndarray)
         funs = self._fun(q, qdot)

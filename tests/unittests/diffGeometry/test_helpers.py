@@ -3,6 +3,7 @@ import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.casadi_helpers import outerProduct
 
+
 def test_outer_product():
     a = ca.SX.sym("a", 2)
     b = ca.SX.sym("b", 2)
@@ -15,4 +16,3 @@ def test_outer_product():
     assert res[0, 1] == 0.6
     assert res[1, 0] == -0.2
     assert res[1, 1] == 1.2
-

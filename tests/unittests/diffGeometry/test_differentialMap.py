@@ -3,12 +3,14 @@ import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 
+
 def test_dm_creation():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
     dm = DifferentialMap(q, qdot, phi)
     assert ca.is_equal(q, dm._q)
+
 
 @pytest.fixture
 def simple_differentialMap():
@@ -17,6 +19,7 @@ def simple_differentialMap():
     phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
     dm = DifferentialMap(q, qdot, phi)
     return dm
+
 
 def test_forward_mapping_polar(simple_differentialMap):
     q = np.array([1.0, -0.3])

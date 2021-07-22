@@ -1,6 +1,7 @@
 import casadi as ca
 
-def outerProduct(a : ca.SX, b : ca.SX):
+
+def outerProduct(a: ca.SX, b: ca.SX):
     assert isinstance(a, ca.SX)
     assert isinstance(b, ca.SX)
     m = a.size()[0]

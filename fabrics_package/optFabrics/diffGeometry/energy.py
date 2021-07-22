@@ -4,6 +4,7 @@ import numpy as np
 from optFabrics.diffGeometry.spec import Spec
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 
+
 class LagrangianException(Exception):
     def __init__(self, expression, message):
         self._expression = expression
@@ -12,10 +13,11 @@ class LagrangianException(Exception):
     def what(self):
         return self._expression + ": " + self._message
 
+
 class Lagrangian(object):
     """description"""
 
-    def __init__(self, l : ca.SX, x : ca.SX, xdot : ca.SX):
+    def __init__(self, l: ca.SX, x: ca.SX, xdot: ca.SX):
         assert isinstance(l, ca.SX)
         assert isinstance(x, ca.SX)
         assert isinstance(xdot, ca.SX)
@@ -25,7 +27,7 @@ class Lagrangian(object):
         self.applyEulerLagrange()
 
     @classmethod
-    def fromSpec(cls, l : ca.SX, s : Spec):
+    def fromSpec(cls, l: ca.SX, s: Spec):
         lag = cls(l, s._x, s._xdot)
         lag._S = s
         return lag
@@ -64,30 +66,31 @@ class Lagrangian(object):
         self._S.concretize()
         self._l_fun = ca.Function("funs", [self._x, self._xdot], [self._l])
 
-    def evaluate(self, x : np.ndarray, xdot : np.ndarray):
+    def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         assert isinstance(x, np.ndarray)
         assert isinstance(xdot, np.ndarray)
         l = float(self._l_fun(x, xdot))
         M, f, _ = self._S.evaluate(x, xdot)
         return M, f, l
 
-    def pull(self, dm : DifferentialMap):
+    def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
         l_subst = ca.substitute(self._l, self._x, dm._phi)
         l_pulled = ca.substitute(l_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
         return Lagrangian(l_pulled, dm._q, dm._qdot)
 
+
 class FinslerStructure(Lagrangian):
-    def __init__(self, lg : ca.SX, x : ca.SX, xdot : ca.SX):
+    def __init__(self, lg: ca.SX, x: ca.SX, xdot: ca.SX):
         self._lg = lg
-        l = 0.5 * lg**2
+        l = 0.5 * lg ** 2
         super().__init__(l, x, xdot)
 
     def concretize(self):
         super().concretize()
         self._lg_fun = ca.Function("fun_lg", [self._x, self._xdot], [self._lg])
 
-    def evaluate(self, x : np.ndarray, xdot : np.ndarray):
+    def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         M, f, l = super().evaluate(x, xdot)
         lg = float(self._lg_fun(x, xdot))
         return M, f, l, lg

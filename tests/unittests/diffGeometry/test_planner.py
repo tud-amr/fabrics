@@ -14,6 +14,7 @@ def simple_planner():
     planner = FabricPlanner(x, xdot)
     return planner
 
+
 @pytest.fixture
 def simple_task():
     q = ca.SX.sym("q", 1)
@@ -24,11 +25,12 @@ def simple_task():
     phi = ca.fabs(q - 1)
     dm = DifferentialMap(q, qdot, phi)
     s = -0.5 * (ca.sign(xdot) - 1)
-    lg = 1/x * s * xdot
+    lg = 1 / x * s * xdot
     l = FinslerStructure(lg, x, xdot)
     h = 0.5 / (x ** 2) * xdot
-    geo = Geometry(h = h, x = x, xdot = xdot)
+    geo = Geometry(h=h, x=x, xdot=xdot)
     return planner, dm, l, geo
+
 
 @pytest.fixture
 def simple_2dtask():
@@ -41,11 +43,12 @@ def simple_2dtask():
     phi = ca.norm_2(q - q0)
     dm = DifferentialMap(q, qdot, phi)
     s = -0.5 * (ca.sign(xdot) - 1)
-    lg = 1/x * s * xdot
+    lg = 1 / x * s * xdot
     l = FinslerStructure(lg, x, xdot)
     h = 0.5 / (x ** 2) * xdot
-    geo = Geometry(h = h, x = x, xdot = xdot)
+    geo = Geometry(h=h, x=x, xdot=xdot)
     return planner, dm, l, geo
+
 
 def test_simple_planner(simple_planner):
     simple_planner.concretize()
@@ -54,6 +57,7 @@ def test_simple_planner(simple_planner):
     xddot = simple_planner.computeAction(x, xdot)
     assert isinstance(xddot, np.ndarray)
     assert xddot[0] == 0.0
+
 
 def test_simple_task(simple_task):
     planner = simple_task[0]
@@ -67,6 +71,7 @@ def test_simple_task(simple_task):
     qddot = planner.computeAction(q, qdot)
     assert isinstance(qddot, np.ndarray)
     assert qddot[0] == pytest.approx(-2.0)
+
 
 def test_simple2d_task(simple_2dtask):
     # obstacle at [1, 0]
@@ -97,4 +102,3 @@ def test_simple2d_task(simple_2dtask):
     assert isinstance(qddot, np.ndarray)
     assert qddot[0] == pytest.approx(0.0)
     assert qddot[1] == pytest.approx(0.0)
-

@@ -14,14 +14,12 @@ class SpecException(Exception):
     def what(self):
         return self._expression + ": " + self._message
 
+
 def checkCompatability(a, b):
     if a._x.size() != b._x.size():
         raise SpecException(
             "Operation invalid",
-            "Different dimensions: "
-            + str(a._x.size())
-            + " vs. "
-            + str(b._x.size()),
+            "Different dimensions: " + str(a._x.size()) + " vs. " + str(b._x.size()),
         )
     if not (ca.is_equal(a._x, b._x)):
         raise SpecException(
@@ -29,10 +27,11 @@ def checkCompatability(a, b):
             "Different variables: " + str(a._x) + " vs. " + str(b._x),
         )
 
+
 class Spec:
     """description"""
 
-    def __init__(self, M : ca.SX, f : ca.SX, x : ca.SX, xdot : ca.SX):
+    def __init__(self, M: ca.SX, f: ca.SX, x: ca.SX, xdot: ca.SX):
         assert isinstance(M, ca.SX)
         assert isinstance(f, ca.SX)
         assert isinstance(x, ca.SX)
@@ -51,10 +50,12 @@ class Spec:
         self._xdot = xdot
 
     def concretize(self):
-        xddot = ca.mtimes(ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f)
+        xddot = ca.mtimes(
+            ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f
+        )
         self._funs = ca.Function("M", [self._x, self._xdot], [self._M, self._f, xddot])
 
-    def evaluate(self, x : np.ndarray, xdot : np.ndarray):
+    def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         assert isinstance(x, np.ndarray)
         assert isinstance(xdot, np.ndarray)
         funs = self._funs(x, xdot)
@@ -68,16 +69,21 @@ class Spec:
         checkCompatability(self, b)
         return Spec(self._M + b._M, self._f + b._f, self._x, self._xdot)
 
-    def pull(self, dm : DifferentialMap):
+    def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
         M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, dm._J))
-        f_1 = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, ca.mtimes(dm._Jdot, dm._qdot)))
+        f_1 = ca.mtimes(
+            ca.transpose(dm._J), ca.mtimes(self._M, ca.mtimes(dm._Jdot, dm._qdot))
+        )
         f_2 = ca.mtimes(ca.transpose(dm._J), self._f)
         f_pulled = f_1 + f_2
         M_pulled_subst = ca.substitute(M_pulled, self._x, dm._phi)
-        M_pulled_subst2 = ca.substitute(M_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
+        M_pulled_subst2 = ca.substitute(
+            M_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot)
+        )
         f_pulled_subst = ca.substitute(f_pulled, self._x, dm._phi)
-        f_pulled_subst2 = ca.substitute(f_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
+        f_pulled_subst2 = ca.substitute(
+            f_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot)
+        )
         print("spec pull")
         return Spec(M_pulled_subst2, f_pulled_subst2, dm._q, dm._qdot)
-
