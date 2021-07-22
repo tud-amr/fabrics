@@ -3,3 +3,5 @@ playground/
 src/
 __pycache__/*
 *.pyc
+*.coverage
+tests/unittests/diffGeometry/htmlcov/
