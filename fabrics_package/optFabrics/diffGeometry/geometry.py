@@ -59,8 +59,8 @@ class Geometry:
         return Geometry(h=h_pulled_subst2, x=dm._q, xdot=dm._qdot)
 
     def concretize(self):
-        xddot = -self._h
-        self._funs = ca.Function("funs", [self._x, self._xdot], [self._h, xddot])
+        self._xddot = -self._h
+        self._funs = ca.Function("funs", [self._x, self._xdot], [self._h, self._xddot])
 
     def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         assert isinstance(x, np.ndarray)

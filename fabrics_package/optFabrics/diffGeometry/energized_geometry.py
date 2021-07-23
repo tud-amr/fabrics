@@ -52,11 +52,11 @@ class WeightedGeometry(Spec):
 
     def concretize(self):
         self.computeAlpha()
-        xddot = ca.mtimes(
+        self._xddot = ca.mtimes(
             ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f
         )
         self._funs = ca.Function(
-            "M", [self._x, self._xdot], [self._M, self._f, xddot, self._alpha]
+            "M", [self._x, self._xdot], [self._M, self._f, self._xddot, self._alpha]
         )
 
     def evaluate(self, x: np.ndarray, xdot: np.ndarray):
@@ -70,7 +70,6 @@ class WeightedGeometry(Spec):
         return [M_eval, f_eval, xddot_eval, alpha_eval]
 
     def pull(self, dm: DifferentialMap):
-        print("Pulling weighted geometry")
         spec = super().pull(dm)
         le_pulled = self._le.pull(dm)
         return WeightedGeometry(s=spec, le=le_pulled)

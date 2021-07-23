@@ -50,10 +50,12 @@ class Spec:
         self._xdot = xdot
 
     def concretize(self):
-        xddot = ca.mtimes(
+        self._xddot = ca.mtimes(
             ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f
         )
-        self._funs = ca.Function("M", [self._x, self._xdot], [self._M, self._f, xddot])
+        self._funs = ca.Function(
+            "M", [self._x, self._xdot], [self._M, self._f, self._xddot]
+        )
 
     def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         assert isinstance(x, np.ndarray)
@@ -85,5 +87,4 @@ class Spec:
         f_pulled_subst2 = ca.substitute(
             f_pulled_subst, self._xdot, ca.mtimes(dm._J, dm._qdot)
         )
-        print("spec pull")
         return Spec(M_pulled_subst2, f_pulled_subst2, dm._q, dm._qdot)
