@@ -81,10 +81,6 @@ class FabricPlanner:
     def computeAction(self, x, xdot):
         return np.array(self._funs(x, xdot))[:, 0]
 
-    def computeActionEx(self, x, xdot):
-        _, _, xddot, alpha_ex = self._eg_ex.evaluate(x, xdot)
-        return xddot - alpha_ex * xdot
-
     def setSpeedControl(self, beta, eta):
         if not self._forcing:
             raise FabricPlannerException(
@@ -102,12 +98,3 @@ class FabricPlanner:
         self._speedControl = True
         self._beta = beta
         self._eta = eta
-
-    def computeActionSpeedControl(self, x, xdot):
-        _, _, _, alpha_le = self._eg.evaluate(x, xdot)
-        _, _, xddot_0, alpha_lex0 = self._eg_ex.evaluate(x, xdot)
-        _, _, xddot, alpha_lexpsi = self._eg_f_ex.evaluate(x, xdot)
-        alpha_ex = self._eta * alpha_lex0 + (1 - self._eta) * alpha_lexpsi
-        xddot_alpha_ex = xddot - alpha_ex * xdot - self._beta * xdot
-
-        return xddot_alpha_ex

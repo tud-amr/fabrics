@@ -45,7 +45,7 @@ def main():
     planner.concretize()
     # setup environment
     cons = [planner]
-    n_steps = 100
+    n_steps = 1200
     qs = []
     x0 = np.array([2.3, 0.5])
     xdot0 = np.array([-1.0, -0.0])
@@ -62,7 +62,7 @@ def main():
                 print('time step : ', i)
             t += env._dt
             # t0 = time.time()
-            action = con.computeActionEx(ob[0:2], ob[2:4])
+            action = con.computeAction(ob[0:2], ob[2:4])
             _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
             #print(en_ex)
             # print(time.time() - t0)
