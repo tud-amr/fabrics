@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap, VariableDifferentialMap
 from optFabrics.diffGeometry.variables import eps
 
 
@@ -41,24 +41,20 @@ class Geometry:
         assert isinstance(dm, DifferentialMap)
         Jt = ca.transpose(dm._J)
         JtJ = ca.mtimes(Jt, dm._J)
-        h_1 = ca.mtimes(Jt, ca.mtimes(dm._Jdot, dm.qdot()))
-        h_2 = ca.mtimes(Jt, self._h)
+        h_1 = ca.mtimes(Jt, self._h)
+        h_2 = dm.Jdotqdot()
         JtJ_eps = JtJ + np.identity(dm.q().size()[0]) * eps
         h_pulled = ca.mtimes(ca.pinv(JtJ_eps), h_1 + h_2)
-        h_pulled_subst = ca.substitute(h_pulled, self.x(), dm._phi)
-        h_pulled_subst2 = ca.substitute(
-            h_pulled_subst, self.xdot(), ca.mtimes(dm._J, dm.qdot())
-        )
-        return Geometry(h=h_pulled_subst2, var=dm._vars)
+        h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
+        h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
+        return Geometry(h=h_pulled_subst_x_xdot, var=dm._vars)
 
     def concretize(self):
         self._xddot = -self._h
         self._funs = ca.Function("funs", self._vars, [self._h, self._xddot])
 
-    def evaluate(self, x: np.ndarray, xdot: np.ndarray):
-        assert isinstance(x, np.ndarray)
-        assert isinstance(xdot, np.ndarray)
-        funs = self._funs(x, xdot)
+    def evaluate(self, *args):
+        funs = self._funs(*args)
         h_eval = np.array(funs[0])[:, 0]
         xddot_eval = np.array(funs[1])[:, 0]
         return [h_eval, xddot_eval]

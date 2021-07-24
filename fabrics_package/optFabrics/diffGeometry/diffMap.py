@@ -21,6 +21,12 @@ class DifferentialMap:
         self._J = ca.jacobian(phi, q)
         self._Jdot = Jdot_sign * ca.jacobian(ca.mtimes(self._J, qdot), q)
 
+    def Jdotqdot(self):
+        return ca.mtimes(self._Jdot, self.qdot())
+
+    def phidot(self):
+        return ca.mtimes(self._J, self.qdot())
+
     def concretize(self):
         self._fun = ca.Function(
             "forward", self._vars, [self._phi, self._J, self._Jdot]
@@ -54,8 +60,7 @@ class VariableDifferentialMap(DifferentialMap):
         assert isinstance(q_p, ca.SX)
         assert isinstance(qdot_p, ca.SX)
         super().__init__(phi, q=q, qdot=qdot)
-        self._vars.append(q_p)
-        self._vars.append(qdot_p)
+        self._vars += [q_p, qdot_p]
         self._J_p = ca.jacobian(phi, q_p)
         self._Jdot_p = Jdot_sign * ca.jacobian(ca.mtimes(self._J_p, qdot_p), q_p)
 
@@ -76,6 +81,14 @@ class VariableDifferentialMap(DifferentialMap):
         J_p = np.array(funs[3])
         Jdot_p = np.array(funs[4])
         return x, J, Jdot, J_p, Jdot_p
+
+    def Jdotqdot(self):
+        # TODO: The term J_p q_ddot_p is currently ignored;
+        # const velocity assumed <24-07-21, mspahn> #
+        return ca.mtimes(self._Jdot, self.qdot()) + ca.mtimes(self._Jdot_p, self.qdot_p())
+
+    def phidot(self):
+        return ca.mtimes(self._J, self.qdot()) + ca.mtimes(self._J_p, self.qdot_p())
 
     def q_p(self):
         return self._vars[2]
