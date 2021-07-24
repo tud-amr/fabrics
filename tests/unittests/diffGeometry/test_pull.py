@@ -12,7 +12,7 @@ def simple_spec():
     xdot = ca.SX.sym("xdot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 * ca.vertcat(1 / (x[0] ** 2), 1 / (x[1] ** 2))
-    s1 = Spec(M1, f1, x, xdot)
+    s1 = Spec(M1, f1, x=x, xdot=xdot)
     return s1
 
 
@@ -21,7 +21,7 @@ def simple_differentialMap():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     return dm
 
 
@@ -48,8 +48,8 @@ def test_pullback(simple_spec, simple_differentialMap):
     JtMJdot = Jdot_sign * np.array([[0, -r * tdot], [r * tdot, r * rdot]])
     f2 = -np.dot(JtMJdot, qdot)
     """"""
-    assert ca.is_equal(s_pulled._x, dm._q)
-    assert ca.is_equal(s_pulled._xdot, dm._qdot)
+    assert ca.is_equal(s_pulled.x(), dm.q())
+    assert ca.is_equal(s_pulled.xdot(), dm.qdot())
     assert M[0, 0] == 1
     assert M[1, 0] == 0
     assert M[0, 1] == 0

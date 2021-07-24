@@ -28,7 +28,8 @@ class FabricPlanner:
         print("Initiializing fabric planner")
         assert isinstance(lag, Lagrangian)
         self._eg = WeightedGeometry(g=geo, le=lag)
-        self._n = lag._x.size()[0]
+        self._vars = self._eg._vars
+        self._n = lag.x().size()[0]
         self._forcing = False
         self._executionEnergy = False
         self._speedControl = False
@@ -61,22 +62,22 @@ class FabricPlanner:
 
     def concretize(self):
         self._eg.concretize()
-        xddot = self._eg._xddot - self._eg._alpha * self._eg._xdot
+        xddot = self._eg._xddot - self._eg._alpha * self._eg.xdot()
         if self._executionEnergy:
-            xddot = self._eg_ex._xddot - self._eg_ex._alpha * self._eg._xdot
+            xddot = self._eg_ex._xddot - self._eg_ex._alpha * self._eg.xdot()
         if self._forcing:
-            xddot = self._eg_f._xddot - self._eg_f._alpha * self._eg._xdot
+            xddot = self._eg_f._xddot - self._eg_f._alpha * self._eg.xdot()
         if self._forcing and self._executionEnergy:
-            xddot = self._eg_f_ex._xddot - self._eg_f_ex._alpha * self._eg._xdot
+            xddot = self._eg_f_ex._xddot - self._eg_f_ex._alpha * self._eg.xdot()
         if self._speedControl:
             a_ex = self._eta * self._eg._alpha + (1 - self._eta) * self._eg_f_ex._alpha
             beta_subst = self._beta.substitute(-a_ex, -self._eg._alpha)
             xddot = (
                 self._eg_f_ex._xddot
-                - a_ex * self._eg._xdot
-                - beta_subst * self._eg._xdot
+                - a_ex * self._eg.xdot()
+                - beta_subst * self._eg.xdot()
             )
-        self._funs = ca.Function("planner", [self._eg._x, self._eg._xdot], [xddot])
+        self._funs = ca.Function("planner", self._vars, [xddot])
 
     def computeAction(self, x, xdot):
         return np.array(self._funs(x, xdot))[:, 0]

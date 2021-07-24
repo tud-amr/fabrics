@@ -18,7 +18,7 @@ def energization_example():
     h = 0.5 / (x ** 2) * ca.norm_2(xdot) ** 2
     geo = Geometry(h=h, x=x, xdot=xdot)
     l = 1.0 * ca.norm_2(xdot)
-    le = FinslerStructure(l, x, xdot)
+    le = FinslerStructure(l, x=x, xdot=xdot)
     return geo, le
 
 
@@ -29,11 +29,11 @@ def energization_example_pulled():
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
     phi = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     h = 0.5 * ca.norm_2(xdot) ** 2 / (x ** 2 + eps)
     geo = Geometry(h=h, x=x, xdot=xdot)
     l = 0.5 * ca.dot(x, x) * ca.dot(xdot, xdot)
-    le = Lagrangian(l, x, xdot)
+    le = Lagrangian(l, var=[x, xdot])
     return geo, le, dm
 
 
@@ -44,9 +44,9 @@ def two_energizations():
     h = 0.5 * ca.norm_2(xdot) ** 2 / (x ** 2 + eps)
     geo = Geometry(h=h, x=x, xdot=xdot)
     l1 = 0.5 * ca.dot(x, x) * ca.dot(xdot, xdot)
-    le1 = Lagrangian(l1, x, xdot)
+    le1 = Lagrangian(l1, var=[x, xdot])
     l2 = 2.5 * ca.dot(xdot, xdot) / ca.dot(x, x)
-    le2 = Lagrangian(l2, x, xdot)
+    le2 = Lagrangian(l2, x=x, xdot=xdot)
     return geo, le1, le2
 
 
@@ -58,20 +58,20 @@ def two_different_spaces():
     x1 = ca.SX.sym("x", 2)
     xdot1 = ca.SX.sym("xdot", 2)
     phi1 = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
-    dm1 = DifferentialMap(q, qdot, phi1)
+    dm1 = DifferentialMap(phi1, q=q, qdot=qdot)
     h1 = 0.5 * ca.norm_2(xdot1) ** 2 / (x1 ** 2 + eps)
     geo1 = Geometry(h=h1, x=x1, xdot=xdot1)
     l1 = 0.5 * ca.dot(x1, x1) * ca.dot(xdot1, xdot1)
-    le1 = Lagrangian(l1, x1, xdot1)
+    le1 = Lagrangian(l1, x=x1, xdot=xdot1)
     # space of q[1]
     x2 = ca.SX.sym("x", 1)
     xdot2 = ca.SX.sym("xdot", 1)
     phi2 = q[1]
-    dm2 = DifferentialMap(q, qdot, phi2)
+    dm2 = DifferentialMap(phi2, q=q, qdot=qdot)
     h2 = 0.5 * ca.norm_2(xdot2) ** 2 / (x2 ** 2 + eps)
     geo2 = Geometry(h=h2, x=x2, xdot=xdot2)
     l2 = 0.5 * ca.dot(x2, x2) * ca.dot(xdot2, xdot2)
-    le2 = Lagrangian(l2, x2, xdot2)
+    le2 = Lagrangian(l2, x=x2, xdot=xdot2)
     return geo1, le1, dm1, geo2, le2, dm2
 
 

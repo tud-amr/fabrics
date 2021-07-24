@@ -13,9 +13,9 @@ def simple_case():
     h = 0.5 / (x ** 2) * ca.norm_2(xdot) ** 2
     geo = Geometry(h=h, x=x, xdot=xdot)
     l_ex = 1.0 * ca.norm_2(xdot)
-    lex = FinslerStructure(l_ex, x, xdot)
+    lex = FinslerStructure(l_ex, x=x, xdot=xdot)
     l_e = 0.5 * ca.norm_2(x) * ca.norm_2(xdot)
-    le = FinslerStructure(l_e, x, xdot)
+    le = FinslerStructure(l_e, x=x, xdot=xdot)
     return geo, lex, le
 
 

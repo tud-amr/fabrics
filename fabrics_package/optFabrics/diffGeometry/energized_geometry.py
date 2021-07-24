@@ -15,12 +15,12 @@ class EnergizedGeometry(Spec):
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
         checkCompatability(le, g)
-        frac = outerProduct(g._xdot, g._xdot) / (
-            eps + ca.dot(g._xdot, ca.mtimes(le._S._M, g._xdot))
+        frac = outerProduct(g.xdot(), g.xdot()) / (
+            eps + ca.dot(g.xdot(), ca.mtimes(le._S._M, g.xdot()))
         )
-        pe = np.identity(le._x.size()[0]) - ca.mtimes(le._S._M, frac)
+        pe = np.identity(le.x().size()[0]) - ca.mtimes(le._S._M, frac)
         f = le._S._f + ca.mtimes(pe, ca.mtimes(le._S._M, g._h) - le._S._f)
-        super().__init__(le._S._M, f, g._x, g._xdot)
+        super().__init__(le._S._M, f, var=g._vars)
         self._le = le
 
 
@@ -31,12 +31,12 @@ class WeightedGeometry(Spec):
         if "g" in kwargs:
             g = kwargs.get("g")
             checkCompatability(le, g)
-            super().__init__(le._S._M, ca.mtimes(le._S._M, g._h), g._x, g._xdot)
+            super().__init__(le._S._M, ca.mtimes(le._S._M, g._h), var=g._vars)
             self._le = le
         if "s" in kwargs:
             s = kwargs.get("s")
             checkCompatability(le, s)
-            super().__init__(s._M, s._f, s._x, s._xdot)
+            super().__init__(s._M, s._f, var=s._vars)
             self._le = le
 
     def __add__(self, b):
@@ -45,18 +45,18 @@ class WeightedGeometry(Spec):
         return WeightedGeometry(s=spec, le=le)
 
     def computeAlpha(self):
-        frac = self._xdot / (
-            eps + ca.dot(self._xdot, ca.mtimes(self._le._S._M, self._xdot))
+        frac = self.xdot() / (
+            eps + ca.dot(self.xdot(), ca.mtimes(self._le._S._M, self.xdot()))
         )
         self._alpha = -ca.dot(frac, self._f - self._le._S._f)
 
     def concretize(self):
         self.computeAlpha()
         self._xddot = ca.mtimes(
-            ca.pinv(self._M + np.identity(self._x.size()[0]) * eps), -self._f
+            ca.pinv(self._M + np.identity(self.x().size()[0]) * eps), -self._f
         )
         self._funs = ca.Function(
-            "M", [self._x, self._xdot], [self._M, self._f, self._xddot, self._alpha]
+            "M", self._vars, [self._M, self._f, self._xddot, self._alpha]
         )
 
     def evaluate(self, x: np.ndarray, xdot: np.ndarray):

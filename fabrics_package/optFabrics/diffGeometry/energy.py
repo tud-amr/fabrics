@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from optFabrics.diffGeometry.spec import Spec
+from optFabrics.diffGeometry.spec import Spec, checkCompatability
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 
 
@@ -17,54 +17,51 @@ class LagrangianException(Exception):
 class Lagrangian(object):
     """description"""
 
-    def __init__(self, l: ca.SX, x: ca.SX, xdot: ca.SX):
+    def __init__(self, l: ca.SX, **kwargs):
+        if len(kwargs) == 2:
+            x = kwargs.get('x')
+            xdot = kwargs.get('xdot')
+        elif len(kwargs) == 1:
+            x, xdot = kwargs.get('var')
         assert isinstance(l, ca.SX)
         assert isinstance(x, ca.SX)
         assert isinstance(xdot, ca.SX)
         self._l = l
-        self._x = x
-        self._xdot = xdot
+        self._vars = [x, xdot]
         self.applyEulerLagrange()
+
+    def x(self):
+        return self._vars[0]
+
+    def xdot(self):
+        return self._vars[1]
 
     @classmethod
     def fromSpec(cls, l: ca.SX, s: Spec):
-        lag = cls(l, s._x, s._xdot)
+        lag = cls(l, var= s._vars)
         lag._S = s
         return lag
 
     def __add__(self, b):
         assert isinstance(b, Lagrangian)
-        if b._x.size() != self._x.size():
-            raise LagrangianException(
-                "Attempted summation invalid",
-                "Different dimensions: "
-                + str(b._x.size())
-                + " vs. "
-                + str(self._x.size()),
-            )
-        if not (ca.is_equal(b._x, self._x)):
-            raise LagrangianException(
-                "Attempted summation invalid",
-                "Different variables: " + str(b._x) + " vs. " + str(self._x),
-            )
+        checkCompatability(self, b)
         return Lagrangian.fromSpec(self._l + b._l, self._S + b._S)
 
     def applyEulerLagrange(self):
-        dL_dx = ca.gradient(self._l, self._x)
-        dL_dxdot = ca.gradient(self._l, self._xdot)
-        d2L_dx2 = ca.jacobian(dL_dx, self._x)
-        d2L_dxdxdot = ca.jacobian(dL_dx, self._xdot)
-        d2L_dxdot2 = ca.jacobian(dL_dxdot, self._xdot)
+        dL_dx = ca.gradient(self._l, self.x())
+        dL_dxdot = ca.gradient(self._l, self.xdot())
+        d2L_dxdxdot = ca.jacobian(dL_dx, self.xdot())
+        d2L_dxdot2 = ca.jacobian(dL_dxdot, self.xdot())
 
         F = d2L_dxdxdot
         f_e = -dL_dx
         M = d2L_dxdot2
-        f = ca.mtimes(ca.transpose(F), self._xdot) + f_e
-        self._S = Spec(M, f, self._x, self._xdot)
+        f = ca.mtimes(ca.transpose(F), self.xdot()) + f_e
+        self._S = Spec(M, f, var=self._vars)
 
     def concretize(self):
         self._S.concretize()
-        self._l_fun = ca.Function("funs", [self._x, self._xdot], [self._l])
+        self._l_fun = ca.Function("funs", self._vars, [self._l])
 
     def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         assert isinstance(x, np.ndarray)
@@ -75,21 +72,21 @@ class Lagrangian(object):
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
-        l_subst = ca.substitute(self._l, self._x, dm._phi)
-        l_pulled = ca.substitute(l_subst, self._xdot, ca.mtimes(dm._J, dm._qdot))
+        l_subst = ca.substitute(self._l, self.x(), dm._phi)
+        l_pulled = ca.substitute(l_subst, self.xdot(), ca.mtimes(dm._J, dm.qdot()))
         s_pulled = self._S.pull(dm)
         return Lagrangian.fromSpec(l_pulled, s_pulled)
 
 
 class FinslerStructure(Lagrangian):
-    def __init__(self, lg: ca.SX, x: ca.SX, xdot: ca.SX):
+    def __init__(self, lg: ca.SX, **kwargs):
         self._lg = lg
         l = 0.5 * lg ** 2
-        super().__init__(l, x, xdot)
+        super().__init__(l, **kwargs)
 
     def concretize(self):
         super().concretize()
-        self._lg_fun = ca.Function("fun_lg", [self._x, self._xdot], [self._lg])
+        self._lg_fun = ca.Function("fun_lg", self._vars, [self._lg])
 
     def evaluate(self, x: np.ndarray, xdot: np.ndarray):
         M, f, l = super().evaluate(x, xdot)

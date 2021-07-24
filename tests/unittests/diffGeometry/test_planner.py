@@ -9,11 +9,10 @@ from optFabrics.diffGeometry.geometry import Geometry
 
 @pytest.fixture
 def simple_planner():
-    x = ca.SX.sym("x", 1)
-    xdot = ca.SX.sym("xdot", 1)
-    l = 0.5 * xdot**2
-    l_base = Lagrangian(l, x, xdot)
-    geo_base = Geometry(h=ca.SX(0), x=x, xdot=xdot)
+    var = [ca.SX.sym("x", 1), ca.SX.sym("xdot", 1)]
+    l = 0.5 * var[1]**2
+    l_base = Lagrangian(l, var=var)
+    geo_base = Geometry(h=ca.SX(0), var=var)
     planner = FabricPlanner(geo_base, l_base)
     return planner
 
@@ -25,14 +24,14 @@ def simple_task():
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     l = 0.5 * ca.dot(qdot, qdot)
-    l_base = Lagrangian(l, q, qdot)
+    l_base = Lagrangian(l, x=q, xdot=qdot)
     geo_base = Geometry(h=ca.SX(0), x=q, xdot=qdot)
     planner = FabricPlanner(geo_base, l_base)
     phi = ca.fabs(q - 1)
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     s = -0.5 * (ca.sign(xdot) - 1)
     lg = 1 / x * s * xdot
-    l = FinslerStructure(lg, x, xdot)
+    l = FinslerStructure(lg, x=x, xdot=xdot)
     h = 0.5 / (x ** 2) * xdot
     geo = Geometry(h=h, x=x, xdot=xdot)
     return planner, dm, l, geo
@@ -45,15 +44,15 @@ def simple_2dtask():
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     l = 0.5 * ca.dot(qdot, qdot)
-    l_base = Lagrangian(l, q, qdot)
+    l_base = Lagrangian(l, x=q, xdot=qdot)
     geo_base = Geometry(h=ca.SX(np.zeros(2)), x=q, xdot=qdot)
     planner = FabricPlanner(geo_base, l_base)
     q0 = np.array([1.0, 0.0])
     phi = ca.norm_2(q - q0)
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     s = -0.5 * (ca.sign(xdot) - 1)
     lg = 1 / x * s * xdot
-    l = FinslerStructure(lg, x, xdot)
+    l = FinslerStructure(lg, x=x, xdot=xdot)
     h = 0.5 / (x ** 2) * xdot
     geo = Geometry(h=h, x=x, xdot=xdot)
     return planner, dm, l, geo

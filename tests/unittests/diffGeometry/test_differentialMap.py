@@ -9,8 +9,8 @@ def test_dm_creation():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
-    dm = DifferentialMap(q, qdot, phi)
-    assert ca.is_equal(q, dm._q)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
+    assert ca.is_equal(q, dm.q())
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def simple_differentialMap():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     return dm
 
 
@@ -30,8 +30,8 @@ def variable_differentialMap():
     qdot_p = ca.SX.sym("qdot_p", 2)
     phi = ca.norm_2(q - np.zeros(2))
     phi_var = ca.norm_2(q - q_p)
-    dm = DifferentialMap(q, qdot, phi)
-    dm_var = VariableDifferentialMap(q, qdot, phi_var, q_p, qdot_p)
+    dm = DifferentialMap(phi, var=[q, qdot])
+    dm_var = VariableDifferentialMap(phi_var, var=[q, qdot, q_p, qdot_p])
     return dm, dm_var
 
 

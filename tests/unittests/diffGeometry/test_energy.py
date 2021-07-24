@@ -12,7 +12,7 @@ def simple_lagrangian():
     xdot = ca.SX.sym("xdot", 1)
     lam = 0.25
     l = 0.5 * lam / x * xdot ** 2
-    lagrangian = Lagrangian(l, x, xdot)
+    lagrangian = Lagrangian(l, x=x, xdot=xdot)
     return lagrangian
 
 
@@ -22,7 +22,7 @@ def simple_finsler_structure():
     xdot = ca.SX.sym("xdot", 1)
     lam = 0.25
     lg = lam / x * xdot
-    finslerStruct = FinslerStructure(lg, x, xdot)
+    finslerStruct = FinslerStructure(lg, x=x, xdot=xdot)
     return finslerStruct
 
 
@@ -34,9 +34,9 @@ def two_dimensional_lagrangian():
     xdot = ca.SX.sym("xdot", 2)
     lam = 0.25
     l = 0.5 * lam / (ca.norm_2(x)**2) * ca.norm_2(xdot)
-    lg = Lagrangian(l, x, xdot)
+    lg = Lagrangian(l, x=x, xdot=xdot)
     phi = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     return lg, dm
 
 
