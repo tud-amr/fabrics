@@ -35,23 +35,23 @@ class Spec:
         if len(kwargs) == 2:
             x = kwargs.get('x')
             xdot = kwargs.get('xdot')
+            self._vars = [x, xdot]
         elif len(kwargs) == 1:
-            x, xdot = kwargs.get('var')
+            self._vars = kwargs.get('var')
+        for var in self._vars:
+            assert isinstance(var, ca.SX)
         assert isinstance(M, ca.SX)
         assert isinstance(f, ca.SX)
-        assert isinstance(x, ca.SX)
-        assert isinstance(xdot, ca.SX)
-        if x.size() != xdot.size():
+        if self.x().size() != self.xdot().size():
             raise SpecException(
                 "Attempted spec creation failed",
                 "Different dimensions of x : "
-                + str(b._x.size())
+                + str(b.x().size())
                 + " and xdot :"
                 + str(self.x().size()),
             )
         self._M = M
         self._f = f
-        self._vars = [x, xdot]
 
     def x(self):
         return self._vars[0]
@@ -67,10 +67,10 @@ class Spec:
             "M", self._vars, [self._M, self._f, self._xddot]
         )
 
-    def evaluate(self, x: np.ndarray, xdot: np.ndarray):
-        assert isinstance(x, np.ndarray)
-        assert isinstance(xdot, np.ndarray)
-        funs = self._funs(x, xdot)
+    def evaluate(self, *args):
+        for arg in args:
+            assert isinstance(arg, np.ndarray)
+        funs = self._funs(*args)
         M_eval = np.array(funs[0])
         f_eval = np.array(funs[1])[:, 0]
         xddot_eval = np.array(funs[2])[:, 0]
@@ -79,22 +79,28 @@ class Spec:
     def __add__(self, b):
         assert isinstance(b, Spec)
         checkCompatability(self, b)
-        return Spec(self._M + b._M, self._f + b._f, var=self._vars)
+        nb_vars_a = len(self._vars)
+        nb_vars_b = len(b._vars)
+        if nb_vars_a >= nb_vars_b:
+            var = self._vars
+        else:
+            var = b._vars
+        return Spec(self._M + b._M, self._f + b._f, var=var)
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
         M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, dm._J))
         f_1 = ca.mtimes(
-            ca.transpose(dm._J), ca.mtimes(self._M, ca.mtimes(dm._Jdot, dm.qdot()))
+            ca.transpose(dm._J), ca.mtimes(self._M, dm.Jdotqdot())
         )
         f_2 = ca.mtimes(ca.transpose(dm._J), self._f)
         f_pulled = f_1 + f_2
-        M_pulled_subst = ca.substitute(M_pulled, self.x(), dm._phi)
-        M_pulled_subst2 = ca.substitute(
-            M_pulled_subst, self.xdot(), ca.mtimes(dm._J, dm.qdot())
+        M_pulled_subst_x = ca.substitute(M_pulled, self.x(), dm._phi)
+        M_pulled_subst_x_xdot = ca.substitute(
+            M_pulled_subst_x, self.xdot(), ca.mtimes(dm._J, dm.qdot())
         )
-        f_pulled_subst = ca.substitute(f_pulled, self.x(), dm._phi)
-        f_pulled_subst2 = ca.substitute(
-            f_pulled_subst, self.xdot(), ca.mtimes(dm._J, dm.qdot())
+        f_pulled_subst_x = ca.substitute(f_pulled, self.x(), dm._phi)
+        f_pulled_subst_x_xdot = ca.substitute(
+            f_pulled_subst_x, self.xdot(), dm.phidot()
         )
-        return Spec(M_pulled_subst2, f_pulled_subst2, var=dm._vars)
+        return Spec(M_pulled_subst_x_xdot, f_pulled_subst_x_xdot, var=dm._vars)

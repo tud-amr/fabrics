@@ -59,10 +59,10 @@ class WeightedGeometry(Spec):
             "M", self._vars, [self._M, self._f, self._xddot, self._alpha]
         )
 
-    def evaluate(self, x: np.ndarray, xdot: np.ndarray):
-        assert isinstance(x, np.ndarray)
-        assert isinstance(xdot, np.ndarray)
-        funs = self._funs(x, xdot)
+    def evaluate(self, *args):
+        for arg in args:
+            assert isinstance(arg, np.ndarray)
+        funs = self._funs(*args)
         M_eval = np.array(funs[0])
         f_eval = np.array(funs[1])[:, 0]
         xddot_eval = np.array(funs[2])[:, 0]

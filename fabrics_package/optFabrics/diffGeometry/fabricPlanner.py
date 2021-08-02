@@ -28,7 +28,6 @@ class FabricPlanner:
         print("Initiializing fabric planner")
         assert isinstance(lag, Lagrangian)
         self._eg = WeightedGeometry(g=geo, le=lag)
-        self._vars = self._eg._vars
         self._n = lag.x().size()[0]
         self._forcing = False
         self._executionEnergy = False
@@ -77,10 +76,13 @@ class FabricPlanner:
                 - a_ex * self._eg.xdot()
                 - beta_subst * self._eg.xdot()
             )
-        self._funs = ca.Function("planner", self._vars, [xddot])
+        self._funs = ca.Function("planner", self._eg._vars, [xddot])
 
-    def computeAction(self, x, xdot):
-        return np.array(self._funs(x, xdot))[:, 0]
+    def computeAction(self, *args):
+        for arg in args:
+            assert isinstance(arg, np.ndarray)
+        funs_val = self._funs(*args)
+        return np.array(funs_val)[:, 0]
 
     def setSpeedControl(self, beta, eta):
         if not self._forcing:
