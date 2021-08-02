@@ -27,6 +27,20 @@ def checkCompatability(a, b):
             "Different variables: " + str(a.x()) + " vs. " + str(b.x()),
         )
 
+def joinVariables(var1, var2):
+    var = var1 + var2
+    unique_items = []
+    for item in var:
+        already_exists = False
+        for u_item in unique_items:
+            if ca.is_equal(u_item, item):
+                already_exists = True
+                break
+        if not already_exists:
+            unique_items.append(item)
+    return unique_items
+
+
 
 class Spec:
     """description"""
@@ -79,13 +93,8 @@ class Spec:
     def __add__(self, b):
         assert isinstance(b, Spec)
         checkCompatability(self, b)
-        nb_vars_a = len(self._vars)
-        nb_vars_b = len(b._vars)
-        if nb_vars_a >= nb_vars_b:
-            var = self._vars
-        else:
-            var = b._vars
-        return Spec(self._M + b._M, self._f + b._f, var=var)
+        all_vars = joinVariables(self._vars, b._vars)
+        return Spec(self._M + b._M, self._f + b._f, var=all_vars)
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
