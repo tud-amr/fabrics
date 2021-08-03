@@ -27,13 +27,14 @@ def checkCompatability(a, b):
             "Different variables: " + str(a.x()) + " vs. " + str(b.x()),
         )
 
+
 def joinVariables(var1, var2):
     var = var1 + var2
     unique_items = []
     for item in var:
         already_exists = False
         for u_item in unique_items:
-            if ca.is_equal(u_item, item):
+            if u_item.size() == item.size() and ca.is_equal(u_item, item):
                 already_exists = True
                 break
         if not already_exists:
