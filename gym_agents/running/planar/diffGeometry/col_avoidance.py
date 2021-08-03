@@ -1,20 +1,18 @@
 import gym
 import pointRobot
-import time
-
-
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.fabricPlanner import FabricPlanner
+
+from optFabrics.planner.fabricPlanner import FabricPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
+from optFabrics.diffGeometry.energy import Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
 
 from obstacle import Obstacle
 from robotPlot import RobotPlot
 
 
-def main():
+def pointMassAvoidance(n_steps=1200):
     ## setting up the problem
     obsts = [
                 Obstacle(np.array([0.0, 0.0]), 1.0),
@@ -27,25 +25,24 @@ def main():
     l_base = 0.5 * ca.dot(qdot, qdot)
     h_base = ca.SX(np.zeros(n))
     baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
-    baseLag = Lagrangian(l_base, q, qdot)
+    baseLag = Lagrangian(l_base, x=q, xdot=qdot)
     planner = FabricPlanner(baseGeo, baseLag)
     phi = ca.norm_2(q - obsts[0].x()) / obsts[0].r() - 1
-    dm = DifferentialMap(q, qdot, phi)
+    dm = DifferentialMap(phi, q=q, qdot=qdot)
     s = -0.5 * (ca.sign(xdot) - 1)
     lam = 5.00
     le = lam * 1/x * s * xdot**2
-    lag_col = Lagrangian(le, x, xdot)
+    lag_col = Lagrangian(le, x=x, xdot=xdot)
     h = -lam / (x ** 3) * xdot**2
     geo = Geometry(h=h, x=x, xdot=xdot)
     planner.addGeometry(dm, lag_col, geo)
     l_ex = 0.5 * ca.dot(qdot, qdot)
-    exLag = Lagrangian(l_ex, q, qdot)
+    exLag = Lagrangian(l_ex, x=q, xdot=qdot)
     exLag.concretize()
     planner.setExecutionEnergy(exLag)
     planner.concretize()
     # setup environment
     cons = [planner]
-    n_steps = 1200
     qs = []
     x0 = np.array([2.3, 0.5])
     xdot0 = np.array([-1.0, -0.0])
@@ -70,14 +67,23 @@ def main():
             ob, reward, done, info = env.step(action)
             q[i, :] = ob[0:n]
         qs.append(q)
+    res = {}
+    res['qs'] = qs
+    res['obsts'] = obsts
+    res['dt'] = env._dt
+    return res
+
+if __name__ == "__main__":
+    n_steps = 1200
+    res = pointMassAvoidance(n_steps)
+    qs = res['qs']
+    obsts = res['obsts']
     ## Plotting the results
     fk_fun = lambda q : q
-    robotPlot = RobotPlot(qs, fk_fun, 2, types=[0])
+    robotPlot = RobotPlot(qs, fk_fun, 2, types=[0], dt=res['dt'])
     robotPlot.initFig(2, 2)
     robotPlot.addObstacle([0], obsts)
     robotPlot.plot()
     robotPlot.makeAnimation(n_steps)
     robotPlot.show()
-
-if __name__ == "__main__":
     main()
