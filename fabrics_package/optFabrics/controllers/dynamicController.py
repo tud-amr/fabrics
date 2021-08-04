@@ -62,8 +62,8 @@ class DynamicController(object):
             self._q_ca, self._qdot_ca, self._m_forcing, diffMap_ex, x_ex, xdot_ex, b=b
         )
 
-    def addConstantDamper(self):
-        self._rootDamper = createConstantRootDamper(beta=3.0)
+    def addConstantDamper(self, beta=3.0):
+        self._rootDamper = createConstantRootDamper(beta=beta)
 
     def assembleRootGeometry(self, m=1):
         le_root = m * 1.0 / 2.0 * ca.dot(self._qdot_ca, self._qdot_ca)
