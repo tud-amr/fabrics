@@ -18,3 +18,9 @@ class GoalMap(DifferentialMap):
     def __init__(self, q, qdot, fk, goal):
         phi = fk - goal
         super().__init__(phi, q=q, qdot=qdot)
+
+
+class VariableGoalMap(VariableDifferentialMap):
+    def __init__(self, q, qdot, fk, q_g, qdot_g):
+        phi = fk - q_g
+        super().__init__(phi, q=q, qdot=qdot, q_p=q_g, qdot_p=qdot_g)

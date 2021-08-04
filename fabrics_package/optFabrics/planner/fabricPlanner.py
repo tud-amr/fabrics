@@ -11,6 +11,7 @@ from optFabrics.diffGeometry.energized_geometry import (
     EnergizedGeometry,
 )
 from optFabrics.diffGeometry.speedControl import Damper
+from optFabrics.helper_functions import joinVariables
 
 from obstacle import DynamicObstacle
 
@@ -33,11 +34,16 @@ class FabricPlanner:
         self._eg = WeightedGeometry(g=geo, le=lag)
         self._n = lag.x().size()[0]
         self._forcing = False
+        self._targetVelocity = np.zeros(self._eg.x().size()[0])
         self._executionEnergy = False
         self._speedControl = False
+        self._constantSpeedControl = False
 
     def var(self):
-        return self._eg._vars
+        try:
+            return joinVariables(self._eg._vars, self._eg_f._vars)
+        except:
+            return self._eg._vars
 
     def addGeometry(self, dm: DifferentialMap, le: Lagrangian, g: Geometry):
         assert isinstance(dm, DifferentialMap)
@@ -52,6 +58,8 @@ class FabricPlanner:
         self._forcing = True
         self._eg_f = deepcopy(self._eg)
         self._eg_f += WeightedGeometry(g=g, le=le).pull(dm)
+        if isinstance(dm, VariableDifferentialMap):
+            self._targetVelocity += ca.mtimes(ca.transpose(dm._J), dm._vars[3])
         self._eg_f.concretize()
 
     def setExecutionEnergy(self, lex: Lagrangian):
@@ -75,14 +83,17 @@ class FabricPlanner:
         if self._forcing and self._executionEnergy:
             xddot = self._eg_f_ex._xddot - self._eg_f_ex._alpha * self._eg.xdot()
         if self._speedControl:
-            a_ex = self._eta * self._eg._alpha + (1 - self._eta) * self._eg_f_ex._alpha
-            beta_subst = self._beta.substitute(-a_ex, -self._eg._alpha)
+            if self._constantSpeedControl:
+                beta_subst = self._constant_beta
+                a_ex = 0.0
+            else:
+                a_ex = self._eta * self._eg._alpha + (1 - self._eta) * self._eg_f_ex._alpha
+                beta_subst = self._beta.substitute(-a_ex, -self._eg._alpha)
             xddot = (
                 self._eg_f_ex._xddot
-                - a_ex * self._eg.xdot()
-                - beta_subst * self._eg.xdot()
+                - (a_ex + beta_subst) * (self._eg.xdot() - self._targetVelocity)
             )
-        self._funs = ca.Function("planner", self._eg._vars, [xddot])
+        self._funs = ca.Function("planner", self.var(), [xddot])
 
     def computeAction(self, *args):
         for arg in args:
@@ -105,6 +116,7 @@ class FabricPlanner:
                 "energy through setExecutionEnergy",
             )
         self._speedControl = True
+        self._constantSpeedControl = False
         self._beta = beta
         self._eta = eta
 
@@ -121,6 +133,11 @@ class FabricPlanner:
         l_ex_d = ex_factor * exLag._l
         eta = 0.5 * (ca.tanh(-p['a_eta'] * (exLag._l - l_ex_d) - p['a_shift']) + 1)
         self.setSpeedControl(beta, eta)
+
+    def setConstantSpeedControl(self, beta=3.0):
+        self._constant_beta = beta
+        self._speedControl = True
+        self._constantSpeedControl = True
 
 
 class DefaultFabricPlanner(FabricPlanner):

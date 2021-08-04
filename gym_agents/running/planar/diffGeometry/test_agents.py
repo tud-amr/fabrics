@@ -4,6 +4,7 @@ from col_avoidance_moving import pointMassDynamicAvoidance
 from col_avoidance import pointMassAvoidance
 from pointMass import pointMass
 from pointMass_moving import pointMassDynamic
+from pointMass_dynamic import pointMassDynamicGoal
 from nlink import nlink
 from nlink_moving import nlinkDynamic
 
@@ -26,6 +27,13 @@ def test_pointMass():
 
 def test_pointMassDynamic():
     res = pointMassDynamic(10)
+    assert len(res['qs'][0]) == 10
+    assert len(res['qs'][0][0]) == 2
+    assert len(res['solverTimes'][0]) == 10
+
+
+def test_pointMassDynamicGoal():
+    res = pointMassDynamicGoal(10)
     assert len(res['qs'][0]) == 10
     assert len(res['qs'][0][0]) == 2
     assert len(res['solverTimes'][0]) == 10
