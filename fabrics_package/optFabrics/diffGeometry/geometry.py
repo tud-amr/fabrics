@@ -3,6 +3,7 @@ import numpy as np
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, VariableDifferentialMap
 from optFabrics.diffGeometry.variables import eps
+from optFabrics.helper_functions import joinVariables
 
 
 class Geometry:
@@ -48,12 +49,13 @@ class Geometry:
         Jt = ca.transpose(dm._J)
         JtJ = ca.mtimes(Jt, dm._J)
         h_1 = ca.mtimes(Jt, self._h)
-        h_2 = dm.Jdotqdot()
+        h_2 = ca.mtimes(Jt, dm.Jdotqdot())
         JtJ_eps = JtJ + np.identity(dm.q().size()[0]) * eps
         h_pulled = ca.mtimes(ca.pinv(JtJ_eps), h_1 + h_2)
         h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
         h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
-        return Geometry(h=h_pulled_subst_x_xdot, var=dm._vars)
+        var = joinVariables(dm._vars, self._vars[2:])
+        return Geometry(h=h_pulled_subst_x_xdot, var=var)
 
     def concretize(self):
         self._xddot = -self._h

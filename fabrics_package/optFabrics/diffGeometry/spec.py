@@ -8,29 +8,19 @@ from optFabrics.helper_functions import joinVariables, checkCompatability
 from optFabrics.exceptions.spec_exception import SpecException
 
 
-
 class Spec:
     """description"""
 
     def __init__(self, M: ca.SX, f: ca.SX, **kwargs):
-        if len(kwargs) == 2:
-            x = kwargs.get('x')
-            xdot = kwargs.get('xdot')
-            self._vars = [x, xdot]
-        elif len(kwargs) == 1:
+        if 'x' in kwargs:
+            self._vars = [kwargs.get('x'), kwargs.get('xdot')]
+        elif 'var' in kwargs:
             self._vars = kwargs.get('var')
+        self._xdot_d = np.zeros(self.x().size()[0])
         for var in self._vars:
             assert isinstance(var, ca.SX)
         assert isinstance(M, ca.SX)
         assert isinstance(f, ca.SX)
-        if self.x().size() != self.xdot().size():
-            raise SpecException(
-                "Attempted spec creation failed",
-                "Different dimensions of x : "
-                + str(b.x().size())
-                + " and xdot :"
-                + str(self.x().size()),
-            )
         self._M = M
         self._f = f
 
@@ -66,10 +56,9 @@ class Spec:
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
         M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, dm._J))
-        f_1 = ca.mtimes(
-            ca.transpose(dm._J), ca.mtimes(self._M, dm.Jdotqdot())
-        )
-        f_2 = ca.mtimes(ca.transpose(dm._J), self._f)
+        Jt = ca.transpose(dm._J)
+        f_1 = ca.mtimes(Jt, ca.mtimes(self._M, dm.Jdotqdot()))
+        f_2 = ca.mtimes(Jt, self._f)
         f_pulled = f_1 + f_2
         M_pulled_subst_x = ca.substitute(M_pulled, self.x(), dm._phi)
         M_pulled_subst_x_xdot = ca.substitute(
@@ -79,4 +68,5 @@ class Spec:
         f_pulled_subst_x_xdot = ca.substitute(
             f_pulled_subst_x, self.xdot(), dm.phidot()
         )
-        return Spec(M_pulled_subst_x_xdot, f_pulled_subst_x_xdot, var=dm._vars)
+        var = joinVariables(dm._vars, self._vars[2:])
+        return Spec(M_pulled_subst_x_xdot, f_pulled_subst_x_xdot, var=var)
