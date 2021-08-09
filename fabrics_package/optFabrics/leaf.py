@@ -106,10 +106,14 @@ class TimeVariantLeaf(DampedLeaf):
         return (M_pulled, h_pulled)
 
 class DynamicLeaf(Leaf):
-    def __init__(self, name, diffMap, le, psi, xd_ca, xd_t, t_ca, beta=1.0):
+    def __init__(self, name, diffMap, le, psi, xd_ca, xd_t, t_ca):
         super(DynamicLeaf, self).__init__(name, diffMap, le)
         f = ca.mtimes(self._Me, ca.gradient(psi, self._x))
-        self._beta = beta
+        """
+        print("Me : ", self._Me)
+        print("f : ", f)
+        print("psi : ", psi)
+        """
         self.f_fun = ca.Function("f_" + name, [self._x, self._xdot, xd_ca], [f])
         xd_dot_t = ca.jacobian(xd_t, t_ca)
         xd_ddot_t = ca.jacobian(xd_dot_t, t_ca)
@@ -122,8 +126,14 @@ class DynamicLeaf(Leaf):
         self._Jt = Jt
         xd = np.array(self.xd_fun(t))[:, 0]
         xd_dot = np.array(self.xd_dot_fun(t))[:, 0]
+        print("x : ", x)
+        print("xdot : ", xdot)
+        print("x_d : ", xd)
+        print("xd_dot : ", xd_dot)
         self._xd_dot = xd_dot
         xd_ddot = np.array(self.xd_ddot_fun(t))[:, 0]
+        print("xd_ddot : ", xd_ddot)
+        print("M xddot_d : ", xd_ddot)
         M = self.M_fun(x, xdot)
         fe = np.array(self.fe_fun(x, xdot))[:, 0]
         f_psi = np.array(self.f_fun(x, xdot, xd))[:, 0]
@@ -132,9 +142,15 @@ class DynamicLeaf(Leaf):
         #b_d = self._beta * (xdot - xd_dot)
         #f = f_psi - f_d + b_d
         f = f_psi - f_d
+        print("f_psi in leaf : ", f_psi)
+        print("f in leaf : ", f)
+        print("fd in leaf : ", f_d)
+        print("M in leaf : ", M)
         M_pulled = np.dot(Jt, np.dot(M, J))
         f_pulled = np.dot(Jt, f + np.dot(M, np.dot(Jdot, qdot)))
         fe_pulled = np.dot(Jt, fe + np.dot(M, np.dot(Jdot, qdot)))
+        print("f_pulled : ", f_pulled)
+        print("M_pulled : ", M_pulled)
         he = self.he_fun(x, xdot)
         return (M_pulled, f_pulled, fe_pulled, he)
 

@@ -7,7 +7,10 @@ def createAttractor(q, qdot, x, xdot, x_d, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m
     dm = DiffMap("attractor", phi, q, qdot, x, xdot)
     psi = k * (ca.norm_2(x) + 1/a_psi * ca.log(1 + ca.exp(-2*a_psi * ca.norm_2(x))))
     M = ((m[1] - m[0]) * ca.exp(-(a_m * ca.norm_2(x))**2) + m[0]) * np.identity(n)
-    le = ca.dot(xdot, ca.mtimes(M, xdot))
+    # quadratic
+    psi = k * ca.norm_2(x)**2
+    M = np.identity(n)
+    le = 0.5 * ca.dot(xdot, ca.mtimes(M, xdot))
     damper = createDamper(x, xdot, le)
     lforcing = ForcingLeaf("attractor", dm, le, psi)
     return lforcing
@@ -41,7 +44,7 @@ def createDynamicAttractor(q, qdot, x, xdot, xd_ca, xd_t, t_ca, fk, k=5.0):
     psi = k * ca.norm_2(x - xd_ca)**2
     M = np.identity(n)
     le = 0.5 * ca.dot(xdot, ca.mtimes(M, xdot))
-    ldynamic = DynamicLeaf("attractor", dm, le, psi, xd_ca, xd_t, t_ca, beta=5.0)
+    ldynamic = DynamicLeaf("attractor", dm, le, psi, xd_ca, xd_t, t_ca)
     return ldynamic
 
 def createSplineAttractor(q, qdot, x, xdot, spline, T, dt, fk,  k=5.0, a_psi=10.0, a_m = 0.75, m=np.array([0.3, 2.0])):

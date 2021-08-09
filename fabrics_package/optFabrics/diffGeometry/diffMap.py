@@ -50,17 +50,19 @@ class DifferentialMap:
 
 class VariableDifferentialMap(DifferentialMap):
     def __init__(self, phi: ca.SX, **kwargs):
-        if len(kwargs) == 4:
+        if len(kwargs) == 5:
             q = kwargs.get('q')
             qdot = kwargs.get('qdot')
             q_p = kwargs.get('q_p')
             qdot_p = kwargs.get('qdot_p')
+            qddot_p = kwargs.get('qddot_p')
         elif len(kwargs) == 1:
-            q, qdot, q_p, qdot_p = kwargs.get('var')
+            q, qdot, q_p, qdot_p, qddot_p = kwargs.get('var')
         assert isinstance(q_p, ca.SX)
         assert isinstance(qdot_p, ca.SX)
+        assert isinstance(qddot_p, ca.SX)
         super().__init__(phi, q=q, qdot=qdot)
-        self._vars += [q_p, qdot_p]
+        self._vars += [q_p, qdot_p, qddot_p]
         self._J_p = ca.jacobian(phi, q_p)
         self._Jdot_p = Jdot_sign * ca.jacobian(ca.mtimes(self._J_p, qdot_p), q_p)
 
@@ -69,12 +71,13 @@ class VariableDifferentialMap(DifferentialMap):
             "forward", self._vars, [self._phi, self._J, self._Jdot, self._J_p, self._Jdot_p]
         )
 
-    def forward(self, q: np.ndarray, qdot: np.ndarray, q_p: np.ndarray, qdot_p: np.ndarray):
+    def forward(self, q: np.ndarray, qdot: np.ndarray, q_p: np.ndarray, qdot_p: np.ndarray, qddot_p: np.ndarray):
         assert isinstance(q, np.ndarray)
         assert isinstance(qdot, np.ndarray)
         assert isinstance(q_p, np.ndarray)
         assert isinstance(qdot_p, np.ndarray)
-        funs = self._fun(q, qdot, q_p, qdot_p)
+        assert isinstance(qddot_p, np.ndarray)
+        funs = self._fun(q, qdot, q_p, qdot_p, qddot_p)
         x = np.array(funs[0])[:, 0]
         J = np.array(funs[1])
         Jdot = np.array(funs[2])
@@ -83,9 +86,7 @@ class VariableDifferentialMap(DifferentialMap):
         return x, J, Jdot, J_p, Jdot_p
 
     def Jdotqdot(self):
-        # TODO: The term J_p q_ddot_p is currently ignored;
-        # const velocity assumed <24-07-21, mspahn> #
-        return ca.mtimes(self._Jdot, self.qdot()) + ca.mtimes(self._Jdot_p, self.qdot_p())
+        return ca.mtimes(self._Jdot, self.qdot()) + ca.mtimes(self._J_p, self.qddot_p())
 
     def phidot(self):
         return ca.mtimes(self._J, self.qdot()) + ca.mtimes(self._J_p, self.qdot_p())
@@ -95,3 +96,39 @@ class VariableDifferentialMap(DifferentialMap):
 
     def qdot_p(self):
         return self._vars[3]
+
+    def qddot_p(self):
+        return self._vars[4]
+
+
+class RelativeDifferentialMap(DifferentialMap):
+    def __init__(self, **kwargs):
+        if len(kwargs) == 5:
+            q = kwargs.get('q')
+            qdot = kwargs.get('qdot')
+            q_p = kwargs.get('q_p')
+            qdot_p = kwargs.get('qdot_p')
+            qddot_p = kwargs.get('qddot_p')
+        elif len(kwargs) == 1:
+            q, qdot, q_p, qdot_p, qddot_p = kwargs.get('var')
+        assert isinstance(q_p, ca.SX)
+        assert isinstance(qdot_p, ca.SX)
+        assert isinstance(qddot_p, ca.SX)
+        phi = q - q_p
+        super().__init__(phi, q=q, qdot=qdot)
+        self._vars += [q_p, qdot_p, qddot_p]
+
+    def Jdotqdot(self):
+        return -1 * self.qddot_p()
+
+    def phidot(self):
+        return self.qdot()
+
+    def q_p(self):
+        return self._vars[2]
+
+    def qdot_p(self):
+        return self._vars[3]
+
+    def qddot_p(self):
+        return self._vars[4]

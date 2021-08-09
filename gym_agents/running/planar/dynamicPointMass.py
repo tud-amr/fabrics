@@ -27,8 +27,10 @@ def main():
     fabCon = DynamicController(2, q_ca, qdot_ca)
     fabCon.addAttractor(x_d, t_ca, 2, fk)
     obsts = [Obstacle(np.array([0.5, 0.8]), 0.3), Obstacle(np.array([1.2, -0.5]), 0.2)]
+    obsts = []
     fabCon.addObstacles(obsts, fk)
-    fabCon.addDamper(2, fk)
+    #fabCon.addDamper(2, fk)
+    fabCon.addConstantDamper(beta=5.0)
     fabCon.assembleRootGeometry(m=0.1)
     # setup environment
     cons = [fabCon]

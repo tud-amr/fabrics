@@ -20,7 +20,7 @@ class GoalLagrangian(Lagrangian):
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
-        M_psi = ((p['m'][1] - p['m'][0]) * ca.exp(-1*(p['a_m'] * ca.norm_2(x))**2) + p['m'][0]) * ca.SX(np.identity(2))
+        M_psi = ((p['m'][1] - p['m'][0]) * ca.exp(-1*(p['a_m'] * ca.norm_2(x))**2) + p['m'][0]) * ca.SX(np.identity(x.size()[0]))
         le_psi = ca.dot(xdot, ca.mtimes(M_psi, xdot))
         super().__init__(le_psi, x=x, xdot=xdot)
 

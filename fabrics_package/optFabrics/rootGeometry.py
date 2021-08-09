@@ -43,6 +43,7 @@ class RootGeometry(object):
         if self._he_fun:
             he = self._he_fun(q[0], qdot[0])
         for leaf in self._leaves:
+            print("leaf : ", leaf.name())
             isForcing = isinstance(leaf, ForcingLeaf) or isinstance(leaf, DynamicLeaf) or isinstance(leaf, SplineLeaf)
             (M_leaf, f_leaf, fe_leaf, he_leaf) = leaf.pull(q, qdot, t)
             if np.linalg.norm(f_leaf) > 1e5:
@@ -61,13 +62,25 @@ class RootGeometry(object):
         if self._damper:
             x_forcing = np.array(x_forcing)
             (alex, beta) = self._damper.damp(self._f_geometry, self._f_forcing, self._fe_geometry, self._fe_forcing, self._M_geometry, self._M_forcing, q, qdot, x_forcing)
+            print("beta : ", beta)
+            print("alex : ", alex)
             self._d = (beta - alex) * np.dot((self._M_forcing + self._M_geometry), qdot)
+            print("pure d : ", self._d)
             for leaf in self._leaves:
                 if isinstance(leaf, DynamicLeaf) or isinstance(leaf, SplineLeaf):
+                    print("bxdot : ", leaf.bxddot(beta-alex))
                     self._d += leaf.bxddot(beta-alex)
+            print("d : ", self._d)
+        print("f_forcing : ", self._f_forcing)
+        print("f_geometry : ", self._f_geometry)
         self._he = he
 
     def setRHS(self):
+        print('f_forcing : ', self._f_forcing)
+        print('f_geometry : ', self._f_geometry)
+        print('fe_geometry: ', self._fe_geometry)
+        print('d : ', self._d)
+        print('rhs without d : ', -self._f_forcing + self._fe_geometry)
         self._rhs = -self._f_forcing - self._f_geometry - self._d + self._fe_geometry
 
     def augment(self):
@@ -76,6 +89,10 @@ class RootGeometry(object):
             self._rhs_aug[i] = self._qdot[i]
             self._rhs_aug[i + n] = self._rhs[i]
         M = self._M_forcing + self._M_geometry
+        print("M : ", M)
+        #print("M_geometry : ", self._M_geometry)
+        #print("M_forcing : ", self._M_forcing)
+        print("rhs : ", self._rhs)
         if np.linalg.cond(M) > 1e5:
             M += np.identity(n) * 0.01
         self._M_aug[n:2*n, n:2*n] = M

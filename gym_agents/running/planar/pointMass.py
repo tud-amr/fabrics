@@ -23,10 +23,10 @@ def main():
     x_d = np.array([-1.0, -1.0])
     # construct fabric controller
     fabCon = StaticController(2, q_ca, qdot_ca)
-    fabCon.addAttractor(x_d, 2, fk)
+    #fabCon.addAttractor(x_d, 2, fk)
     obsts = [Obstacle(np.array([0.5, 0.8]), 0.3), Obstacle(np.array([1.2, -0.5]), 0.2)]
     fabCon.addObstacles(obsts, fk)
-    fabCon.addDamper(2, fk)
+    #fabCon.addDamper(2, fk)
     fabCon.assembleRootGeometry()
     # setup environment
     cons = [fabCon]
@@ -44,7 +44,9 @@ def main():
             if i % 100 == 0:
                 print('time step : ', i)
             t += env._dt
+            t0 = time.time()
             action = con.computeAction(ob, t)
+            print(time.time() - t0)
             #env.render()
             ob, reward, done, info = env.step(action)
             q[i, :] = ob[0:n]

@@ -18,9 +18,12 @@ def pointMassDynamicAvoidance(n_steps=500):
     env = gym.make('point-robot-acc-v0', dt=0.005)
     ## setting up the problem
     t = ca.SX.sym('t', 1)
-    v_obst = np.array([0.5, 0.5])
-    x_obst = ca.vertcat(-1.0, 0.0) + t * v_obst
+    x_obst = ca.vertcat(-1.0 + t * 0.5, t * 0.5)
+    v_obst = ca.jacobian(x_obst, t)
+    a_obst = ca.jacobian(v_obst, t)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
+    v_obst_fun = ca.Function("v_obst_fun", [t], [v_obst])
+    a_obst_fun = ca.Function("a_obst_fun", [t], [a_obst])
     obsts = [
                 DynamicObstacle(x_obst_fun, 1.0)
             ]
@@ -35,9 +38,10 @@ def pointMassDynamicAvoidance(n_steps=500):
     for obst in obsts:
         q_p = ca.SX.sym('q_p', 2)
         qdot_p = ca.SX.sym('qdot_p', 2)
+        qddot_p = ca.SX.sym('qddot_p', 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
-                dm_col = VariableCollisionMap(q, qdot, fk, obst.r(), q_p, qdot_p)
+                dm_col = VariableCollisionMap(q, qdot, fk, obst.r(), q_p, qdot_p, qddot_p)
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
             planner.addGeometry(dm_col, lag_col, geo_col)
@@ -58,9 +62,10 @@ def pointMassDynamicAvoidance(n_steps=500):
         if i % 100 == 0:
             print('time step : ', i)
         t += env._dt
-        q_p_t = obsts[0].x(t)
-        qdot_p_t = v_obst
-        action = planner.computeAction(ob[0:2], ob[2:4], q_p_t, qdot_p_t)
+        q_p_t = np.array(x_obst_fun(t))[:, 0]
+        qdot_p_t = np.array(v_obst_fun(t))[:, 0]
+        qddot_p_t = np.array(a_obst_fun(t))[:, 0]
+        action = planner.computeAction(ob[0:2], ob[2:4], q_p_t, qdot_p_t, qddot_p_t)
         _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
         #print(en_ex)
         # env.render()

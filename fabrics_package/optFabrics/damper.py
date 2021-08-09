@@ -39,6 +39,10 @@ class RootDamper(object):
     def damp(self, f_geometry, f_forcing, fe_geometry, fe_forcing, M_geometry, M_forcing, q, qdot, x):
         ale0 = self.alpha(f_geometry, fe_forcing, M_forcing, q, qdot)
         alex0 = self._exEn.alpha(q, qdot, f_geometry)
+        print("fe_forcing : ", fe_forcing)
+        print("M_forcing : ", M_forcing)
+        print("f_geometry: ", f_geometry)
+        print("alpha forcing : ", ale0)
         alexpsi = self._exEn.alpha(q, qdot, f_geometry + f_forcing)
         lex = self._exEn.energy(q, qdot)
         eta = self.eta_fun(lex)

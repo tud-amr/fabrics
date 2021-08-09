@@ -9,9 +9,9 @@ class CollisionMap(DifferentialMap):
 
 
 class VariableCollisionMap(VariableDifferentialMap):
-    def __init__(self, q, qdot, fk, r_obst, q_p, qdot_p):
+    def __init__(self, q, qdot, fk, r_obst, q_p, qdot_p, qddot_p):
         phi = ca.norm_2(fk - q_p) / r_obst - 1
-        super().__init__(phi, q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p)
+        super().__init__(phi, q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
 
 
 class GoalMap(DifferentialMap):
@@ -21,6 +21,6 @@ class GoalMap(DifferentialMap):
 
 
 class VariableGoalMap(VariableDifferentialMap):
-    def __init__(self, q, qdot, fk, q_g, qdot_g):
+    def __init__(self, q, qdot, fk, q_g, qdot_g, qddot_g):
         phi = fk - q_g
-        super().__init__(phi, q=q, qdot=qdot, q_p=q_g, qdot_p=qdot_g)
+        super().__init__(phi, q=q, qdot=qdot, q_p=q_g, qdot_p=qdot_g, qddot_p=qddot_g)

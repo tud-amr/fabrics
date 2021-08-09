@@ -23,20 +23,22 @@ def main():
     x_d = np.array([-1.0, -1.0])
     # construct fabric controller
     fabCon = StaticController(2, q_ca, qdot_ca)
-    fabCon.addAttractor(x_d, 2, fk, k=2.0)
-    obsts = [Obstacle(np.array([0.5, 0.8]), 1.0)]
+    fabCon.addAttractor(x_d, 2, fk, k=5.0)
+    obsts = [Obstacle(np.array([0.0, 0.0]), 1.0)]
     fabCon.addObstacles(obsts, fk)
-    fabCon.addDamper(2, fk)
-    fabCon.assembleRootGeometry(m=0.5)
+    #fabCon.addDamper(2, fk)
+    fabCon.assembleRootGeometry(m=0.1)
     # setup environment
     con = fabCon
-    n_steps = 3000
+    n_steps = 1000
     qs = []
     alphas = [-np.pi/1 + np.pi/5 * i for i in range(1, 2)]
     ## running the simulation
     for alpha in alphas:
         env = gym.make('point-robot-acc-v0', dt=0.01)
         xdot0 = xdot_mag * np.array([np.cos(alpha), -np.sin(alpha)])
+        xdot0 = np.array([-0.8, -0.58])
+        print(xdot0)
         ob = env.reset(x0, xdot0)
         print("Starting episode")
         q = np.zeros((n_steps, n))

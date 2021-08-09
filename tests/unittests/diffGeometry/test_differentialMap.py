@@ -28,10 +28,11 @@ def variable_differentialMap():
     qdot = ca.SX.sym("qdot", 2)
     q_p = ca.SX.sym("q_p", 2)
     qdot_p = ca.SX.sym("qdot_p", 2)
+    qddot_p = ca.SX.sym("qddot_p", 2)
     phi = ca.norm_2(q - np.zeros(2))
     phi_var = ca.norm_2(q - q_p)
     dm = DifferentialMap(phi, var=[q, qdot])
-    dm_var = VariableDifferentialMap(phi_var, var=[q, qdot, q_p, qdot_p])
+    dm_var = VariableDifferentialMap(phi_var, var=[q, qdot, q_p, qdot_p, qddot_p])
     return dm, dm_var
 
 
@@ -79,8 +80,9 @@ def test_variable_map_Zero(variable_differentialMap):
     qdot = np.array([-0.3, 0.7])
     q_p = np.array([0.0, 0.0])
     qdot_p = np.array([0.0, 0.0])
+    qddot_p = np.array([0.0, 0.0])
     x, J, Jdot = dm.forward(q, qdot)
-    x_var, J_var, Jdot_var, J_p, Jdot_p = dm_var.forward(q, qdot, q_p, qdot_p)
+    x_var, J_var, Jdot_var, J_p, Jdot_p = dm_var.forward(q, qdot, q_p, qdot_p, qddot_p)
     xdot = np.dot(J, qdot)
     xdot_var = np.dot(J_var, qdot)
     assert x[0] == pytest.approx(np.linalg.norm(q - q_p))
@@ -101,7 +103,8 @@ def test_variable_map_NonZero(variable_differentialMap):
     qdot = np.array([-0.3, 0.7])
     q_p = np.array([-0.2, 0.2])
     qdot_p = np.array([-0.4, 0.8])
-    x, J, Jdot, J_p, Jdot_p = dm_var.forward(q, qdot, q_p, qdot_p)
+    qddot_p = np.array([-0.0, 0.0])
+    x, J, Jdot, J_p, Jdot_p = dm_var.forward(q, qdot, q_p, qdot_p, qddot_p)
     xdot = np.dot(J, qdot) + np.dot(J_p, qdot_p)
     J_test = 1 / np.linalg.norm(q - q_p) * np.array([q[0] - q_p[0], q[1] - q_p[1]])
     Jdot_test = Jdot_sign * (

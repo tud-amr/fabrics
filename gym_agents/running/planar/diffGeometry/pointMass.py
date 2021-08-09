@@ -40,6 +40,7 @@ def pointMass(n_steps=5000):
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # execution energy
     exLag = ExecutionLagrangian(q, qdot)
+    exLag.concretize()
     planner.setExecutionEnergy(exLag)
     # Speed control
     ex_factor = 2.0
