@@ -60,13 +60,13 @@ class Spec:
         f_1 = ca.mtimes(Jt, ca.mtimes(self._M, dm.Jdotqdot()))
         f_2 = ca.mtimes(Jt, self._f)
         f_pulled = f_1 + f_2
-        M_pulled_subst_x = ca.substitute(M_pulled, self.x(), dm._phi)
+        M_pulled_subst_x = ca.substitute(M_pulled, self._vars[0], dm._phi)
         M_pulled_subst_x_xdot = ca.substitute(
-            M_pulled_subst_x, self.xdot(), ca.mtimes(dm._J, dm.qdot())
+            M_pulled_subst_x, self._vars[1], dm.phidot()
         )
-        f_pulled_subst_x = ca.substitute(f_pulled, self.x(), dm._phi)
+        f_pulled_subst_x = ca.substitute(f_pulled, self._vars[0], dm._phi)
         f_pulled_subst_x_xdot = ca.substitute(
-            f_pulled_subst_x, self.xdot(), dm.phidot()
+            f_pulled_subst_x, self._vars[1], dm.phidot()
         )
         var = joinVariables(dm._vars, self._vars[2:])
         return Spec(M_pulled_subst_x_xdot, f_pulled_subst_x_xdot, var=var)

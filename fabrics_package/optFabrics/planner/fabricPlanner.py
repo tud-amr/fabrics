@@ -32,6 +32,7 @@ class FabricPlanner:
         self._executionEnergy = False
         self._speedControl = False
         self._constantSpeedControl = False
+        self._vars = self._eg._vars
 
     def var(self):
         try:
@@ -44,6 +45,7 @@ class FabricPlanner:
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
         self._eg += WeightedGeometry(g=g, le=le).pull(dm)
+        self._vars = joinVariables(self._vars, self._eg._vars)
 
     def addForcingGeometry(
         self, dm: DifferentialMap, le: Lagrangian, g: Geometry, goalVelocity=None
@@ -54,6 +56,7 @@ class FabricPlanner:
         self._forcing = True
         self._eg_f = deepcopy(self._eg)
         self._eg_f += WeightedGeometry(g=g, le=le).pull(dm)
+        self._vars = joinVariables(self._vars, self._eg_f._vars)
         if goalVelocity is not None:
             self._targetVelocity += ca.mtimes(ca.transpose(dm._J), goalVelocity)
         self._eg_f.concretize()
@@ -66,6 +69,7 @@ class FabricPlanner:
         self._forcing = True
         self._eg_f = deepcopy(self._eg)
         self._eg_f += wg.pull(dm)
+        self._vars = joinVariables(self._vars, self._eg_f._vars)
         if goalVelocity is not None:
             self._targetVelocity += ca.mtimes(ca.pinv(dm._J), goalVelocity)
         self._eg_f.concretize()
@@ -76,6 +80,7 @@ class FabricPlanner:
         composed_geometry = Geometry(s=self._eg)
         self._eg_ex = WeightedGeometry(g=composed_geometry, le=lex)
         self._eg_ex.concretize()
+        self._vars = joinVariables(self._vars, self._eg_ex._vars)
         if self._forcing:
             forced_geometry = Geometry(s=self._eg_f)
             self._eg_f_ex = WeightedGeometry(g=forced_geometry, le=lex)
@@ -85,7 +90,7 @@ class FabricPlanner:
         self._eg.concretize()
         xddot = self._eg._xddot - self._eg._alpha * self._eg.xdot()
         if self._executionEnergy:
-            xddot = self._eg_ex._xddot - self._eg_ex._alpha * self._eg.xdot()
+            xddot = self._eg_ex._xddot - self._eg_ex._alpha * self._eg_ex.xdot()
         if self._forcing:
             xddot = self._eg_f._xddot  # - self._eg_f._alpha * self._eg.xdot()
         if self._forcing and self._executionEnergy:
@@ -106,7 +111,7 @@ class FabricPlanner:
                 self._eg.xdot()
                 - ca.mtimes(ca.pinv(self._eg_f._M), self._targetVelocity)
             )
-        self._funs = ca.Function("planner", self.var(), [xddot])
+        self._funs = ca.Function("planner", self._vars, [xddot])
 
     def computeAction(self, *args):
         for arg in args:

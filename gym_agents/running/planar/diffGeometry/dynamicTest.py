@@ -5,7 +5,7 @@ import casadi as ca
 import numpy as np
 
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
-from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry, RelativeGoalGeometry
+from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
 from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian, GoalLagrangian
 from optFabrics.planner.default_maps import CollisionMap, VariableGoalMap, VariableCollisionMap, GoalMap
 from optFabrics.planner.default_leaves import defaultAttractor
@@ -47,7 +47,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     geo_col = CollisionGeometry(x, xdot)
     fks = []
     for i in range(1, n + 1):
-        fks.append(ca.SX(casadiFk(q, i)[0:2]))
+        fks.append(casadiFk(q, i)[0:2])
     for obst in obsts:
         q_p = ca.SX.sym('q_p', 2)
         qdot_p = ca.SX.sym('qdot_p', 2)
@@ -152,6 +152,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
 
     dm_psi = DifferentialMap(fks[-1], q=q, qdot=qdot)
     eg_psi_fin.concretize()
+    eg_psi_fin_pull = eg_psi_fin.pull(dm_psi)
     planner.addForcingWeightedGeometry(dm_psi, eg_psi_fin, goalVelocity=xdot_d)
 
     # add forcing term

@@ -2,7 +2,9 @@ import casadi as ca
 import numpy as np
 
 from optFabrics.diffGeometry.spec import Spec, checkCompatability
-from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+
+from optFabrics.helper_functions import joinVariables
 
 
 class LagrangianException(Exception):
@@ -20,17 +22,16 @@ class Lagrangian(object):
     def __init__(self, l: ca.SX, **kwargs):
         self._l = l
         assert isinstance(l, ca.SX)
-        if len(kwargs) == 2:
+        if 'x' in kwargs:
             self._vars = [kwargs.get('x'), kwargs.get('xdot')]
             self.applyEulerLagrange()
-        elif len(kwargs) == 1:
-            if 'var' in kwargs:
-                self._vars = kwargs.get('var')
-                self.applyEulerLagrange()
-            elif 's' in kwargs:
-                s = kwargs.get('s')
-                self._vars = s._vars
-                self._S = s
+        elif 'var' in kwargs:
+            self._vars = kwargs.get('var')
+            self.applyEulerLagrange()
+        if 's' in kwargs:
+            s = kwargs.get('s')
+            self._vars = s._vars
+            self._S = s
 
     def x(self):
         return self._vars[0]
@@ -68,10 +69,27 @@ class Lagrangian(object):
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
-        l_subst = ca.substitute(self._l, self.x(), dm._phi)
-        l_pulled = ca.substitute(l_subst, self.xdot(), dm.phidot())
+        l_subst = ca.substitute(self._l, self._vars[0], dm._phi)
+        l_pulled = ca.substitute(l_subst, self._vars[1], dm.phidot())
         s_pulled = self._S.pull(dm)
-        return Lagrangian(l_pulled, s=s_pulled)
+        if isinstance(dm, RelativeDifferentialMap):
+            return RelativeLagrangian(l_pulled, dm=dm, s=s_pulled)
+        else:
+            return Lagrangian(l_pulled, s=s_pulled)
+
+
+class RelativeLagrangian(Lagrangian):
+
+    def __init__(self, l: ca.SX, **kwargs):
+        self._dm = kwargs.get('dm')
+        super().__init__(l, **kwargs)
+        self._vars = joinVariables(self._dm._vars, self._vars)
+
+    def x(self):
+        return self._vars[0]
+
+    def xdot(self):
+        return (self._vars[1] - self._dm.qdot_p())
 
 
 class FinslerStructure(Lagrangian):

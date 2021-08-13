@@ -4,10 +4,11 @@ import numpy as np
 from optFabrics.diffGeometry.spec import Spec, checkCompatability
 from optFabrics.diffGeometry.geometry import Geometry
 from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.casadi_helpers import outerProduct
 from optFabrics.diffGeometry.variables import eps
 
+from optFabrics.helper_functions import joinVariables
 
 class EnergizedGeometry(Spec):
     # Should not be used as it is not compliant with summation
@@ -31,13 +32,14 @@ class WeightedGeometry(Spec):
         if "g" in kwargs:
             g = kwargs.get("g")
             checkCompatability(le, g)
-            super().__init__(le._S._M, ca.mtimes(le._S._M, g._h), var=g._vars)
+            var = joinVariables(g._vars, le._vars)
             self._le = le
+            super().__init__(le._S._M, ca.mtimes(le._S._M, g._h), var=var)
         if "s" in kwargs:
             s = kwargs.get("s")
             checkCompatability(le, s)
-            super().__init__(s._M, s._f, var=s._vars)
             self._le = le
+            super().__init__(s._M, s._f, var=s._vars)
 
     def __add__(self, b):
         spec = super().__add__(b)
@@ -73,3 +75,9 @@ class WeightedGeometry(Spec):
         spec = super().pull(dm)
         le_pulled = self._le.pull(dm)
         return WeightedGeometry(s=spec, le=le_pulled)
+
+    def x(self):
+        return self._le.x()
+
+    def xdot(self):
+        return self._le.xdot()

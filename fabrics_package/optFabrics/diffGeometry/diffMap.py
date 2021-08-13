@@ -118,11 +118,22 @@ class RelativeDifferentialMap(DifferentialMap):
         super().__init__(phi, q=q, qdot=qdot)
         self._vars += [q_p, qdot_p, qddot_p]
 
+    def forward(self, q: np.ndarray, qdot: np.ndarray, q_p: np.ndarray, qdot_p: np.ndarray, qddot_p: np.ndarray):
+        assert isinstance(q, np.ndarray)
+        assert isinstance(qdot, np.ndarray)
+        assert isinstance(q_p, np.ndarray)
+        assert isinstance(qdot_p, np.ndarray)
+        assert isinstance(qddot_p, np.ndarray)
+        funs = self._fun(q, qdot, q_p, qdot_p, qddot_p)
+        x = np.array(funs[0])[:, 0]
+        xdot = qdot - qdot_p
+        return x, xdot
+
     def Jdotqdot(self):
         return -1 * self.qddot_p()
 
     def phidot(self):
-        return self.qdot()
+        return self.qdot() - self.qdot_p()
 
     def q_p(self):
         return self._vars[2]
