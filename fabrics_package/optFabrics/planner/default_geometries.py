@@ -8,7 +8,8 @@ class CollisionGeometry(Geometry):
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
-        h = -p["lam"] / (x ** 1) * xdot ** 2
+        s = -0.5 * (ca.sign(xdot) - 1)
+        h = -p["lam"] / (x ** 1) * s * xdot ** 2
         super().__init__(h=h, x=x, xdot=xdot)
 
 

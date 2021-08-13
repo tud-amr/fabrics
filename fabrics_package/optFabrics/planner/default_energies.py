@@ -9,8 +9,10 @@ class CollisionLagrangian(Lagrangian):
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
-        s = -0.5 * (ca.sign(xdot) - 1)
-        le = p['lam'] * 1/(x**2) * s * xdot**2
+        # s cannot be used here as it contradict positivity of the energy
+        # s = -0.5 * (ca.sign(xdot) - 1)
+        # le = p['lam'] * 1/(x**2) * s * xdot**2
+        le = p['lam'] * 1/(x**2) * xdot**2
         super().__init__(le, x=x, xdot=xdot)
 
 
