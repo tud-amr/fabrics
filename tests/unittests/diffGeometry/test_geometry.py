@@ -20,7 +20,7 @@ def simple_spec():
     xdot = ca.SX.sym("xdot", 2)
     M1 = ca.SX(np.array([[-0.3, 0.5], [0.5, 1.2]]))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f1, var=[x, xdot])
+    s1 = Spec(M1, f=f1, var=[x, xdot])
     return s1
 
 

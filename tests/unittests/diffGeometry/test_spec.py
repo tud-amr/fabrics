@@ -11,10 +11,10 @@ def simple_spec():
     xdot = ca.SX.sym("xdot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f1, x=x, xdot=xdot)
+    s1 = Spec(M1, f=f1, x=x, xdot=xdot)
     M2 = ca.SX(np.identity(2) * 0.5)
     f2 = -2.5 / (x ** 2)
-    s2 = Spec(M2, f2, x=x, xdot=xdot)
+    s2 = Spec(M2, f=f2, x=x, xdot=xdot)
     return s1, s2
 
 
@@ -24,12 +24,12 @@ def second_spec():
     xdot = ca.SX.sym("xdot", 3)
     M1 = ca.SX(np.identity(3))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f1, x=x, xdot=xdot)
+    s1 = Spec(M1, f=f1, x=x, xdot=xdot)
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     M2 = ca.SX(np.identity(2))
     f2 = -0.5 / (q ** 2)
-    s2 = Spec(M2, f2, x=q, xdot=qdot)
+    s2 = Spec(M2, f=f2, x=q, xdot=qdot)
     return s1, s2
 
 
@@ -39,13 +39,14 @@ def third_spec():
     xdot = ca.SX.sym("xdot", 3)
     M1 = ca.SX(np.identity(3))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f1, var=[x, xdot])
+    s1 = Spec(M1, f=f1, var=[x, xdot])
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     M2 = np.identity(2)
     f2 = -0.5 / (q ** 2)
-    s2 = Spec(M2, f2, var=[q, qdot])
+    s2 = Spec(M2, f=f2, var=[q, qdot])
     return s1, s2
+
 
 @pytest.fixture
 def var_spec():
@@ -57,8 +58,8 @@ def var_spec():
     x2dot = ca.SX.sym("x2dot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f1, var=[x, xdot, x1, x1dot])
-    s2 = Spec(M1, f1, var=[x, xdot, x2, x2dot])
+    s1 = Spec(M1, f=f1, var=[x, xdot, x1, x1dot])
+    s2 = Spec(M1, f=f1, var=[x, xdot, x2, x2dot])
     return s1, s2
 
 
@@ -97,7 +98,7 @@ def test_assertion_error_creation():
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 / (x ** 2)
     with pytest.raises(AssertionError):
-        s1 = Spec(M1, f1, x=x, xdot=xdot)
+        s1 = Spec(M1, f=f1, x=x, xdot=xdot)
 
 
 def test_assertion_erros(simple_spec):

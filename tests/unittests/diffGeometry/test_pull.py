@@ -12,7 +12,7 @@ def simple_spec():
     xdot = ca.SX.sym("xdot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 * ca.vertcat(1 / (x[0] ** 2), 1 / (x[1] ** 2))
-    s1 = Spec(M1, f1, x=x, xdot=xdot)
+    s1 = Spec(M1, f=f1, x=x, xdot=xdot)
     return s1
 
 
@@ -79,7 +79,7 @@ def test_equal_results(simple_spec, simple_differentialMap):
     assert M_q[1, 0] == pytest.approx(M_q_man[1, 0])
     assert M_q[0, 1] == pytest.approx(M_q_man[0, 1])
     assert M_q[1, 1] == pytest.approx(M_q_man[1, 1])
-    assert xddot_man[0] == pytest.approx(xddot[0])
-    assert xddot_man[1] == pytest.approx(xddot[1])
+    assert xddot_man[0] == pytest.approx(xddot[0], rel=1e-4)
+    assert xddot_man[1] == pytest.approx(xddot[1], rel=1e-4)
     assert f_q[0] == pytest.approx(f_q_man[0])
     assert f_q[1] == pytest.approx(f_q_man[1])

@@ -35,7 +35,7 @@ def variable_spec():
     xdot = ca.SX.sym("xdot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f1, x=x, xdot=xdot)
+    s1 = Spec(M1, f=f1, x=x, xdot=xdot)
     return dm, s1
 
 

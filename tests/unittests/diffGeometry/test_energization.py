@@ -75,11 +75,9 @@ def two_different_spaces():
     return geo1, le1, dm1, geo2, le2, dm2
 
 
-def test_energization(energization_example):
+def test_energization_simple(energization_example):
     geo = energization_example[0]
     le = energization_example[1]
-    geo_energized = EnergizedGeometry(g=geo, le=le)
-    geo_energized.concretize()
     geo_weighted = WeightedGeometry(g=geo, le=le)
     geo_weighted.concretize()
     x = np.array([0.2, -0.8])
@@ -93,15 +91,15 @@ def test_energization(energization_example):
     )
     h = 0.5 / (x ** 2) * np.linalg.norm(xdot) ** 2
     f_test = np.dot(pe, h)
-    M, f, _ = geo_energized.evaluate(x, xdot)
-    M_w, f_w, _, alpha_ex = geo_weighted.evaluate(x, xdot)
+    M_w, f_w, xddot_w, alpha_ex = geo_weighted.evaluate(x, xdot)
+    xddot = xddot_w - alpha_ex * xdot
     h_alpha = h + alpha_ex * xdot
-    assert M[0, 0] == 1.0
-    assert M[0, 1] == 0.0
-    assert M[1, 0] == 0.0
-    assert M[1, 1] == 1.0
-    assert f[0] == pytest.approx(f_test[0])
-    assert f[1] == pytest.approx(f_test[1])
+    assert M_w[0, 0] == 1.0
+    assert M_w[0, 1] == 0.0
+    assert M_w[1, 0] == 0.0
+    assert M_w[1, 1] == 1.0
+    assert xddot[0] == pytest.approx(-f_test[0])
+    assert xddot[1] == pytest.approx(-f_test[1])
     assert h_alpha[0] == pytest.approx(f_test[0])
     assert h_alpha[1] == pytest.approx(f_test[1])
 
@@ -126,10 +124,10 @@ def test_pull_energized(energization_example_pulled):
     h = 0.5 * np.linalg.norm(xdot) ** 2 / (x ** 2 + eps)
     xddot_w_test = -np.dot(np.dot(np.linalg.pinv(M_w), M_w), h)
     f_w_test = np.dot(M_w, h)
-    assert M[0, 0] == pytest.approx(x[0] ** 2 + x[1] ** 2)
-    assert M[0, 1] == pytest.approx(0.0)
-    assert M[1, 0] == pytest.approx(0.0)
-    assert M[1, 1] == pytest.approx(x[0] ** 2 + x[1] ** 2)
+    assert M_w[0, 0] == pytest.approx(x[0] ** 2 + x[1] ** 2)
+    assert M_w[0, 1] == pytest.approx(0.0)
+    assert M_w[1, 0] == pytest.approx(0.0)
+    assert M_w[1, 1] == pytest.approx(x[0] ** 2 + x[1] ** 2)
     assert M_w[0, 0] == pytest.approx(x[0] ** 2 + x[1] ** 2)
     assert M_w[0, 1] == pytest.approx(0.0)
     assert M_w[1, 0] == pytest.approx(0.0)
@@ -138,8 +136,6 @@ def test_pull_energized(energization_example_pulled):
     assert f_w[1] == pytest.approx(f_w_test[1])
     assert xddot_w[0] == pytest.approx(xddot_w_test[0])
     assert xddot_w[1] == pytest.approx(xddot_w_test[1])
-    assert xddot[0] == pytest.approx(xddot_w_alpha[0], abs=1e-4)
-    assert xddot[1] == pytest.approx(xddot_w_alpha[1], abs=1e-4)
     geo_pulled = geo.pull(dm)
     geo_pulled.concretize()
     geo_energized_pulled = geo_energized.pull(dm)
@@ -164,8 +160,8 @@ def test_pull_energized(energization_example_pulled):
     assert M_p_w[1, 1] == pytest.approx(M_p_test[1, 1])
     assert f_p_w[0] == pytest.approx(f_p_w_test[0])
     assert f_p_w[1] == pytest.approx(f_p_w_test[1])
-    assert qddot[0] == pytest.approx(qddot_w_alpha[0], abs=1e-6)
-    assert qddot[1] == pytest.approx(qddot_w_alpha[1], abs=1e-6)
+    assert qddot[0] == pytest.approx(qddot_w_alpha[0], rel=1e-4)
+    assert qddot[1] == pytest.approx(qddot_w_alpha[1], rel=1e-4)
     xddot_p = np.dot(J, qddot) + np.dot(Jdot, qdot)
     assert xddot_p[0] == pytest.approx(xddot[0])
     assert xddot_p[1] == pytest.approx(xddot[1])
@@ -255,12 +251,6 @@ def test_two_spaces_energization(two_different_spaces):
         + np.dot(M_we2, alpha_we2 * qdot)
     )
     f_test = f_we1 + f_we2 + np.dot(M_we, alpha_we * qdot)
-    print(f_test)
-    print(f_we1_we2_alpha)
-    print(f_en)
-    print("alpha_we1 : ", alpha_we1)
-    print("alpha_we2 : ", alpha_we2)
-    print("alpha_we : ", alpha_we)
     assert f_we1_we2_alpha[0] == pytest.approx(f_en[0])
     assert f_we1_we2_alpha[1] == pytest.approx(f_en[1])
     assert M_en[0, 0] == pytest.approx(M_we[0, 0])
@@ -269,9 +259,9 @@ def test_two_spaces_energization(two_different_spaces):
     assert M_en[1, 1] == pytest.approx(M_we[1, 1])
     qddot_we_alpha = qddot_we - alpha_we * qdot
     qddot_we12_alpha = -np.dot(np.linalg.pinv(M_we), f_we1_we2_alpha)
-    assert qddot_we12_alpha[0] == pytest.approx(qddot_en[0])
-    assert qddot_we12_alpha[1] == pytest.approx(qddot_en[1])
+    assert qddot_we12_alpha[0] == pytest.approx(qddot_en[0], rel=1e-4)
+    assert qddot_we12_alpha[1] == pytest.approx(qddot_en[1], rel=1e-4)
     # !!! Important individual energization is different from combined energization
-    # onle the latter is what we need
+    # only the latter is what we need
     assert qddot_we_alpha[0] != pytest.approx(qddot_en[0])
     assert qddot_we_alpha[1] != pytest.approx(qddot_en[1])
