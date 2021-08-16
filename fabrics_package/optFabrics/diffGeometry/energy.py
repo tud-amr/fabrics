@@ -54,7 +54,7 @@ class Lagrangian(object):
         f_e = -dL_dx
         M = d2L_dxdot2
         f = ca.mtimes(ca.transpose(F), self.xdot()) + f_e
-        self._S = Spec(M, f, var=self._vars)
+        self._S = Spec(M, f=f, var=self._vars)
 
     def concretize(self):
         self._S.concretize()

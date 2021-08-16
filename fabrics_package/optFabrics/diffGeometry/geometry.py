@@ -10,18 +10,18 @@ class Geometry:
     """description"""
 
     def __init__(self, **kwargs):
-        if len(kwargs) == 3:
+        if 'x' in kwargs:
             h = kwargs.get("h")
             x = kwargs.get("x")
             xdot = kwargs.get("xdot")
             self._vars = [x, xdot]
-        elif len(kwargs) == 2:
+        elif 'var' in kwargs:
             h = kwargs.get("h")
             self._vars = kwargs.get('var')
-        elif len(kwargs) == 1:
+        elif 's' in kwargs:
             s = kwargs.get("s")
             M_eps = s._M + np.identity(s.x().size()[0]) * eps
-            h = ca.mtimes(ca.pinv(M_eps), s._f)
+            h = s.h()
             self._vars = s._vars
 
         assert isinstance(h, ca.SX)

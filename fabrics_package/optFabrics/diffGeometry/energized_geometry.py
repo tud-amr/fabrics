@@ -21,7 +21,7 @@ class EnergizedGeometry(Spec):
         )
         pe = np.identity(le.x().size()[0]) - ca.mtimes(le._S._M, frac)
         f = le._S._f + ca.mtimes(pe, ca.mtimes(le._S._M, g._h) - le._S._f)
-        super().__init__(le._S._M, f, var=g._vars)
+        super().__init__(le._S._M, f=f, var=g._vars)
         self._le = le
 
 
@@ -34,12 +34,15 @@ class WeightedGeometry(Spec):
             checkCompatability(le, g)
             var = joinVariables(g._vars, le._vars)
             self._le = le
-            super().__init__(le._S._M, ca.mtimes(le._S._M, g._h), var=var)
+            self._h = g._h
+            self._M = le._S.M()
+            self._vars = var
+            #super().__init__(le._S.M(), ca.mtimes(le._S.M(), g._h), var=var)
         if "s" in kwargs:
             s = kwargs.get("s")
             checkCompatability(le, s)
             self._le = le
-            super().__init__(s._M, s._f, var=s._vars)
+            super().__init__(s.M(), f=s.f(), var=s._vars)
 
     def __add__(self, b):
         spec = super().__add__(b)
@@ -48,17 +51,15 @@ class WeightedGeometry(Spec):
 
     def computeAlpha(self):
         frac = 1 / (
-            eps + ca.dot(self.xdot(), ca.mtimes(self._le._S._M, self.xdot()))
+            eps + ca.dot(self.xdot(), ca.mtimes(self._le._S.M(), self.xdot()))
         )
-        self._alpha = -frac * ca.dot(self.xdot(), self._f - self._le._S._f)
+        self._alpha = -frac * ca.dot(self.xdot(), self.f() - self._le._S.f())
 
     def concretize(self):
         self.computeAlpha()
-        self._xddot = ca.mtimes(
-            ca.pinv(self._M + np.identity(self.x().size()[0]) * eps), -self._f
-        )
+        self._xddot = -self.h()
         self._funs = ca.Function(
-            "M", self._vars, [self._M, self._f, self._xddot, self._alpha]
+            "M", self._vars, [self.M(), self.f(), self._xddot, self._alpha]
         )
 
     def evaluate(self, *args):

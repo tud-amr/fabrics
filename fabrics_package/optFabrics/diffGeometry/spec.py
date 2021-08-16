@@ -11,7 +11,15 @@ from optFabrics.exceptions.spec_exception import SpecException
 class Spec:
     """description"""
 
-    def __init__(self, M: ca.SX, f: ca.SX, **kwargs):
+    def __init__(self, M: ca.SX, **kwargs):
+        if 'f' in kwargs:
+            f = kwargs.get('f')
+            assert isinstance(f, ca.SX)
+            self._f = f
+        if 'h' in kwargs:
+            h = kwargs.get('h')
+            assert isinstance(h, ca.SX)
+            self._h = h
         if 'x' in kwargs:
             self._vars = [kwargs.get('x'), kwargs.get('xdot')]
         elif 'var' in kwargs:
@@ -20,9 +28,27 @@ class Spec:
         for var in self._vars:
             assert isinstance(var, ca.SX)
         assert isinstance(M, ca.SX)
-        assert isinstance(f, ca.SX)
         self._M = M
-        self._f = f
+
+    def h(self):
+        if hasattr(self, '_h'):
+            return self._h
+        else:
+            import warnings
+            warnings.warn("Casadi pseudo inverse is used in weighted geometry")
+            h = ca.mtimes(
+                ca.pinv(self._M + np.identity(self.x().size()[0]) * eps), self._f
+            )
+            return h
+
+    def f(self):
+        if hasattr(self, '_f'):
+            return self._f
+        else:
+            return ca.mtimes(self.M(), self._h)
+
+    def M(self):
+        return self._M
 
     def x(self):
         return self._vars[0]
@@ -31,11 +57,9 @@ class Spec:
         return self._vars[1]
 
     def concretize(self):
-        self._xddot = ca.mtimes(
-            ca.pinv(self._M + np.identity(self.x().size()[0]) * eps), -self._f
-        )
+        self._xddot = -self.h()
         self._funs = ca.Function(
-            "M", self._vars, [self._M, self._f, self._xddot]
+            "M", self._vars, [self.M(), self.f(), self._xddot]
         )
 
     def evaluate(self, *args):
@@ -51,14 +75,17 @@ class Spec:
         assert isinstance(b, Spec)
         checkCompatability(self, b)
         all_vars = joinVariables(self._vars, b._vars)
-        return Spec(self._M + b._M, self._f + b._f, var=all_vars)
+        if hasattr(self, '_h') and hasattr(b, '_h') and 1 == 2:
+            return Spec(self.M() + b.M(), h=self.h() + b.h(), var=all_vars)
+        else:
+            return Spec(self.M() + b.M(), f=self.f() + b.f(), var=all_vars)
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
-        M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self._M, dm._J))
+        M_pulled = ca.mtimes(ca.transpose(dm._J), ca.mtimes(self.M(), dm._J))
         Jt = ca.transpose(dm._J)
-        f_1 = ca.mtimes(Jt, ca.mtimes(self._M, dm.Jdotqdot()))
-        f_2 = ca.mtimes(Jt, self._f)
+        f_1 = ca.mtimes(Jt, ca.mtimes(self.M(), dm.Jdotqdot()))
+        f_2 = ca.mtimes(Jt, self.f())
         f_pulled = f_1 + f_2
         M_pulled_subst_x = ca.substitute(M_pulled, self._vars[0], dm._phi)
         M_pulled_subst_x_xdot = ca.substitute(
@@ -69,4 +96,4 @@ class Spec:
             f_pulled_subst_x, self._vars[1], dm.phidot()
         )
         var = joinVariables(dm._vars, self._vars[2:])
-        return Spec(M_pulled_subst_x_xdot, f_pulled_subst_x_xdot, var=var)
+        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=var)
