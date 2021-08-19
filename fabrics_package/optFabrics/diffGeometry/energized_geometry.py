@@ -50,10 +50,11 @@ class WeightedGeometry(Spec):
         return WeightedGeometry(s=spec, le=le)
 
     def computeAlpha(self):
+        xdot = self._le.xdot_rel()
         frac = 1 / (
-            eps + ca.dot(self.xdot(), ca.mtimes(self._le._S.M(), self.xdot()))
+            eps + ca.dot(xdot, ca.mtimes(self._le._S.M(), xdot))
         )
-        self._alpha = -frac * ca.dot(self.xdot(), self.f() - self._le._S.f())
+        self._alpha = -frac * ca.dot(xdot, self.f() - self._le._S.f())
 
     def concretize(self):
         self.computeAlpha()

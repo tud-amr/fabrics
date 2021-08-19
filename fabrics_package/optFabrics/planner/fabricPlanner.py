@@ -56,6 +56,8 @@ class FabricPlanner:
         self._forcing = True
         self._eg_f = deepcopy(self._eg)
         self._eg_f += WeightedGeometry(g=g, le=le).pull(dm)
+        # TODO: The following should be identitical <19-08-21, mspahn> #
+        # self._eg_f += WeightedGeometry(g=g.pull(dm), le=le.pull(dm))
         self._vars = joinVariables(self._vars, self._eg_f._vars)
         if goalVelocity is not None:
             self._targetVelocity += ca.mtimes(ca.transpose(dm._J), goalVelocity)

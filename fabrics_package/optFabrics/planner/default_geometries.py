@@ -4,12 +4,12 @@ from optFabrics.diffGeometry.geometry import Geometry
 
 class CollisionGeometry(Geometry):
     def __init__(self, x, xdot, **kwargs):
-        p = {"lam": 2}
+        p = {"lam": 2, 'exp': 1}
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
         s = -0.5 * (ca.sign(xdot) - 1)
-        h = -p["lam"] / (x ** 1) * s * xdot ** 2
+        h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
         super().__init__(h=h, x=x, xdot=xdot)
 
 

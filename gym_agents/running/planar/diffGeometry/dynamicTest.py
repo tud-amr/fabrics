@@ -7,7 +7,7 @@ import numpy as np
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
 from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
 from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian, GoalLagrangian
-from optFabrics.planner.default_maps import CollisionMap, VariableGoalMap, VariableCollisionMap, GoalMap
+from optFabrics.planner.default_maps import CollisionMap, VariableGoalMap, GoalMap
 from optFabrics.planner.default_leaves import defaultAttractor
 
 from optFabrics.diffGeometry.diffMap  import DifferentialMap, VariableDifferentialMap, RelativeDifferentialMap

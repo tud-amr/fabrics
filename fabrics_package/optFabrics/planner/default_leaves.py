@@ -26,10 +26,9 @@ def defaultDynamicAttractor(q: ca.SX, qdot: ca.SX, fk: ca.SX):
     x_rel = ca.SX.sym("x_rel", 2)
     xdot_rel = ca.SX.sym("xdot_rel", 2)
     # relative systems
-    lag_psi = GoalLagrangian(x, xdot)
-    geo_rel = GoalGeometry(x_rel, xdot_rel, k_psi=20)
     dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, q_p=x_g, qdot_p=xdot_g, qddot_p=xddot_g)
-    geo_psi = geo_rel.pull(dm_rel)
+    lag_psi = GoalLagrangian(x_rel, xdot_rel).pull(dm_rel)
+    geo_psi = GoalGeometry(x_rel, xdot_rel, k_psi=20).pull(dm_rel)
     phi_psi = fk
     dm_psi = DifferentialMap(phi_psi, q=q, qdot=qdot)
     return dm_psi, lag_psi, geo_psi, x, xdot, xdot_g

@@ -3,7 +3,7 @@ import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.geometry import Geometry
 from optFabrics.diffGeometry.spec import Spec
-from optFabrics.diffGeometry.diffMap import VariableDifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
 
 @pytest.fixture
@@ -13,13 +13,15 @@ def variable_geometry():
     q_p = ca.SX.sym("q_p", 1)
     qdot_p = ca.SX.sym("qdot_p", 1)
     qddot_p = ca.SX.sym("qddot_p", 1)
+    q_rel = ca.SX.sym("q_rel", 1)
+    qdot_rel = ca.SX.sym("qdot_rel", 1)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    phi = ca.fabs(q-q_p)
-    dm = VariableDifferentialMap(phi, q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    dm = DifferentialMap(ca.fabs(q_rel), q=q_rel, qdot=qdot_rel)
     h = 0.5 / (x ** 2) * ca.norm_2(xdot) ** 2
     geo = Geometry(h=h, x=x, xdot=xdot)
-    return dm, geo
+    return dm_rel, dm, geo
 
 
 @pytest.fixture
@@ -29,19 +31,21 @@ def variable_spec():
     q_p = ca.SX.sym("q_p", 2)
     qdot_p = ca.SX.sym("qdot_p", 2)
     qddot_p = ca.SX.sym("qddot_p", 2)
-    phi = ca.fabs(q-q_p)
-    dm = VariableDifferentialMap(phi, q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    q_rel = ca.SX.sym("q_rel", 2)
+    qdot_rel = ca.SX.sym("qdot_rel", 2)
+    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    dm = DifferentialMap(ca.fabs(q_rel), q=q_rel, qdot=qdot_rel)
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 / (x ** 2)
     s1 = Spec(M1, f=f1, x=x, xdot=xdot)
-    return dm, s1
+    return dm_rel, dm, s1
 
 
 def test_variable_geometry(variable_geometry):
-    dm, geo = variable_geometry
-    geo_var = geo.pull(dm)
+    dm_rel, dm, geo = variable_geometry
+    geo_var = geo.pull(dm_rel).pull(dm)
     geo_var.concretize()
     q = np.array([1.0])
     qdot = np.array([-0.2])
@@ -60,8 +64,8 @@ def test_variable_geometry(variable_geometry):
 
 
 def test_variable_spec(variable_spec):
-    dm, s = variable_spec
-    s_var = s.pull(dm)
+    dm_rel, dm, s = variable_spec
+    s_var = s.pull(dm).pull(dm_rel)
     s_var.concretize()
     q = np.array([1.0, 0.5])
     qdot = np.array([-0.2, 0.2])

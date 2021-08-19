@@ -3,7 +3,7 @@ import casadi as ca
 import numpy as np
 
 from optFabrics.planner.fabricPlanner import FabricPlanner
-from optFabrics.diffGeometry.diffMap import DifferentialMap, VariableDifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
 
@@ -29,10 +29,8 @@ def movingGoalGeometry():
     geo_rel = Geometry(h=h_rel, x=x_rel, xdot=xdot_rel)
 
     # define the relative transformation
-    phi_rel = x - x_d
-    dm_rel = VariableDifferentialMap(phi_rel, q=x, qdot=xdot, q_p=x_d, qdot_p=xdot_d, qddot_p=xddot_d)
+    dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, q_p=x_d, qdot_p=xdot_d, qddot_p=xddot_d)
     geo = geo_rel.pull(dm_rel)
-    print(geo._h)
     # Define second transform to configuration space
     fks = []
     n = 3

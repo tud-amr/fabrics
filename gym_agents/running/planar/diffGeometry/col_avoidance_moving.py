@@ -6,7 +6,9 @@ import numpy as np
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
 from optFabrics.planner.default_geometries import CollisionGeometry
 from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap, VariableCollisionMap
+from optFabrics.planner.default_maps import CollisionMap
+
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -15,10 +17,10 @@ from robotPlot import RobotPlot
 def pointMassDynamicAvoidance(n_steps=500):
     # Define the robot
     n = 2
-    env = gym.make('point-robot-acc-v0', dt=0.005)
+    env = gym.make('point-robot-acc-v0', dt=0.001)
     ## setting up the problem
     t = ca.SX.sym('t', 1)
-    x_obst = ca.vertcat(-1.0 + t * 0.5, t * 0.5)
+    x_obst = ca.vertcat(-3.0 + (0.5 * t)**2, -t * 0.1 + 0.1 * t**2)
     v_obst = ca.jacobian(x_obst, t)
     a_obst = ca.jacobian(v_obst, t)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
@@ -34,24 +36,29 @@ def pointMassDynamicAvoidance(n_steps=500):
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot)
+    geo_col = CollisionGeometry(x, xdot,lam=10)
     for obst in obsts:
         q_p = ca.SX.sym('q_p', 2)
         qdot_p = ca.SX.sym('qdot_p', 2)
         qddot_p = ca.SX.sym('qddot_p', 2)
+        q_rel = ca.SX.sym('q_rel', 2)
+        qdot_rel = ca.SX.sym('qdot_rel', 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
-                dm_col = VariableCollisionMap(q, qdot, fk, obst.r(), q_p, qdot_p, qddot_p)
+                phi_n = ca.norm_2(q_rel) / obst.r()  - 1
+                dm_n = DifferentialMap(phi_n, q=q_rel, qdot=qdot_rel)
+                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+                planner.addGeometry(dm_rel, lag_col.pull(dm_n), geo_col.pull(dm_n))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
-            planner.addGeometry(dm_col, lag_col, geo_col)
+                planner.addGeometry(dm_col, lag_col, geo_col)
     exLag = ExecutionLagrangian(q, qdot)
     exLag.concretize()
     planner.setExecutionEnergy(exLag)
     planner.concretize()
     # setup environment
     qs = []
-    x0 = np.array([2.3, 0.5])
+    x0 = np.array([3.0, 0.5])
     xdot0 = np.array([-1.0, -0.0])
     # running the simulation
     ob = env.reset(x0, xdot0)
@@ -79,7 +86,7 @@ def pointMassDynamicAvoidance(n_steps=500):
     return res
 
 if __name__ == "__main__":
-    n_steps = 500
+    n_steps = 5500
     res = pointMassDynamicAvoidance(n_steps)
     qs = res['qs']
     obsts = res['obsts']

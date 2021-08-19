@@ -22,7 +22,7 @@ def pointMassAvoidance(n_steps=1200):
     qdot = ca.SX.sym("qdot", n)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    l_base = 0.5 * ca.dot(qdot, qdot)
+    l_base = 0.0 * ca.dot(qdot, qdot)
     h_base = ca.SX(np.zeros(n))
     baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
     baseLag = Lagrangian(l_base, x=q, xdot=qdot)

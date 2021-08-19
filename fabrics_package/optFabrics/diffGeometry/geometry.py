@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap, VariableDifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap
 from optFabrics.diffGeometry.variables import eps
 from optFabrics.helper_functions import joinVariables
 
@@ -20,7 +20,6 @@ class Geometry:
             self._vars = kwargs.get('var')
         elif 's' in kwargs:
             s = kwargs.get("s")
-            M_eps = s._M + np.identity(s.x().size()[0]) * eps
             h = s.h()
             self._vars = s._vars
 

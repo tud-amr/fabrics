@@ -7,8 +7,10 @@ import numpy as np
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
 from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
 from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap, VariableCollisionMap
+from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultAttractor
+
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
 from obstacle import DynamicObstacle, Obstacle
 from robotPlot import RobotPlot
@@ -46,17 +48,22 @@ def pointMassDynamic(n_steps=5000):
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot)
+    geo_col = CollisionGeometry(x, xdot, exp=3, lam=10)
     for obst in obsts:
         q_p = ca.SX.sym('q_p', 2)
         qdot_p = ca.SX.sym('qdot_p', 2)
         qddot_p = ca.SX.sym('qddot_p', 2)
+        q_rel = ca.SX.sym('q_rel', 2)
+        qdot_rel = ca.SX.sym('qdot_rel', 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
-                dm_col = VariableCollisionMap(q, qdot, fk, obst.r(), q_p, qdot_p, qddot_p)
+                phi_n = ca.norm_2(q_rel) / obst.r()  - 1
+                dm_n = DifferentialMap(phi_n, q=q_rel, qdot=qdot_rel)
+                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+                planner.addGeometry(dm_rel, lag_col.pull(dm_n), geo_col.pull(dm_n))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
-            planner.addGeometry(dm_col, lag_col, geo_col)
+                planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
     q_d = np.array([-2.0, -1.5])
     dm_psi, lag_psi, _, x_psi, xdot_psi  = defaultAttractor(q, qdot, q_d, fk)

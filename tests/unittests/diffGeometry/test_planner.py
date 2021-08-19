@@ -2,7 +2,7 @@ import pytest
 import casadi as ca
 import numpy as np
 from optFabrics.planner.fabricPlanner import FabricPlanner
-from optFabrics.diffGeometry.diffMap import DifferentialMap, VariableDifferentialMap, RelativeDifferentialMap
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
 

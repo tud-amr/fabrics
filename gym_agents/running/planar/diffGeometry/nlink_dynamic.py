@@ -12,9 +12,10 @@ from optFabrics.planner.default_energies import (
 )
 from optFabrics.planner.default_maps import (
     CollisionMap,
-    VariableCollisionMap,
 )
 from optFabrics.planner.default_leaves import defaultDynamicAttractor
+
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -33,6 +34,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     v_obst_fun = ca.Function("v_obst_fun", [t], [v_obst])
     r = 1.0
     obsts = [DynamicObstacle(x_obst_fun, r), Obstacle(np.array([-1.0, 2.5]), 0.5)]
+    #obsts = []
     # goal
     t = ca.SX.sym("t", 1)
     w = 1.0
@@ -54,22 +56,29 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     for i in range(1, n + 1):
         fks.append(ca.SX(casadiFk(q, i)[0:2]))
     for obst in obsts:
-        q_p = ca.SX.sym("q_p", 2)
-        qdot_p = ca.SX.sym("qdot_p", 2)
-        qddot_p = ca.SX.sym("qddot_p", 2)
+        x_p = ca.SX.sym('q_p', 2)
+        xdot_p = ca.SX.sym('qdot_p', 2)
+        xddot_p = ca.SX.sym('qddot_p', 2)
+        x_col = ca.SX.sym("x_col", 2)
+        xdot_col = ca.SX.sym("xdot_col", 2)
+        x_rel = ca.SX.sym("x_rel", 2)
+        xdot_rel = ca.SX.sym("xdot_rel", 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
-                dm_col = VariableCollisionMap(
-                    q, qdot, fk, obst.r(), q_p, qdot_p, qddot_p
-                )
+                phi_n = ca.norm_2(x_rel)/ obst.r() - 1
+                dm_n = DifferentialMap(phi_n, q=x_rel, qdot=xdot_rel)
+                dm_rel = RelativeDifferentialMap(q=x_col, qdot=xdot_col, q_p=x_p, qdot_p=xdot_p, qddot_p=xddot_p) 
+                dm_col = DifferentialMap(fk, q=q, qdot=qdot)
+                planner.addGeometry(dm_col, lag_col.pull(dm_n).pull(dm_rel), geo_col.pull(dm_n).pull(dm_rel))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
-            planner.addGeometry(dm_col, lag_col, geo_col)
+                planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
     dm_psi, lag_psi, geo_psi, x_psi, xdot_psi, xdot_g = defaultDynamicAttractor(
         q, qdot, fks[-1]
     )
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi, goalVelocity=xdot_g)
+    __import__('pdb').set_trace()
     # execution energy
     exLag = ExecutionLagrangian(q, qdot)
     planner.setExecutionEnergy(exLag)

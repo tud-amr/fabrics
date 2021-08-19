@@ -7,8 +7,10 @@ import numpy as np
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
 from optFabrics.planner.default_geometries import CollisionGeometry
 from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap, VariableCollisionMap
+from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultDynamicAttractor
+
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -18,8 +20,8 @@ from solverPlot import SolverPlot
 def pointMassDynamicGoal(n_steps=5000):
     env = gym.make("point-robot-acc-v0", dt=0.01)
     t = ca.SX.sym("t", 1)
-    w_obst = 1.0
-    x_obst = ca.vertcat(0.5, -3.0 * ca.sin(w_obst * t))
+    w = 1.0
+    x_obst = ca.vertcat(0.5, -3.0 * ca.sin(w * t))
     v_obst = ca.jacobian(x_obst, t)
     a_obst = ca.jacobian(v_obst, t)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
@@ -28,7 +30,6 @@ def pointMassDynamicGoal(n_steps=5000):
     r = 1.0
     obsts = [DynamicObstacle(x_obst_fun, r), Obstacle(np.array([-1.0, 0.5]), 0.15)]
     t = ca.SX.sym("t", 1)
-    w = 1.0
     x_d = ca.vertcat(2.0 * ca.cos(w * t), 1.5 * ca.sin(w * t))
     x_goal = ca.Function("x_goal", [t], [x_d])
     v_d = ca.jacobian(x_d, t)
@@ -42,21 +43,24 @@ def pointMassDynamicGoal(n_steps=5000):
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot)
     fks = [q]
+    lag_col = CollisionLagrangian(x, xdot)
+    geo_col = CollisionGeometry(x, xdot, exp=3)
     for obst in obsts:
-        q_p = ca.SX.sym("q_p", 2)
-        qdot_p = ca.SX.sym("qdot_p", 2)
-        qddot_p = ca.SX.sym("qddot_p", 2)
+        q_p = ca.SX.sym('q_p', 2)
+        qdot_p = ca.SX.sym('qdot_p', 2)
+        qddot_p = ca.SX.sym('qddot_p', 2)
+        q_rel = ca.SX.sym('q_rel', 2)
+        qdot_rel = ca.SX.sym('qdot_rel', 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
-                dm_col = VariableCollisionMap(
-                    q, qdot, fk, obst.r(), q_p, qdot_p, qddot_p
-                )
+                phi_n = ca.norm_2(q_rel) / obst.r()  - 1
+                dm_n = DifferentialMap(phi_n, q=q_rel, qdot=qdot_rel)
+                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+                planner.addGeometry(dm_rel, lag_col.pull(dm_n), geo_col.pull(dm_n))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
-            planner.addGeometry(dm_col, lag_col, geo_col)
+                planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
     dm_psi, lag_psi, geo_psi, x_psi, xdot_psi, xdot_g = defaultDynamicAttractor(
         q, qdot, q
@@ -67,7 +71,7 @@ def pointMassDynamicGoal(n_steps=5000):
     planner.setExecutionEnergy(exLag)
     # Speed control
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, b=[2.0, 10.0])
+    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, b=[0.4, 10.0])
     # planner.setConstantSpeedControl(beta=5.0)
     planner.concretize()
     # setup environment

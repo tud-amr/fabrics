@@ -8,8 +8,10 @@ import numpy as np
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
 from optFabrics.planner.default_geometries import CollisionGeometry
 from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap, VariableCollisionMap
+from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultAttractor
+
+from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
 # robotUtils
 from obstacle import DynamicObstacle, Obstacle
@@ -53,15 +55,23 @@ def nlinkDynamic(n=3, n_steps=5000):
     lag_col = CollisionLagrangian(x, xdot)
     geo_col = CollisionGeometry(x, xdot)
     for obst in obsts:
-        q_p = ca.SX.sym('q_p', 2)
-        qdot_p = ca.SX.sym('qdot_p', 2)
-        qddot_p = ca.SX.sym('qddot_p', 2)
+        x_p = ca.SX.sym('q_p', 2)
+        xdot_p = ca.SX.sym('qdot_p', 2)
+        xddot_p = ca.SX.sym('qddot_p', 2)
+        x_col = ca.SX.sym("x_col", 2)
+        xdot_col = ca.SX.sym("xdot_col", 2)
+        x_rel = ca.SX.sym("x_rel", 2)
+        xdot_rel = ca.SX.sym("xdot_rel", 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
-                dm_col = VariableCollisionMap(q, qdot, fk, obst.r(), q_p, qdot_p, qddot_p)
+                phi_n = ca.norm_2(x_rel)/ obst.r() - 1
+                dm_n = DifferentialMap(phi_n, q=x_rel, qdot=xdot_rel)
+                dm_rel = RelativeDifferentialMap(q=x_col, qdot=xdot_col, q_p=x_p, qdot_p=xdot_p, qddot_p=xddot_p) 
+                dm_col = DifferentialMap(fk, q=q, qdot=qdot)
+                planner.addGeometry(dm_col, lag_col.pull(dm_n).pull(dm_rel), geo_col.pull(dm_n).pull(dm_rel))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
-            planner.addGeometry(dm_col, lag_col, geo_col)
+                planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
     dm_psi, lag_psi, geo_psi, x_psi, _ = defaultAttractor(q, qdot, x_d, fk)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)

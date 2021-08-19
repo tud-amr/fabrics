@@ -29,6 +29,8 @@ class Lagrangian(object):
         elif 'var' in kwargs:
             self._vars = kwargs.get('var')
         self._rel = True if len(self._vars) > 2 else False
+        if self._rel:
+            self._Jp = kwargs.get('Jp')
         self.applyEulerLagrange()
 
     def x(self):
@@ -49,6 +51,13 @@ class Lagrangian(object):
         else:
             return None
 
+    def xdot_rel(self):
+        if self._rel:
+            Jpinv = ca.pinv(self._Jp)
+            return self.xdot() - ca.mtimes(Jpinv, self._vars[3])
+        else:
+            return self.xdot()
+
     def xddot_p(self):
         if self._rel:
             return self._vars[4]
@@ -58,7 +67,12 @@ class Lagrangian(object):
     def __add__(self, b):
         assert isinstance(b, Lagrangian)
         checkCompatability(self, b)
-        return Lagrangian(self._l + b._l, var=joinVariables(self._vars, b._vars))
+        if b._rel:
+            return Lagrangian(self._l + b._l, var=joinVariables(self._vars, b._vars), Jp=b._Jp)
+        elif self._rel:
+            return Lagrangian(self._l + b._l, var=joinVariables(self._vars, b._vars), Jp=self._Jp)
+        else:
+            return Lagrangian(self._l + b._l, var=joinVariables(self._vars, b._vars))
 
     def applyEulerLagrange(self):
         dL_dxdot = ca.gradient(self._l, self._vars[1])
@@ -99,8 +113,8 @@ class Lagrangian(object):
         assert isinstance(dm, DifferentialMap)
         l_subst = ca.substitute(self._l, self._vars[0], dm._phi)
         l_subst2 = ca.substitute(l_subst, self._vars[1], dm.phidot())
-        new_vars = joinVariables(self._vars[2:], dm._vars)
-        return Lagrangian(l_subst2, var=new_vars)
+        new_vars = joinVariables(dm._vars, self._vars[2:])
+        return Lagrangian(l_subst2, var=new_vars, Jp=dm._J)
 
 
 class FinslerStructure(Lagrangian):
