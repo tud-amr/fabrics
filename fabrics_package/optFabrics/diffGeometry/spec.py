@@ -1,11 +1,11 @@
 import casadi as ca
 import numpy as np
-import inspect
+from copy import deepcopy
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 from optFabrics.diffGeometry.variables import eps
 from optFabrics.helper_functions import joinVariables, checkCompatability
-from optFabrics.exceptions.spec_exception import SpecException
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 
 class Spec:
@@ -24,6 +24,9 @@ class Spec:
             self._vars = [kwargs.get('x'), kwargs.get('xdot')]
         elif 'var' in kwargs:
             self._vars = kwargs.get('var')
+        self._refTrajs = []
+        if 'refTrajs' in kwargs:
+            self._refTrajs = kwargs.get('refTrajs')
         self._xdot_d = np.zeros(self.x().size()[0])
         for var in self._vars:
             assert isinstance(var, ca.SX)
@@ -58,8 +61,11 @@ class Spec:
 
     def concretize(self):
         self._xddot = -self.h()
+        var = deepcopy(self._vars)
+        for refTraj in self._refTrajs:
+            var += refTraj._vars
         self._funs = ca.Function(
-            "M", self._vars, [self.M(), self.f(), self._xddot]
+            "M", var, [self.M(), self.f(), self._xddot]
         )
 
     def evaluate(self, *args):
@@ -95,5 +101,9 @@ class Spec:
         f_pulled_subst_x_xdot = ca.substitute(
             f_pulled_subst_x, self._vars[1], dm.phidot()
         )
-        var = joinVariables(dm._vars, self._vars[2:])
-        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=var)
+        var = dm._vars
+        if hasattr(dm, '_refTraj'):
+            refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
+        else:
+            refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
+        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=var, refTrajs=refTrajs)

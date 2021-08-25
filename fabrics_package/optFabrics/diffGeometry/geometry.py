@@ -1,5 +1,6 @@
 import casadi as ca
 import numpy as np
+from copy import deepcopy
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 from optFabrics.diffGeometry.variables import eps
@@ -22,6 +23,9 @@ class Geometry:
             s = kwargs.get("s")
             h = s.h()
             self._vars = s._vars
+        self._refTrajs = []
+        if 'refTrajs' in kwargs:
+            self._refTrajs = kwargs.get('refTrajs')
 
         assert isinstance(h, ca.SX)
         self._h = h
@@ -53,12 +57,19 @@ class Geometry:
         h_pulled = ca.mtimes(ca.pinv(JtJ_eps), h_1 + h_2)
         h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
         h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
-        var = joinVariables(dm._vars, self._vars[2:])
-        return Geometry(h=h_pulled_subst_x_xdot, var=var)
+        new_vars = dm._vars
+        if hasattr(dm, '_refTraj'):
+            refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
+        else:
+            refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
+        return Geometry(h=h_pulled_subst_x_xdot, var=new_vars, refTrajs=refTrajs)
 
     def concretize(self):
         self._xddot = -self._h
-        self._funs = ca.Function("funs", self._vars, [self._h, self._xddot])
+        var = deepcopy(self._vars)
+        for refTraj in self._refTrajs:
+            var += refTraj._vars
+        self._funs = ca.Function("funs", var, [self._h, self._xddot])
 
     def evaluate(self, *args):
         funs = self._funs(*args)

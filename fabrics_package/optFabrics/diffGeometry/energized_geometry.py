@@ -1,5 +1,6 @@
 import casadi as ca
 import numpy as np
+from copy import deepcopy
 
 from optFabrics.diffGeometry.spec import Spec, checkCompatability
 from optFabrics.diffGeometry.geometry import Geometry
@@ -8,10 +9,11 @@ from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentia
 from optFabrics.diffGeometry.casadi_helpers import outerProduct
 from optFabrics.diffGeometry.variables import eps
 
-from optFabrics.helper_functions import joinVariables
+from optFabrics.helper_functions import joinRefTrajs
 
 class EnergizedGeometry(Spec):
     # Should not be used as it is not compliant with summation
+    # Only used for verification in testing
     def __init__(self, g: Geometry, le: Lagrangian):
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
@@ -32,17 +34,18 @@ class WeightedGeometry(Spec):
         if "g" in kwargs:
             g = kwargs.get("g")
             checkCompatability(le, g)
-            var = joinVariables(g._vars, le._vars)
+            var = g._vars
+            self._refTrajs = joinRefTrajs(le._refTrajs, g._refTrajs)
             self._le = le
             self._h = g._h
             self._M = le._S.M()
             self._vars = var
-            #super().__init__(le._S.M(), ca.mtimes(le._S.M(), g._h), var=var)
         if "s" in kwargs:
             s = kwargs.get("s")
             checkCompatability(le, s)
             self._le = le
-            super().__init__(s.M(), f=s.f(), var=s._vars)
+            refTrajs = joinRefTrajs(le._refTrajs, s._refTrajs)
+            super().__init__(s.M(), f=s.f(), var=s._vars, refTrajs=refTrajs)
 
     def __add__(self, b):
         spec = super().__add__(b)
@@ -59,8 +62,11 @@ class WeightedGeometry(Spec):
     def concretize(self):
         self.computeAlpha()
         self._xddot = -self.h()
+        var = deepcopy(self._vars)
+        for refTraj in self._refTrajs:
+            var += refTraj._vars
         self._funs = ca.Function(
-            "M", self._vars, [self.M(), self.f(), self._xddot, self._alpha]
+            "M", var, [self.M(), self.f(), self._xddot, self._alpha]
         )
 
     def evaluate(self, *args):

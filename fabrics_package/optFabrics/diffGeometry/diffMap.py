@@ -50,20 +50,15 @@ class DifferentialMap:
 
 class RelativeDifferentialMap(DifferentialMap):
     def __init__(self, **kwargs):
-        if len(kwargs) == 5:
+        if 'q' in kwargs:
             q = kwargs.get('q')
             qdot = kwargs.get('qdot')
-            q_p = kwargs.get('q_p')
-            qdot_p = kwargs.get('qdot_p')
-            qddot_p = kwargs.get('qddot_p')
-        elif len(kwargs) == 1:
-            q, qdot, q_p, qdot_p, qddot_p = kwargs.get('var')
-        assert isinstance(q_p, ca.SX)
-        assert isinstance(qdot_p, ca.SX)
-        assert isinstance(qddot_p, ca.SX)
-        phi = q - q_p
+        elif 'var' in kwargs:
+            q, qdot = kwargs.get('var')
+        if 'refTraj' in kwargs:
+            self._refTraj = kwargs.get('refTraj')
+        phi = q - self._refTraj.x()
         super().__init__(phi, q=q, qdot=qdot)
-        self._vars += [q_p, qdot_p, qddot_p]
 
     def forward(self, q: np.ndarray, qdot: np.ndarray, q_p: np.ndarray, qdot_p: np.ndarray, qddot_p: np.ndarray):
         assert isinstance(q, np.ndarray)
@@ -76,17 +71,14 @@ class RelativeDifferentialMap(DifferentialMap):
         xdot = qdot - qdot_p
         return x, xdot
 
+    def concretize(self):
+        var = self._vars + self._refTraj._vars
+        self._fun = ca.Function(
+            "forward", var, [self._phi, self._J, self._Jdot]
+        )
+
     def Jdotqdot(self):
-        return -1 * self.qddot_p()
+        return -1 * self._refTraj.xddot()
 
     def phidot(self):
-        return self.qdot() - self.qdot_p()
-
-    def q_p(self):
-        return self._vars[2]
-
-    def qdot_p(self):
-        return self._vars[3]
-
-    def qddot_p(self):
-        return self._vars[4]
+        return self.qdot() - self._refTraj.xdot()
