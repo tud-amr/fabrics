@@ -6,16 +6,15 @@ from optFabrics.diffGeometry.spec import Spec
 from optFabrics.diffGeometry.energy import Lagrangian
 from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
 from optFabrics.diffGeometry.diffMap import RelativeDifferentialMap
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 
 @pytest.fixture
 def relative_map():
     q = ca.SX.sym("q", 1)
     qdot = ca.SX.sym("qdot", 1)
-    q_p = ca.SX.sym("q_p", 1)
-    qdot_p = ca.SX.sym("qdot_p", 1)
-    qddot_p = ca.SX.sym("qddot_p", 1)
-    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    refTraj = ReferenceTrajectory(1, ca.SX(np.identity(1)))
+    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, refTraj=refTraj)
     q_rel = ca.SX.sym("q_rel", 1)
     qdot_rel = ca.SX.sym("qdot_rel", 1)
     l_rel = 0.5 * ca.dot(qdot_rel, qdot_rel) * ca.dot(q_rel, q_rel)

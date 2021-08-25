@@ -4,20 +4,19 @@ import numpy as np
 from optFabrics.diffGeometry.geometry import Geometry
 from optFabrics.diffGeometry.spec import Spec
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 
 @pytest.fixture
 def variable_geometry():
     q = ca.SX.sym("q", 1)
     qdot = ca.SX.sym("qdot", 1)
-    q_p = ca.SX.sym("q_p", 1)
-    qdot_p = ca.SX.sym("qdot_p", 1)
-    qddot_p = ca.SX.sym("qddot_p", 1)
+    refTraj = ReferenceTrajectory(1, ca.SX(np.identity(1)))
     q_rel = ca.SX.sym("q_rel", 1)
     qdot_rel = ca.SX.sym("qdot_rel", 1)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, refTraj=refTraj)
     dm = DifferentialMap(ca.fabs(q_rel), q=q_rel, qdot=qdot_rel)
     h = 0.5 / (x ** 2) * ca.norm_2(xdot) ** 2
     geo = Geometry(h=h, x=x, xdot=xdot)
@@ -28,12 +27,10 @@ def variable_geometry():
 def variable_spec():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
-    q_p = ca.SX.sym("q_p", 2)
-    qdot_p = ca.SX.sym("qdot_p", 2)
-    qddot_p = ca.SX.sym("qddot_p", 2)
+    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)))
     q_rel = ca.SX.sym("q_rel", 2)
     qdot_rel = ca.SX.sym("qdot_rel", 2)
-    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+    dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, refTraj=refTraj)
     dm = DifferentialMap(ca.fabs(q_rel), q=q_rel, qdot=qdot_rel)
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
@@ -52,8 +49,8 @@ def test_variable_geometry(variable_geometry):
     q_p = np.array([0.2])
     qdot_p = np.array([1.0])
     qddot_p = np.array([0.0])
-    h, qddot = geo_var.evaluate(q, qdot, q_p, qdot_p, qddot_p)
     h_test = 1 / (2 * np.linalg.norm(q - q_p)**2) * np.linalg.norm(qdot-qdot_p)**2
+    h, qddot = geo_var.evaluate(q, qdot, q_p, qdot_p, qddot_p)
     assert isinstance(h, np.ndarray)
     assert h[0] == pytest.approx(h_test)
     assert qddot[0] == pytest.approx(-h_test)

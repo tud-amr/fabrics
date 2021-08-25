@@ -5,6 +5,7 @@ from optFabrics.planner.fabricPlanner import FabricPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 
 @pytest.fixture
@@ -64,16 +65,14 @@ def variable_2dtask():
     qdot = ca.SX.sym("qdot", 2)
     q_rel = ca.SX.sym("q_rel", 2)
     qdot_rel = ca.SX.sym("qdot_rel", 2)
-    q_p = ca.SX.sym("q_p", 2)
-    qdot_p = ca.SX.sym("qdot_p", 2)
-    qddot_p = ca.SX.sym("qddot_p", 2)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     l = 0.5 * ca.dot(qdot, qdot)
     l_base = Lagrangian(l, x=q, xdot=qdot)
     geo_base = Geometry(h=ca.SX(np.zeros(2)), x=q, xdot=qdot)
     planner = FabricPlanner(geo_base, l_base)
-    dm_rel = RelativeDifferentialMap(var = [q, qdot, q_p, qdot_p, qddot_p])
+    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)))
+    dm_rel = RelativeDifferentialMap(var = [q, qdot], refTraj=refTraj)
     phi = ca.norm_2(q_rel)
     dm = DifferentialMap(phi, var=[q_rel, qdot_rel])
     s = -0.5 * (ca.sign(xdot) - 1)

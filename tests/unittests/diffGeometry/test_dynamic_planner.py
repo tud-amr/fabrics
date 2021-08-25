@@ -6,6 +6,7 @@ from optFabrics.planner.fabricPlanner import FabricPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 from casadiFk import casadiFk
 
@@ -20,7 +21,6 @@ def movingGoalGeometry():
     xdot_d = ca.SX.sym("xdot_d", 2)
     xddot_d = ca.SX.sym("xddot_d", 2)
 
-
     # define geometry in relative coordinates x_rel
     # where psi is defined to have its minimum at x = x_d
     k_psi = 1
@@ -29,7 +29,8 @@ def movingGoalGeometry():
     geo_rel = Geometry(h=h_rel, x=x_rel, xdot=xdot_rel)
 
     # define the relative transformation
-    dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, q_p=x_d, qdot_p=xdot_d, qddot_p=xddot_d)
+    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)), var=[x_d, xdot_d, xddot_d])
+    dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, refTraj=refTraj)
     geo = geo_rel.pull(dm_rel)
     # Define second transform to configuration space
     fks = []
