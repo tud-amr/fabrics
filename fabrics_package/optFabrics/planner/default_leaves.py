@@ -6,6 +6,7 @@ from optFabrics.planner.default_energies import GoalLagrangian
 from optFabrics.planner.default_maps import GoalMap
 
 from optFabrics.diffGeometry.diffMap import RelativeDifferentialMap, DifferentialMap
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 
 def defaultAttractor(q: ca.SX, qdot: ca.SX, goal: np.ndarray, fk: ca.SX):
@@ -17,19 +18,20 @@ def defaultAttractor(q: ca.SX, qdot: ca.SX, goal: np.ndarray, fk: ca.SX):
     return dm, lag, geo, x, xdot
 
 
-def defaultDynamicAttractor(q: ca.SX, qdot: ca.SX, fk: ca.SX):
+def defaultDynamicAttractor(q: ca.SX, qdot: ca.SX, fk: ca.SX, refTraj: ReferenceTrajectory, **kwargs):
+    p = {"k_psi": 20}
+    for key in p.keys():
+        if key in kwargs:
+            p[key] = kwargs.get(key)
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
-    x_g = ca.SX.sym("x_g", 2)
-    xdot_g = ca.SX.sym("xdot_g", 2)
-    xddot_g = ca.SX.sym("xdot_g", 2)
     x_rel = ca.SX.sym("x_rel", 2)
     xdot_rel = ca.SX.sym("xdot_rel", 2)
     # relative systems
-    dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, q_p=x_g, qdot_p=xdot_g, qddot_p=xddot_g)
+    dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, refTraj=refTraj)
     lag_psi = GoalLagrangian(x_rel, xdot_rel).pull(dm_rel)
-    geo_psi = GoalGeometry(x_rel, xdot_rel, k_psi=20).pull(dm_rel)
+    geo_psi = GoalGeometry(x_rel, xdot_rel, k_psi=p['k_psi']).pull(dm_rel)
     phi_psi = fk
     dm_psi = DifferentialMap(phi_psi, q=q, qdot=qdot)
-    return dm_psi, lag_psi, geo_psi, x, xdot, xdot_g
+    return dm_psi, lag_psi, geo_psi, x, xdot
 

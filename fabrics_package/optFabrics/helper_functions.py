@@ -28,3 +28,17 @@ def joinVariables(var1, var2):
         if not already_exists:
             unique_items.append(item)
     return unique_items
+
+
+def joinRefTrajs(refTrajs1, refTrajs2):
+    refTrajs = refTrajs1 + refTrajs2
+    unique_items = []
+    for item in refTrajs:
+        already_exists = False
+        for u_item in unique_items:
+            if u_item == item or ca.is_equal(u_item._vars[0], item._vars[0]):
+                already_exists = True
+                break
+        if not already_exists:
+            unique_items.append(item)
+    return unique_items

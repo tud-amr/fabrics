@@ -7,7 +7,7 @@ from optFabrics.diffGeometry.energy import Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
 from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
 from optFabrics.diffGeometry.speedControl import Damper
-from optFabrics.helper_functions import joinVariables
+from optFabrics.helper_functions import joinVariables, joinRefTrajs
 
 
 class FabricPlannerException(Exception):
@@ -33,6 +33,7 @@ class FabricPlanner:
         self._speedControl = False
         self._constantSpeedControl = False
         self._vars = self._eg._vars
+        self._refTrajs = []
 
     def var(self):
         try:
@@ -44,8 +45,9 @@ class FabricPlanner:
         assert isinstance(dm, DifferentialMap)
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
-        self._eg += WeightedGeometry(g=g, le=le).pull(dm)
-        self._vars = joinVariables(self._vars, self._eg._vars)
+        eg = WeightedGeometry(g=g, le=le).pull(dm)
+        self._eg += eg
+        self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
 
     def addForcingGeometry(
         self, dm: DifferentialMap, le: Lagrangian, g: Geometry, goalVelocity=None
@@ -55,7 +57,9 @@ class FabricPlanner:
         assert isinstance(g, Geometry)
         self._forcing = True
         self._eg_f = deepcopy(self._eg)
+        #eg_f = WeightedGeometry(g=g, le=le).pull(dm)
         self._eg_f += WeightedGeometry(g=g, le=le).pull(dm)
+        self._refTrajs = self._eg_f._refTrajs
         # TODO: The following should be identitical <19-08-21, mspahn> #
         # self._eg_f += WeightedGeometry(g=g.pull(dm), le=le.pull(dm))
         self._vars = joinVariables(self._vars, self._eg_f._vars)
@@ -113,7 +117,10 @@ class FabricPlanner:
                 self._eg.xdot()
                 - ca.mtimes(ca.pinv(self._eg_f._M), self._targetVelocity)
             )
-        self._funs = ca.Function("planner", self._vars, [xddot])
+        totalVar = deepcopy(self._vars)
+        for refTraj in self._refTrajs:
+            totalVar += refTraj._vars
+        self._funs = ca.Function("planner", totalVar, [xddot])
 
     def computeAction(self, *args):
         for arg in args:
