@@ -10,6 +10,11 @@ Point Robot             |  Planar Robot
 :-------------------------:|:-------------------------:
 ![Optimization Fabrics for point robots](./assets/demo.gif) | ![Optimization Fabrics for point robots](./assets/three_arm.gif) 
 
+Nonholonomic Robots
+:-------------------------:
+![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
+
+
 ## Tutorials
 
 This repository contains brief examples corresponding to the theory presented in "Optimization Fabrics" by Ratliff et al.
