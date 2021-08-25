@@ -9,6 +9,7 @@ from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLa
 from optFabrics.planner.default_maps import CollisionMap
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -21,11 +22,9 @@ def pointMassDynamicAvoidance(n_steps=500):
     ## setting up the problem
     t = ca.SX.sym('t', 1)
     x_obst = ca.vertcat(-3.0 + (0.5 * t)**2, -t * 0.1 + 0.1 * t**2)
-    v_obst = ca.jacobian(x_obst, t)
-    a_obst = ca.jacobian(v_obst, t)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    v_obst_fun = ca.Function("v_obst_fun", [t], [v_obst])
-    a_obst_fun = ca.Function("a_obst_fun", [t], [a_obst])
+    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t)
+    refTraj.concretize()
     obsts = [
                 DynamicObstacle(x_obst_fun, 1.0)
             ]
@@ -38,16 +37,13 @@ def pointMassDynamicAvoidance(n_steps=500):
     lag_col = CollisionLagrangian(x, xdot)
     geo_col = CollisionGeometry(x, xdot,lam=10)
     for obst in obsts:
-        q_p = ca.SX.sym('q_p', 2)
-        qdot_p = ca.SX.sym('qdot_p', 2)
-        qddot_p = ca.SX.sym('qddot_p', 2)
         q_rel = ca.SX.sym('q_rel', 2)
         qdot_rel = ca.SX.sym('qdot_rel', 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
                 phi_n = ca.norm_2(q_rel) / obst.r()  - 1
                 dm_n = DifferentialMap(phi_n, q=q_rel, qdot=qdot_rel)
-                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, refTraj=refTraj)
                 planner.addGeometry(dm_rel, lag_col.pull(dm_n), geo_col.pull(dm_n))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
@@ -69,9 +65,7 @@ def pointMassDynamicAvoidance(n_steps=500):
         if i % 100 == 0:
             print('time step : ', i)
         t += env._dt
-        q_p_t = np.array(x_obst_fun(t))[:, 0]
-        qdot_p_t = np.array(v_obst_fun(t))[:, 0]
-        qddot_p_t = np.array(a_obst_fun(t))[:, 0]
+        q_p_t, qdot_p_t, qddot_p_t = refTraj.evaluate(t)
         action = planner.computeAction(ob[0:2], ob[2:4], q_p_t, qdot_p_t, qddot_p_t)
         _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
         #print(en_ex)

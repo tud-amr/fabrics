@@ -11,10 +11,13 @@ from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultDynamicAttractor
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
 from solverPlot import SolverPlot
+
+# requires Jdot_sign to be set to -1!?
 
 
 def pointMassDynamicGoal(n_steps=5000):
@@ -22,21 +25,18 @@ def pointMassDynamicGoal(n_steps=5000):
     t = ca.SX.sym("t", 1)
     w = 1.0
     x_obst = ca.vertcat(0.5, -3.0 * ca.sin(w * t))
-    v_obst = ca.jacobian(x_obst, t)
-    a_obst = ca.jacobian(v_obst, t)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    v_obst_fun = ca.Function("v_obst_fun", [t], [v_obst])
-    a_obst_fun = ca.Function("a_obst_fun", [t], [a_obst])
+    refTraj_obst = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
+    refTraj_obst.concretize()
     r = 1.0
-    obsts = [DynamicObstacle(x_obst_fun, r), Obstacle(np.array([-1.0, 0.5]), 0.15)]
-    t = ca.SX.sym("t", 1)
+    obsts = [
+        DynamicObstacle(x_obst_fun, r),
+        Obstacle(np.array([-1.0, 0.5]), 0.15)
+    ]
     x_d = ca.vertcat(2.0 * ca.cos(w * t), 1.5 * ca.sin(w * t))
     x_goal = ca.Function("x_goal", [t], [x_d])
-    v_d = ca.jacobian(x_d, t)
-    a_d = ca.jacobian(v_d, t)
-    x_d_fun = ca.Function("x_d_fun", [t], [x_d])
-    v_d_fun = ca.Function("v_d_fun", [t], [v_d])
-    a_d_fun = ca.Function("a_d_fun", [t], [a_d])
+    refTraj_goal = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_d, t=t, name="goal")
+    refTraj_goal.concretize()
     n = 2
     planner = DefaultFabricPlanner(n, m_base=1.0)
     q, qdot = planner.var()
@@ -47,25 +47,22 @@ def pointMassDynamicGoal(n_steps=5000):
     lag_col = CollisionLagrangian(x, xdot)
     geo_col = CollisionGeometry(x, xdot, exp=3)
     for obst in obsts:
-        q_p = ca.SX.sym('q_p', 2)
-        qdot_p = ca.SX.sym('qdot_p', 2)
-        qddot_p = ca.SX.sym('qddot_p', 2)
         q_rel = ca.SX.sym('q_rel', 2)
         qdot_rel = ca.SX.sym('qdot_rel', 2)
         for fk in fks:
             if isinstance(obst, DynamicObstacle):
                 phi_n = ca.norm_2(q_rel) / obst.r()  - 1
                 dm_n = DifferentialMap(phi_n, q=q_rel, qdot=qdot_rel)
-                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, q_p=q_p, qdot_p=qdot_p, qddot_p=qddot_p)
+                dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, refTraj=refTraj_obst)
                 planner.addGeometry(dm_rel, lag_col.pull(dm_n), geo_col.pull(dm_n))
             elif isinstance(obst, Obstacle):
                 dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
                 planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi, xdot_g = defaultDynamicAttractor(
-        q, qdot, q
+    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultDynamicAttractor(
+        q, qdot, q, refTraj_goal, k_psi=15.0
     )
-    planner.addForcingGeometry(dm_psi, lag_psi, geo_psi, goalVelocity=xdot_g)
+    planner.addForcingGeometry(dm_psi, lag_psi, geo_psi, goalVelocity=refTraj_goal.xdot())
     # execution energy
     exLag = ExecutionLagrangian(q, qdot)
     planner.setExecutionEnergy(exLag)
@@ -94,12 +91,8 @@ def pointMassDynamicGoal(n_steps=5000):
                     if i % 1000 == 0:
                         print("time step : ", i)
                     t += env._dt
-                    q_p_t = np.array(x_obst_fun(t))[:, 0]
-                    qdot_p_t = np.array(v_obst_fun(t))[:, 0]
-                    qddot_p_t = np.array(a_obst_fun(t))[:, 0]
-                    q_g_t = np.array(x_d_fun(t))[:, 0]
-                    qdot_g_t = np.array(v_d_fun(t))[:, 0]
-                    qddot_g_t = np.array(a_d_fun(t))[:, 0]
+                    q_p_t, qdot_p_t, qddot_p_t = refTraj_obst.evaluate(t)
+                    q_g_t, qdot_g_t, qddot_g_t = refTraj_goal.evaluate(t)
                     if e == 0:
                         qdot_g_t = np.zeros(2)
                         qddot_g_t = np.zeros(2)
