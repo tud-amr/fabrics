@@ -37,12 +37,7 @@ class Spec:
         if hasattr(self, '_h'):
             return self._h
         else:
-            import warnings
-            warnings.warn("Casadi pseudo inverse is used in weighted geometry")
-            h = ca.mtimes(
-                ca.pinv(self._M + np.identity(self.x().size()[0]) * eps), self._f
-            )
-            return h
+            return ca.mtimes(self.Minv(), self._f)
 
     def f(self):
         if hasattr(self, '_f'):
@@ -52,6 +47,11 @@ class Spec:
 
     def M(self):
         return self._M
+
+    def Minv(self):
+        import warnings
+        warnings.warn("Casadi pseudo inverse is used in weighted geometry")
+        return ca.pinv(self._M + np.identity(self.x().size()[0]) * eps)
 
     def x(self):
         return self._vars[0]

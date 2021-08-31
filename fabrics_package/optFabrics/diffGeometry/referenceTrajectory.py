@@ -2,6 +2,7 @@ import casadi as ca
 import numpy as np
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap
+from optFabrics.diffGeometry.variables import eps
 
 
 class ReferenceTrajectory:
@@ -44,10 +45,19 @@ class ReferenceTrajectory:
         return self._vars[0]
 
     def xdot(self):
-        return ca.mtimes(ca.pinv(self._J), self._vars[1])
+        return ca.mtimes(self.Jinv(), self._vars[1])
 
     def xddot(self):
         return self._vars[2]
+
+    def Jinv(self):
+        import warnings
+        warnings.warn("Casadi pseudo inverse is used in reference trajectory to transform velocity into joint space")
+        Jt = ca.transpose(self._J)
+        J = self._J
+        JtJ = ca.mtimes(Jt, J)
+        epsMatrix = ca.SX(np.identity(JtJ.size()[0]) * eps)
+        return ca.mtimes(ca.pinv(JtJ + epsMatrix), Jt)
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)

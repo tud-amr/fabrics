@@ -22,7 +22,7 @@ class FabricPlannerException(Exception):
 class FabricPlanner:
     """description"""
 
-    def __init__(self, geo: Geometry, lag: Lagrangian):
+    def __init__(self, geo: Geometry, lag: Lagrangian, debug=False):
         print("Initiializing fabric planner")
         assert isinstance(lag, Lagrangian)
         self._eg = WeightedGeometry(g=geo, le=lag)
@@ -34,6 +34,7 @@ class FabricPlanner:
         self._constantSpeedControl = False
         self._vars = self._eg._vars
         self._refTrajs = []
+        self._debug = debug
 
     def var(self):
         try:
@@ -115,18 +116,32 @@ class FabricPlanner:
                 beta_subst = self._beta.substitute(-a_ex, -self._eg._alpha)
             xddot = self._eg_f._xddot - (a_ex + beta_subst) * (
                 self._eg.xdot()
-                - ca.mtimes(ca.pinv(self._eg_f._M), self._targetVelocity)
+                - ca.mtimes(self._eg_f.Minv(), self._targetVelocity)
             )
         totalVar = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             totalVar += refTraj._vars
         self._funs = ca.Function("planner", totalVar, [xddot])
+        if self._debug:
+            # Put all variables you want to debug in here
+            self._debugFuns = ca.Function("planner_debug", totalVar,
+                [xddot]
+            )
 
     def computeAction(self, *args):
         for arg in args:
             assert isinstance(arg, np.ndarray)
         funs_val = self._funs(*args)
         return np.array(funs_val)[:, 0]
+
+    def debugEval(self, *args):
+        for arg in args:
+            assert isinstance(arg, np.ndarray)
+        debugFuns_val = self._debugFuns(*args)
+        res = []
+        for val in debugFuns_val:
+            res.append(np.array(val)[:, 0])
+        return res
 
     def setSpeedControl(self, beta, eta):
         if not self._forcing:
@@ -171,7 +186,7 @@ class DefaultFabricPlanner(FabricPlanner):
     def __init__(self, n: int, **kwargs):
         q = ca.SX.sym("q", n)
         qdot = ca.SX.sym("qdot", n)
-        p = {"m_base": 0.5}
+        p = {"m_base": 0.5, 'debug': False}
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
@@ -180,4 +195,4 @@ class DefaultFabricPlanner(FabricPlanner):
         h_base = ca.SX(np.zeros(n))
         baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
         baseLag = Lagrangian(l_base, x=q, xdot=qdot)
-        super().__init__(baseGeo, baseLag)
+        super().__init__(baseGeo, baseLag, debug=p['debug'])

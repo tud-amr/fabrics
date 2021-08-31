@@ -70,6 +70,7 @@ def test_pull_lagrangian(relative_lagrangian, static_map):
     x, J, Jdot = dm.forward(q, qdot)
     xdot = np.dot(J, qdot)
     Jt = np.transpose(J)
+    Jinv = np.dot(np.linalg.pinv(np.dot(Jt, J)), Jt)
     M_leaf, f_leaf, h_leaf = lag.evaluate(x, xdot, x_p, xdot_p, xddot_p)
     M_root, f_root, h_root = lag_pull.evaluate(q, qdot, x_p, xdot_p, xddot_p)
     M_test = np.dot(Jt, np.dot(M_leaf, J))
@@ -83,6 +84,6 @@ def test_pull_lagrangian(relative_lagrangian, static_map):
     xdot_comb = lag_pull.xdot_rel()
     xdot_comb_fun = ca.Function('xdot_comb', [lag_pull.x(), lag_pull.xdot(), lag_pull._refTrajs[0]._vars[1]], [xdot_comb])
     xdot_comb_t = np.array(xdot_comb_fun(q, qdot, xdot_p))[:, 0]
-    xdot_comb_test = qdot - np.dot(Jt, xdot_p)
-    assert xdot_comb_t == pytest.approx(xdot_comb_test)
+    xdot_comb_test = qdot - np.dot(Jinv, xdot_p)
+    assert xdot_comb_t == pytest.approx(xdot_comb_test, rel=1e-3)
 
