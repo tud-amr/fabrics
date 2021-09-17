@@ -9,6 +9,8 @@ from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
 from optFabrics.diffGeometry.speedControl import Damper
 from optFabrics.helper_functions import joinVariables, joinRefTrajs
 
+from optFabrics.diffGeometry.variables import eps
+
 
 class FabricPlannerException(Exception):
     def __init__(self, expression, message):
@@ -125,22 +127,31 @@ class FabricPlanner:
         if self._debug:
             # Put all variables you want to debug in here
             self._debugFuns = ca.Function("planner_debug", totalVar,
-                [xddot]
+                [self._eg._le._S.M(), self._eg.h(), self._eg._le._l]
             )
 
     def computeAction(self, *args):
         for arg in args:
             assert isinstance(arg, np.ndarray)
         funs_val = self._funs(*args)
-        return np.array(funs_val)[:, 0]
+        action = np.array(funs_val)[:, 0]
+        # avoid to small actions
+        if np.linalg.norm(action) < eps:
+            action = np.zeros(self._n)
+        return action
 
     def debugEval(self, *args):
         for arg in args:
             assert isinstance(arg, np.ndarray)
         debugFuns_val = self._debugFuns(*args)
         res = []
+        if not isinstance(debugFuns_val, tuple):
+            return np.array(debugFuns_val)
         for val in debugFuns_val:
-            res.append(np.array(val)[:, 0])
+            if val.size()[1] == 1:
+                res.append(np.array(val)[:, 0])
+            else:
+                res.append(np.array(val))
         return res
 
     def setSpeedControl(self, beta, eta):

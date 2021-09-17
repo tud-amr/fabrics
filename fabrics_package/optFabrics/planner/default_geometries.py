@@ -12,6 +12,16 @@ class CollisionGeometry(Geometry):
         h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
         super().__init__(h=h, x=x, xdot=xdot)
 
+class LimitGeometry(Geometry):
+    def __init__(self, x, xdot, **kwargs):
+        p = {'lam': 0.25, 'a1': 0.4, 'a2': 0.2, 'a3': 20, 'a4': 5}
+        for key in p.keys():
+            if key in kwargs:
+                p[key] = kwargs.get(key)
+        psi = p['a1']/(x**2) + p['a2'] * ca.log(ca.exp(-p['a3'] * (x - p['a4'])) + 1)
+        h = p['lam'] * xdot**2 * ca.gradient(psi, x)
+        super().__init__(h=h, x=x, xdot=xdot)
+
 
 class GoalGeometry(Geometry):
     def __init__(self, x, xdot, **kwargs):
