@@ -7,6 +7,11 @@ class CollisionMap(DifferentialMap):
         phi = ca.norm_2(fk - x_obst) / r_obst - 1
         super().__init__(phi, q=q, qdot=qdot)
 
+class SelfCollisionMap(DifferentialMap):
+    def __init__(self, q, qdot, fk1, fk2, r):
+        phi = ca.norm_2(fk1 - fk2) / r - 1
+        super().__init__(phi, q=q, qdot=qdot)
+
 class UpperLimitMap(DifferentialMap):
     def __init__(self, q, qdot, limit, index):
         phi = limit - q[index]
