@@ -15,7 +15,7 @@ from optFabrics.planner.default_maps import (
 )
 from optFabrics.planner.default_leaves import defaultDynamicAttractor
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -30,7 +30,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     w_obst = 0.3
     x_obst = ca.vertcat(5 * ca.sin(w_obst * t), -3.0)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    refTraj_obst = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
+    refTraj_obst = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
     refTraj_obst.concretize()
     r = 1.0
     obsts = [
@@ -42,7 +42,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     w = 1.0
     x_d = ca.vertcat(1.5 + 0.7 * ca.sin(w * t), -1 + 1 * ca.cos(w * t))
     x_goal = ca.Function("x_goal", [t], [x_d])
-    refTraj_goal = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_d, t=t, name='goal')
+    refTraj_goal = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_d, t=t, name='goal')
     refTraj_goal.concretize()
     planner = DefaultFabricPlanner(n, m_base=0.1)
     q, qdot = planner.var()
@@ -51,7 +51,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     xdot = ca.SX.sym("xdot", 1)
     print("lag_col_default")
     lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=1)
+    geo_col = CollisionGeometry(x, xdot, lam=20, exp=2)
     fks = []
     for i in range(2, n+1):
         fks.append(ca.SX(casadiFk(q, i)[0:2]))
@@ -75,7 +75,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     print('col done')
     # forcing term
     dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultDynamicAttractor(
-        q, qdot, fks[-1], refTraj_goal, k_psi=20.0
+        q, qdot, fks[-1], refTraj_goal, k_psi=5.0
     )
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi, goalVelocity=refTraj_goal.xdot())
     # execution energy

@@ -11,7 +11,7 @@ from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultAttractor
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 from obstacle import DynamicObstacle, Obstacle
 from robotPlot import RobotPlot
@@ -25,11 +25,11 @@ def pointMassDynamic(n_steps=5000):
     t = ca.SX.sym('t', 1)
     x_obst = ca.vertcat(0.5 - 0.5 * t, -3.0 + t)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    refTraj_obst1 = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst1")
+    refTraj_obst1 = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst1")
     refTraj_obst1.concretize()
     x2_obst = ca.vertcat(-0.5, 2.0 - 0.5 * t)
     x2_obst_fun = ca.Function("x2_obst_fun", [t], [x2_obst])
-    refTraj_obst2 = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x2_obst, t=t, name="obst2")
+    refTraj_obst2 = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x2_obst, t=t, name="obst2")
     refTraj_obst2.concretize()
     r = 1.0
     r2 = 0.5

@@ -64,6 +64,7 @@ def nonHolonomic_col():
     return planner, dm, l, geo
 
 
+@pytest.mark.skip(reason="Nonholonomic base currently not maintained")
 def test_nh_planner_zero(nonHolonomic_planner):
     nh_planner = nonHolonomic_planner
     nh_planner.concretize()
@@ -76,6 +77,7 @@ def test_nh_planner_zero(nonHolonomic_planner):
     assert action[1] == pytest.approx(0.0)
 
 
+@pytest.mark.skip(reason="Nonholonomic base currently not maintained")
 def test_nh_planner_col(nonHolonomic_col):
     planner, dm, l, geo = nonHolonomic_col
     dm.concretize()

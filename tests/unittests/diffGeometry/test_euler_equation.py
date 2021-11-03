@@ -4,7 +4,7 @@ import numpy as np
 
 from optFabrics.diffGeometry.energy import Lagrangian
 from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def relative_lagrangian():
     xddot_p = ca.SX.sym("xddot_p", 1)
     l_rel = 0.5 * ca.dot(xdot - xdot_p, xdot - xdot_p) \
                 * ca.dot(x - x_p, x - x_p)
-    refTraj = ReferenceTrajectory(1, ca.SX(np.identity(1)), var=[x_p, xdot_p, xddot_p])
+    refTraj = AnalyticTrajectory(1, ca.SX(np.identity(1)), var=[x_p, xdot_p, xddot_p])
     lag = Lagrangian(
                 l_rel,
                 x=x, xdot=xdot,

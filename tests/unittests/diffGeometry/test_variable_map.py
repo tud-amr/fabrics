@@ -4,14 +4,14 @@ import numpy as np
 from optFabrics.diffGeometry.geometry import Geometry
 from optFabrics.diffGeometry.spec import Spec
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 
 @pytest.fixture
 def variable_geometry():
     q = ca.SX.sym("q", 1)
     qdot = ca.SX.sym("qdot", 1)
-    refTraj = ReferenceTrajectory(1, ca.SX(np.identity(1)))
+    refTraj = AnalyticTrajectory(1, ca.SX(np.identity(1)))
     q_rel = ca.SX.sym("q_rel", 1)
     qdot_rel = ca.SX.sym("qdot_rel", 1)
     x = ca.SX.sym("x", 1)
@@ -27,7 +27,7 @@ def variable_geometry():
 def variable_spec():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
-    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)))
+    refTraj = AnalyticTrajectory(2, ca.SX(np.identity(2)))
     q_rel = ca.SX.sym("q_rel", 2)
     qdot_rel = ca.SX.sym("qdot_rel", 2)
     dm_rel = RelativeDifferentialMap(q=q, qdot=qdot, refTraj=refTraj)

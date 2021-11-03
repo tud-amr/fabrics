@@ -6,7 +6,7 @@ from optFabrics.planner.default_energies import GoalLagrangian
 from optFabrics.planner.default_maps import GoalMap
 
 from optFabrics.diffGeometry.diffMap import RelativeDifferentialMap, DifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 
 def defaultAttractor(q: ca.SX, qdot: ca.SX, goal: np.ndarray, fk: ca.SX):
@@ -18,7 +18,7 @@ def defaultAttractor(q: ca.SX, qdot: ca.SX, goal: np.ndarray, fk: ca.SX):
     return dm, lag, geo, x, xdot
 
 
-def defaultDynamicAttractor(q: ca.SX, qdot: ca.SX, fk: ca.SX, refTraj: ReferenceTrajectory, **kwargs):
+def defaultDynamicAttractor(q: ca.SX, qdot: ca.SX, fk: ca.SX, refTraj: AnalyticTrajectory, **kwargs):
     p = {"k_psi": 20}
     for key in p.keys():
         if key in kwargs:

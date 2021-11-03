@@ -3,7 +3,7 @@ import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.variables import Jdot_sign
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 
 def test_dm_creation():
@@ -29,7 +29,7 @@ def variable_differentialMap():
     qdot = ca.SX.sym("qdot", 2)
     q_rel = ca.SX.sym("q_rel", 2)
     qdot_rel = ca.SX.sym("qdot_rel", 2)
-    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)))
+    refTraj = AnalyticTrajectory(2, ca.SX(np.identity(2)))
     phi = ca.norm_2(q - np.zeros(2))
     dm = DifferentialMap(phi, var=[q, qdot])
     dm_rel = RelativeDifferentialMap(var=[q, qdot], refTraj=refTraj)

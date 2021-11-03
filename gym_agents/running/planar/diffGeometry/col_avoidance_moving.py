@@ -9,7 +9,7 @@ from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLa
 from optFabrics.planner.default_maps import CollisionMap
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -23,7 +23,7 @@ def pointMassDynamicAvoidance(n_steps=500):
     t = ca.SX.sym('t', 1)
     x_obst = ca.vertcat(-3.0 + (0.5 * t)**2, -t * 0.1 + 0.1 * t**2)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    refTraj = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t)
+    refTraj = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t)
     refTraj.concretize()
     obsts = [
                 DynamicObstacle(x_obst_fun, 1.0)

@@ -2,7 +2,7 @@ import pytest
 import casadi as ca
 import numpy as np
 from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 
 @pytest.fixture
@@ -10,7 +10,7 @@ def rel_lag():
     t = ca.SX.sym('t')
     traj = 0.5 * t
     J = ca.SX(np.identity(1))
-    refTraj = ReferenceTrajectory(1, J, traj=traj, t=t)
+    refTraj = AnalyticTrajectory(1, J, traj=traj, t=t)
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     l_en = 0.5 * (xdot - refTraj.xdot()) ** 2

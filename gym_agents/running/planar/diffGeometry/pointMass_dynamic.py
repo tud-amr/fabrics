@@ -11,7 +11,7 @@ from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultDynamicAttractor
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 from obstacle import Obstacle, DynamicObstacle
 from robotPlot import RobotPlot
@@ -23,22 +23,22 @@ from solverPlot import SolverPlot
 def pointMassDynamicGoal(n_steps=5000):
     env = gym.make("point-robot-acc-v0", dt=0.01)
     t = ca.SX.sym("t", 1)
-    w = 1.0
+    w = 0.3
     x_obst = ca.vertcat(0.5, -3.0 * ca.sin(w * t))
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    refTraj_obst = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
+    refTraj_obst = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
     refTraj_obst.concretize()
     r = 1.0
     obsts = [
-        DynamicObstacle(x_obst_fun, r),
-        Obstacle(np.array([-1.0, 0.5]), 0.15)
+        #DynamicObstacle(x_obst_fun, r),
+        Obstacle(np.array([2.0, 0.5]), 0.35)
     ]
     x_d = ca.vertcat(2.0 * ca.cos(w * t), 1.5 * ca.sin(w * t))
     x_goal = ca.Function("x_goal", [t], [x_d])
-    refTraj_goal = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_d, t=t, name="goal")
+    refTraj_goal = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_d, t=t, name="goal")
     refTraj_goal.concretize()
     n = 2
-    planner = DefaultFabricPlanner(n, m_base=1.0)
+    planner = DefaultFabricPlanner(n, m_base=2.0)
     q, qdot = planner.var()
     # collision avoidance
     x = ca.SX.sym("x", 1)
@@ -68,7 +68,7 @@ def pointMassDynamicGoal(n_steps=5000):
     planner.setExecutionEnergy(exLag)
     # Speed control
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, b=[0.4, 10.0])
+    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, b=[0.2, 10.0])
     # planner.setConstantSpeedControl(beta=5.0)
     planner.concretize()
     # setup environment
@@ -100,9 +100,9 @@ def pointMassDynamicGoal(n_steps=5000):
                     action = planner.computeAction(
                         ob[0:2],
                         ob[2:4],
-                        q_p_t,
-                        qdot_p_t,
-                        qddot_p_t,
+                        #q_p_t,
+                        #qdot_p_t,
+                        #qddot_p_t,
                         q_g_t,
                         qdot_g_t,
                         qddot_g_t,

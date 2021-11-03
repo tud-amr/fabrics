@@ -5,7 +5,6 @@ from copy import deepcopy
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 from optFabrics.diffGeometry.variables import eps
 from optFabrics.helper_functions import joinVariables, checkCompatability
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
 
 
 class Spec:
