@@ -27,29 +27,29 @@ def pointMass(n_steps=5000):
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot)
+    geo_col = CollisionGeometry(x, xdot, exp=2.0)
     fks = [q]
     for fk in fks:
         for obst in obsts:
             dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
             planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
-    q_d = np.array([-2.0, -1.0])
+    q_d = np.array([-2.0, -0.1])
     dm_psi, lag_psi, _, x_psi, xdot_psi  = defaultAttractor(q, qdot, q_d, fk)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=1)
+    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=5)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # execution energy
     exLag = ExecutionLagrangian(q, qdot)
     exLag.concretize()
     planner.setExecutionEnergy(exLag)
     # Speed control
-    ex_factor = 2.0
+    ex_factor = 1.0
     planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor)
     planner.concretize()
     # setup environment
     qs = []
     solverTimes = []
-    x0s = [np.array([2.3, -1.0 + i * 0.2]) for i in range(11)]
+    x0s = [np.array([4.3, -1.0 + i * 0.2]) for i in range(11)]
     xdot0s = [np.array([-1.0, -0.0])]
     # running the simulation
     for xdot0 in xdot0s:

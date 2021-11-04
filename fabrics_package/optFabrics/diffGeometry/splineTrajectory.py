@@ -25,13 +25,21 @@ class SplineTrajectory(ReferenceTrajectory):
         suffix = "ref"
         if 'name' in kwargs:
             suffix = kwargs.get('name')
-        self._x = ca.SX.sym("x_" + suffix, n)
-        self._xdot = ca.SX.sym("xdot_" + suffix, n)
-        self._xddot = ca.SX.sym("xddot_" + suffix, n)
+        if 'var' in kwargs:
+            self._vars = kwargs.get('var')
+        else:
+            self._vars = [
+                ca.SX.sym("x_" + suffix, n), 
+                ca.SX.sym("xdot_" + suffix, n), 
+                ca.SX.sym("xddot_" + suffix, n)
+            ]
         self._vn = 1.0
         if 'vn' in kwargs:
             self._vn = kwargs.get('vn')
         self._lam = 100
+        if 'lam' in kwargs:
+            self._lam = kwargs.get('lam')
+        self._duration = kwargs.get('duration')
 
     def crv(self):
         return self._crv
@@ -42,44 +50,45 @@ class SplineTrajectory(ReferenceTrajectory):
     def concretize(self):
         pass
 
-    def vScaling(self, t):
-        if t < 0.2:
-            return 1/(1 + np.exp(-self._lam * (t - 0.05)))
-        elif t > 0.8:
-            return 1/(1 + np.exp(self._lam * (t - 0.95)))
-        else:
-            return 1
+    def sScaling(self, t):
+        return 0.5 * (-np.cos(np.pi * 1/self._duration * t) + 1)
 
-    def aScaling(self, t):
-        if t < 0.2:
-            expTerm = np.exp(-self._lam * (t - 0.05))
-            return self._lam * expTerm / (1 + expTerm)**2
-        if t > 0.8:
-            expTerm = np.exp(self._lam * (t - 0.95))
-            return -self._lam * expTerm / (1 + expTerm)**2
-        else:
-            return 0.0
+    def vScaling(self, t_ref):
+        return 0.5 * (np.sin(np.pi * t_ref) + 1)
+
+    def aScaling(self, t_ref):
+        return 0.5 * (np.cos(np.pi * t_ref) + 1)
 
     def evaluate(self, t):
-        xds = self._crv.derivatives(t, order=2)
+        t_ref = self.sScaling(min(t, self._duration))
+        xds = self._crv.derivatives(t_ref, order=2)
         x = np.array(xds[0])
         v_raw = np.array(xds[1])
         a_raw = np.array(xds[2])
-        v = self.vScaling(t) * v_raw/np.linalg.norm(v_raw)
-        a = self.aScaling(t) * a_raw/np.linalg.norm(a_raw)
+        v = self.vScaling(t_ref) * v_raw/np.linalg.norm(v_raw)
+        a = self.aScaling(t_ref) * a_raw/np.linalg.norm(a_raw)
+        if t_ref == 1.0:
+            v = v_raw * 0
+            a = a_raw * 0
         return x, v, a
 
     def x(self):
-        return self._x
+        return self._vars[0]
 
     def xdot(self):
-        return self._xdot
+        return self._vars[1]
 
     def xddot(self):
-        return self._xddot
+        return self._vars[2]
+
+    def duration(self):
+        return self._duration
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
-        return SplineTrajectory(self._n, dm._J, t=self.t(), crv=self._crv)
+        if hasattr(self, '_crv'):
+            return SplineTrajectory(self._n, dm._J, t=self.t(), crv=self._crv, var=self._vars, duration=self.duration())
+        else:
+            return SplineTrajectory(self._n, dm._J, var=self._vars, duration=self.duration())
 
 

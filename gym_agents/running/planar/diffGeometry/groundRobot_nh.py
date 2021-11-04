@@ -8,7 +8,7 @@ from optFabrics.planner.nonHolonomicPlanner import NonHolonomicPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 from optFabrics.planner.default_leaves import defaultAttractor
 from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
 from optFabrics.planner.default_energies import GoalLagrangian
@@ -28,7 +28,7 @@ def pointMass(n_steps=5000):
     x_obst = ca.vertcat(0.5 - 0.1 * t, -3.0 + 1.2 * t)
     x_obst = ca.vertcat(3.0, 6.0 * ca.sin(0.1 * t))
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    refTraj_obst = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
+    refTraj_obst = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst")
     refTraj_obst.concretize()
     r = 1.0
     obsts = [
@@ -111,7 +111,7 @@ def pointMass(n_steps=5000):
     phi_psi = x_ee - x_d
     dm_psi = DifferentialMap(phi_psi, q=x, qdot=xdot)
     dm_psi.concretize()
-    lag_psi = GoalLagrangian(x_psi, xdot_psi, k_psi=1)
+    lag_psi = GoalLagrangian(x_psi, xdot_psi, k_psi=0.5)
     geo_psi = GoalGeometry(x_psi, xdot_psi)
     geo_psi.concretize()
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)

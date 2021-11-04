@@ -12,7 +12,7 @@ from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultAttractor
 
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
 
 # robotUtils
 from obstacle import DynamicObstacle, Obstacle
@@ -28,14 +28,13 @@ def nlinkDynamic(n=3, n_steps=5000):
     # Define the problem
     x_d = np.array([-2.0, 1.0])
     t = ca.SX.sym('t', 1)
-    x_obst = ca.vertcat(-1.2 + 0.4 * t**1, 1.3)
-    x_obst = ca.vertcat(7.2 - 0.1 * t**2, -2.5 + 0.5 * t)
+    x_obst = ca.vertcat(-1.5, 5 - 0.1 * t**2)
     x_obst_fun = ca.Function("x_obst_fun", [t], [x_obst])
-    refTraj_obst1 = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst1")
+    refTraj_obst1 = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x_obst, t=t, name="obst1")
     refTraj_obst1.concretize()
-    x2_obst = ca.vertcat(-1.2, 2.3 - 0.7 * t)
+    x2_obst = ca.vertcat(1.2, 2.3 - 0.7 * t)
     x2_obst_fun = ca.Function("x2_obst_fun", [t], [x2_obst])
-    refTraj_obst2 = ReferenceTrajectory(2, ca.SX(np.identity(2)), traj=x2_obst, t=t, name="obst2")
+    refTraj_obst2 = AnalyticTrajectory(2, ca.SX(np.identity(2)), traj=x2_obst, t=t, name="obst2")
     refTraj_obst2.concretize()
     obsts = [
                 DynamicObstacle(x2_obst_fun, 1.0),
@@ -51,7 +50,7 @@ def nlinkDynamic(n=3, n_steps=5000):
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
     lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=3, lam=20)
+    geo_col = CollisionGeometry(x, xdot, exp=5, lam=40)
     for i, obst in enumerate(obsts):
         x_col = ca.SX.sym("x_col", 2)
         xdot_col = ca.SX.sym("xdot_col", 2)
@@ -84,25 +83,35 @@ def nlinkDynamic(n=3, n_steps=5000):
     # setup environment
     qs = []
     solverTimes = []
+    q0 = np.zeros(n)
+    qdot0 = np.zeros(n)
     # running the simulation
-    ob = env.reset()
-    print("Starting episode")
-    q = np.zeros((n_steps, n))
-    t = 0.0
-    solverTime = np.zeros(n_steps)
-    for i in range(n_steps):
-        if i % 1000 == 0:
-            print("time step : %d" % i)
-        t += env._dt
-        t0 = time.time()
-        q_p_t, qdot_p_t, qddot_p_t = refTraj_obst1.evaluate(t)
-        q2_p_t, q2dot_p_t, q2ddot_p_t = refTraj_obst2.evaluate(t)
-        action = planner.computeAction(ob[0:n], ob[n:2*n], q_p_t, qdot_p_t, qddot_p_t, q2_p_t, q2dot_p_t, q2ddot_p_t)
-        solverTime[i] = time.time() - t0
-        ob, reward, done, info = env.step(action)
-        q[i, :] = ob[0:n]
-    qs.append(q)
-    solverTimes.append(solverTime)
+    for e in range(2):
+        ob = env.reset(q0, qdot0)
+        print("Starting episode")
+        q = np.zeros((n_steps, n))
+        t = 0.0
+        solverTime = np.zeros(n_steps)
+        for i in range(n_steps):
+            if i % 1000 == 0:
+                print("time step : %d" % i)
+            t += env._dt
+            t0 = time.time()
+            q_p_t, qdot_p_t, qddot_p_t = refTraj_obst1.evaluate(t)
+            q2_p_t, q2dot_p_t, q2ddot_p_t = refTraj_obst2.evaluate(t)
+            if e == 0:
+                q_p_t = np.array([100,100])
+                qdot_p_t = np.zeros(2)
+                qddot_p_t = np.zeros(2)
+                q2_p_t = np.array([100,100])
+                q2dot_p_t = np.zeros(2)
+                q2ddot_p_t = np.zeros(2)
+            action = planner.computeAction(ob[0:n], ob[n:2*n], q_p_t, qdot_p_t, qddot_p_t, q2_p_t, q2dot_p_t, q2ddot_p_t)
+            solverTime[i] = time.time() - t0
+            ob, reward, done, info = env.step(action)
+            q[i, :] = ob[0:n]
+        qs.append(q)
+        solverTimes.append(solverTime)
     res = {}
     res['qs'] = qs
     res['solverTimes'] = solverTimes
@@ -113,13 +122,13 @@ def nlinkDynamic(n=3, n_steps=5000):
 
 if __name__ == "__main__":
     n = 3
-    n_steps = 10000
+    n_steps = 3000
     res = nlinkDynamic(n=n, n_steps=n_steps)
     # Plotting the results
     fk_fun = lambda q, n: numpyFk(q, n)[0:3]
-    robotPlot = RobotPlot(res['qs'], fk_fun, 2, types=[1])
+    robotPlot = RobotPlot(res['qs'], fk_fun, 2, types=[1, 1])
     robotPlot.initFig(2, 2)
-    robotPlot.addObstacle([0, 1], res['obsts'])
+    robotPlot.addObstacle([1], res['obsts'])
     robotPlot.addGoal([0, 1], res['goal'])
     robotPlot.plot()
     robotPlot.makeAnimation(n_steps)

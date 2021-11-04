@@ -25,7 +25,6 @@ class FabricPlanner:
     """description"""
 
     def __init__(self, geo: Geometry, lag: Lagrangian, debug=False):
-        print("Initiializing fabric planner")
         assert isinstance(lag, Lagrangian)
         self._eg = WeightedGeometry(g=geo, le=lag)
         self._n = lag.x().size()[0]
@@ -37,6 +36,7 @@ class FabricPlanner:
         self._vars = self._eg._vars
         self._refTrajs = []
         self._debug = debug
+        self._debugVars = []
 
     def var(self):
         try:
@@ -49,6 +49,7 @@ class FabricPlanner:
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
         eg = WeightedGeometry(g=g, le=le).pull(dm)
+        self._debugVars.append(eg.h())
         self._eg += eg
         self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
 
@@ -59,7 +60,8 @@ class FabricPlanner:
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
         self._forcing = True
-        self._eg_f = deepcopy(self._eg)
+        if not hasattr(self, '_eg_f'):
+            self._eg_f = deepcopy(self._eg)
         #eg_f = WeightedGeometry(g=g, le=le).pull(dm)
         self._eg_f += WeightedGeometry(g=g, le=le).pull(dm)
         self._refTrajs = self._eg_f._refTrajs
@@ -127,7 +129,7 @@ class FabricPlanner:
         if self._debug:
             # Put all variables you want to debug in here
             self._debugFuns = ca.Function("planner_debug", totalVar,
-                [self._eg._le._S.M(), self._eg.h(), self._eg._le._l]
+                self._debugVars
             )
 
     def computeAction(self, *args):
