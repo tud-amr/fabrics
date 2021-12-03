@@ -20,7 +20,7 @@ gravity = np.array([0.0, 0.0, -10.0])
 
 
 def forwardKinematics(q, tip='panda_link8', root='panda_link0'):
-    return robot.get_forward_kinematics(root, tip)["T_fk"](q)[0:3, 3]
+    return robot.get_forward_kinematics(root, tip, q)["T_fk"][0:3, 3]
 
 def getLimits():
     root = "panda_link0"

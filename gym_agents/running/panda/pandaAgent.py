@@ -1,5 +1,5 @@
 import gym
-import nLinkUrdfReacher
+# import nLinkUrdfReacher
 import time
 import os
 import sys
@@ -54,6 +54,7 @@ def getLimits():
             limitVel[i, 1] = joint_info.limit.velocity
             limitTor[i, 0] = -joint_info.limit.effort
             limitTor[i, 1] = joint_info.limit.effort
+    __import__('pdb').set_trace()
     return limitPos, limitVel, limitTor
 
 

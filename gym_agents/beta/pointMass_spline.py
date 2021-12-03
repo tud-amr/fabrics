@@ -25,7 +25,8 @@ def pointMassSplineGoal(n_steps=5000):
     env = gym.make("point-robot-acc-v0", dt=0.01)
     t = ca.SX.sym("t", 1)
     ctrlpts = [[-4.0, -4.0], [-4.0, 4.0], [2.0, 4.0], [3.0, 2.0], [4.0, -4.0]]
-    refTraj_goal = SplineTrajectory(2, ca.SX(np.identity(2)), degree=2, ctrlpts=ctrlpts, duration=20)
+    ctrlpts = [[-4.0, -4.0], [-3.0, 3.0], [3.0, -3.0], [4.0, 4.0]]
+    refTraj_goal = SplineTrajectory(2, ca.SX(np.identity(2)), degree=2, ctrlpts=ctrlpts, duration=30)
     n = 2
     planner = DefaultFabricPlanner(n, m_base=1.0)
     q, qdot = planner.var()
@@ -61,7 +62,7 @@ def pointMassSplineGoal(n_steps=5000):
     solverTimes = []
     x0s = [np.array([2.3, -1.0 + i * 0.2]) for i in range(2)]
     xdot0s = [np.array([-1.0, -0.0])]
-    x0s = [np.array([-5.0, -5.0])]
+    x0s = [np.array([-3.5, -4.0])]
     xdot0s = [np.array([-0.0, -0.0])]
     # running the simulation
     for e in range(3):

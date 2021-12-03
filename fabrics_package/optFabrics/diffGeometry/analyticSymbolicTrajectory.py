@@ -21,4 +21,5 @@ class AnalyticSymbolicTrajectory(SymbolicTrajectory):
         if hasattr(self, '_refTraj'):
             return AnalyticSymbolicTrajectory(dm._J, self.n(), traj=self._refTraj, var=self._vars)
         else:
+            __import__('pdb').set_trace()
             return AnalyticSymbolicTrajectory(dm._J, self.n(), var=self._vars)

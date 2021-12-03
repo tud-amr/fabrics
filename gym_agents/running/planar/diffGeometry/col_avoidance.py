@@ -8,15 +8,13 @@ from optFabrics.diffGeometry.diffMap import DifferentialMap
 from optFabrics.diffGeometry.energy import Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
 
-from obstacle import Obstacle
-from robotPlot import RobotPlot
-
+from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 
 def pointMassAvoidance(n_steps=1200):
     ## setting up the problem
-    obsts = [
-                Obstacle(np.array([0.0, 0.0]), 1.0),
-            ]
+    obstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [0.0, 0.0], 'radius': 1.0}} 
+    obst = SphereObstacle(name="obst", contentDict=obstDict)
     n = 2
     q = ca.SX.sym("q", n)
     qdot = ca.SX.sym("qdot", n)
@@ -27,7 +25,7 @@ def pointMassAvoidance(n_steps=1200):
     baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
     baseLag = Lagrangian(l_base, x=q, xdot=qdot)
     planner = FabricPlanner(baseGeo, baseLag)
-    phi = ca.norm_2(q - obsts[0].x()) / obsts[0].r() - 1
+    phi = ca.norm_2(q - obst.position()) / obst.radius() - 1
     dm = DifferentialMap(phi, q=q, qdot=qdot)
     s = -0.5 * (ca.sign(xdot) - 1)
     lam = 5.00
@@ -42,48 +40,24 @@ def pointMassAvoidance(n_steps=1200):
     planner.setExecutionEnergy(exLag)
     planner.concretize()
     # setup environment
-    cons = [planner]
     qs = []
     x0 = np.array([2.3, 0.5])
     xdot0 = np.array([-1.0, -0.0])
     # running the simulation
-    for i in range(len(cons)):
-        con = cons[i]
-        env = gym.make('point-robot-acc-v0', dt=0.01)
-        ob = env.reset(x0, xdot0)
-        print("Starting episode")
-        q = np.zeros((n_steps, n))
-        t = 0.0
-        for i in range(n_steps):
-            if i % 100 == 0:
-                print('time step : ', i)
-            t += env._dt
-            # t0 = time.time()
-            action = con.computeAction(ob[0:2], ob[2:4])
-            _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
-            #print(en_ex)
-            # print(time.time() - t0)
-            # env.render()
-            ob, reward, done, info = env.step(action)
-            q[i, :] = ob[0:n]
-        qs.append(q)
-    res = {}
-    res['qs'] = qs
-    res['obsts'] = obsts
-    res['dt'] = env._dt
-    return res
+    env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
+    ob = env.reset(x0, xdot0)
+    env.addObstacle(obst)
+    print("Starting episode")
+    for i in range(n_steps):
+        if i % 100 == 0:
+            print('time step : ', i)
+        # t0 = time.time()
+        action = planner.computeAction(ob[0:2], ob[2:4])
+        _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
+        # print(en_ex)
+        ob, reward, done, info = env.step(action)
+
 
 if __name__ == "__main__":
     n_steps = 1200
-    res = pointMassAvoidance(n_steps)
-    qs = res['qs']
-    obsts = res['obsts']
-    ## Plotting the results
-    fk_fun = lambda q : q
-    robotPlot = RobotPlot(qs, fk_fun, 2, types=[0], dt=res['dt'])
-    robotPlot.initFig(2, 2)
-    robotPlot.addObstacle([0], obsts)
-    robotPlot.plot()
-    robotPlot.makeAnimation(n_steps)
-    robotPlot.show()
-    main()
+    pointMassAvoidance(n_steps)

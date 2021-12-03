@@ -20,7 +20,7 @@ gravity = np.array([0.0, 0.0, -10.0])
 
 
 def forwardKinematics(q, tip='panda_link8', root='world'):
-    return robot.get_forward_kinematics(root, tip)["T_fk"](q)[0:3, 3]
+    return robot.get_forward_kinematics(root, tip, q)["T_fk"][0:3, 3]
 
 
 def getLimits():
@@ -116,7 +116,7 @@ def main():
     t = 0.0
     #ob = env.reset()
     ob = env.reset(q0)
-    env.addObstacle(obsts_base[0].x())
+    #env.addObstacle(obsts_base[0].x())
     con.addObstacles(obsts_base, fk_base)
     con2.addObstacles(obsts_base, fk_base)
     con3.addObstacles(obsts_base, fk_base)
