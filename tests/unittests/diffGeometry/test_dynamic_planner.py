@@ -2,11 +2,9 @@ import pytest
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import FabricPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
+from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from casadiFk import casadiFk
 
@@ -29,7 +27,7 @@ def movingGoalGeometry():
     geo_rel = Geometry(h=h_rel, x=x_rel, xdot=xdot_rel)
 
     # define the relative transformation
-    refTraj = AnalyticTrajectory(2, ca.SX(np.identity(2)), var=[x_d, xdot_d, xddot_d])
+    refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, var=[x_d, xdot_d, xddot_d])
     dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, refTraj=refTraj)
     geo = geo_rel.pull(dm_rel)
     # Define second transform to configuration space

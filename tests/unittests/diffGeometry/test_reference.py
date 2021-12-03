@@ -1,25 +1,23 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
+from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 from optFabrics.diffGeometry.diffMap import DifferentialMap
 
 
 def test_ref_creation():
-    t = ca.SX.sym("t")
-    x = ca.vertcat(3 * t, -1 * t)
+    traj = ["3 * t", "-1 * t"]
     J = ca.SX(np.identity(2))
-    refTraj = AnalyticTrajectory(2, J, traj=x, t=t)
+    refTraj = AnalyticSymbolicTrajectory(J, 2, traj=traj)
     refTraj.concretize()
-    assert ca.is_equal(t, refTraj._t)
+    assert refTraj.n() == 2
 
 
 @pytest.fixture
 def simple_trajectory():
-    t = ca.SX.sym("t")
-    x = ca.vertcat(3 * t, -1 * t**2)
+    traj = ["3 * t", "-1 * t ** 2"]
     J = ca.SX(np.identity(2))
-    refTraj = AnalyticTrajectory(2, J, traj=x, t=t)
+    refTraj = AnalyticSymbolicTrajectory(J, 2, traj=traj)
     return refTraj
 
 

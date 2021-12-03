@@ -163,8 +163,8 @@ def test_pull_energized(energization_example_pulled):
     assert qddot[0] == pytest.approx(qddot_w_alpha[0], rel=1e-4)
     assert qddot[1] == pytest.approx(qddot_w_alpha[1], rel=1e-4)
     xddot_p = np.dot(J, qddot) + np.dot(Jdot, qdot)
-    assert xddot_p[0] == pytest.approx(xddot[0])
-    assert xddot_p[1] == pytest.approx(xddot[1])
+    assert xddot_p[0] == pytest.approx(xddot[0], rel=1e-4)
+    assert xddot_p[1] == pytest.approx(xddot[1], rel=1e-4)
 
 
 def test_sum_energization(two_energizations):

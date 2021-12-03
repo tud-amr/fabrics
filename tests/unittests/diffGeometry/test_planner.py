@@ -5,7 +5,7 @@ from optFabrics.planner.fabricPlanner import FabricPlanner
 from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.referenceTrajectory import AnalyticTrajectory
+from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ def variable_2dtask():
     l_base = Lagrangian(l, x=q, xdot=qdot)
     geo_base = Geometry(h=ca.SX(np.zeros(2)), x=q, xdot=qdot)
     planner = FabricPlanner(geo_base, l_base)
-    refTraj = AnalyticTrajectory(2, ca.SX(np.identity(2)))
+    refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2)
     dm_rel = RelativeDifferentialMap(var = [q, qdot], refTraj=refTraj)
     phi = ca.norm_2(q_rel)
     dm = DifferentialMap(phi, var=[q_rel, qdot_rel])
