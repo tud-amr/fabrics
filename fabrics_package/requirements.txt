@@ -1,0 +1,5 @@
+casadi
+numpy
+matplotlib
+-e git+https://github.com/maxspahn/forwardKinematics@master#egg=forwardKinematics
+-e git+https://github.com/maxspahn/motion_planning_scenes@master#egg=MotionPlanningScenes
