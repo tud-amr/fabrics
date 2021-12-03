@@ -3,5 +3,6 @@ casadi==3.5.1
 gym==0.17.3
 numpy==1.19.5
 geomdl>=5.3.0
--e git+https://github.com/maxspahn/robotUtils.git#egg=robotUtils
+-e git+https://github.com/maxspahn/forwardKinematics@master#egg=forwardKinematics
+-e git+https://github.com/maxspahn/motion_planning_scenes@master#egg=MotionPlanningScenes
 -e git+https://github.com/maxspahn/gym_envs_planar.git#egg=planarEnvs
