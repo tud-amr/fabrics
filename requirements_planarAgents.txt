@@ -4,5 +4,5 @@ numpy==1.19.5
 gym==0.17.3
 geomdl>=5.3.0
 -e git+https://github.com/maxspahn/gym_envs_planar.git#egg=planarEnvs
--e git+https://github.com/maxspahn/forwardKinematics@main#egg=forwardKinematics
--e git+https://github.com/maxspahn/motion_planning_scenes@main#egg=MotionPlanningScenes
+-e git+https://github.com/maxspahn/forwardKinematics.git@main#egg=forwardKinematics
+-e git+https://github.com/maxspahn/motion_planning_scenes.git@main#egg=MotionPlanningScenes
