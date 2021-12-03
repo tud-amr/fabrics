@@ -7,10 +7,10 @@ from geomdl.visualization import VisMPL
 
 from optFabrics.diffGeometry.variables import eps
 from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.referenceTrajectory import ReferenceTrajectory
+from optFabrics.diffGeometry.symbolicTrajectory import SymbolicTrajectory
 
 
-class SplineTrajectory(ReferenceTrajectory):
+class SplineTrajectory(SymbolicTrajectory):
 
     def __init__(self, n: int, J: ca.SX, **kwargs):
         super().__init__(n, J) 
@@ -51,13 +51,18 @@ class SplineTrajectory(ReferenceTrajectory):
         pass
 
     def sScaling(self, t):
+        return 0.5 * (1 - np.cos(np.pi * t / self._duration))
         return 0.5 * (-np.cos(np.pi * 1/self._duration * t) + 1)
 
-    def vScaling(self, t_ref):
-        return 0.5 * (np.sin(np.pi * t_ref) + 1)
+    def vScaling(self, t):
+        # return 0.5 * (np.sin(np.pi * t) + 1)
+        T = self._duration
+        return 1 * np.pi/T * np.sin(t * np.pi/T)
 
-    def aScaling(self, t_ref):
-        return 0.5 * (np.cos(np.pi * t_ref) + 1)
+    def aScaling(self, t):
+        # return 0.5 * (np.cos(np.pi * t) + 1)
+        T = self._duration
+        return 1 * (np.pi/T)**2 * np.cos(t * np.pi/T)
 
     def evaluate(self, t):
         t_ref = self.sScaling(min(t, self._duration))
@@ -65,21 +70,12 @@ class SplineTrajectory(ReferenceTrajectory):
         x = np.array(xds[0])
         v_raw = np.array(xds[1])
         a_raw = np.array(xds[2])
-        v = self.vScaling(t_ref) * v_raw/np.linalg.norm(v_raw)
-        a = self.aScaling(t_ref) * a_raw/np.linalg.norm(a_raw)
+        v = self.vScaling(t) * v_raw/np.linalg.norm(v_raw)
+        a = self.aScaling(t) * a_raw/np.linalg.norm(a_raw)
         if t_ref == 1.0:
             v = v_raw * 0
             a = a_raw * 0
         return x, v, a
-
-    def x(self):
-        return self._vars[0]
-
-    def xdot(self):
-        return self._vars[1]
-
-    def xddot(self):
-        return self._vars[2]
 
     def duration(self):
         return self._duration

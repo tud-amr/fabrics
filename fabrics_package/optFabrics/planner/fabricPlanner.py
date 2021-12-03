@@ -53,6 +53,13 @@ class FabricPlanner:
         self._eg += eg
         self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
 
+    def addWeightedGeometry(self, dm: DifferentialMap, eg: WeightedGeometry):
+        assert isinstance(dm, DifferentialMap)
+        assert isinstance(eg, WeightedGeometry)
+        eg_pulled = eg.pull(dm)
+        self._eg += eg_pulled
+        self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
+
     def addForcingGeometry(
         self, dm: DifferentialMap, le: Lagrangian, g: Geometry, goalVelocity=None
     ):
