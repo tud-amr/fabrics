@@ -6,7 +6,7 @@ from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentia
 from optFabrics.diffGeometry.geometry import Geometry
 from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
-from casadiFk import casadiFk
+from forwardKinematics.planarFks.planarArmFk import PlanarArmFk
 
 
 @pytest.fixture
@@ -31,13 +31,11 @@ def movingGoalGeometry():
     dm_rel = RelativeDifferentialMap(q=x, qdot=xdot, refTraj=refTraj)
     geo = geo_rel.pull(dm_rel)
     # Define second transform to configuration space
-    fks = []
     n = 3
     q = ca.SX.sym("q", n)
     qdot = ca.SX.sym("qdot", n)
-    for i in range(1, n + 1):
-        fks.append(ca.SX(casadiFk(q, i)[0:2]))
-    phi_fk = fks[-1]
+    planarArmFk = PlanarArmFk(n)
+    phi_fk = planarArmFk.fk(q, n, positionOnly=True)
     dm_fk = DifferentialMap(phi_fk, q=q, qdot=qdot)
     geo_fk = geo.pull(dm_fk)
     return geo_rel, geo, geo_fk

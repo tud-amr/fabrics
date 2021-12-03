@@ -4,6 +4,7 @@ import numpy as np
 from optFabrics.diffGeometry.splineTrajectory import SplineTrajectory
 
 
+@pytest.mark.skip(reason="Spline trajectories currently not maintained")
 def test_ref_creation():
     t = ca.SX.sym("t")
     ctrlpts = [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0]]
