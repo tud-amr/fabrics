@@ -23,6 +23,7 @@ def simple_splineTrajectory():
     splineTraj = SplineTrajectory(n, J, degree=degree, ctrlpts=ctrlpts, t=t)
     return splineTraj
 
+@pytest.mark.skip(reason="Spline trajectories currently not maintained")
 def test_evaluate(simple_splineTrajectory):
     t = 0.5
     x, v, a = simple_splineTrajectory.evaluate(t)
@@ -30,6 +31,7 @@ def test_evaluate(simple_splineTrajectory):
     assert x[1] == pytest.approx(0.75)
     assert np.linalg.norm(v) == pytest.approx(1)
 
+@pytest.mark.skip(reason="Spline trajectories currently not maintained")
 def test_evaluateAtZero(simple_splineTrajectory):
     t = 0.0
     x, v, a = simple_splineTrajectory.evaluate(t)
