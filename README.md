@@ -1,4 +1,4 @@
-### Fabrics
+# Fabrics
 
 [![Build and Agents](https://github.com/maxspahn/fabrics/actions/workflows/agents.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/agents.yml)
 [![Build and Unittest](https://github.com/maxspahn/fabrics/actions/workflows/build.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/build.yml)
@@ -13,6 +13,10 @@ Point Robot             |  Planar Robot
 Nonholonomic Robots
 :-------------------------:
 ![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
+
+# IMPORTANT NOTE
+
+SET THE VARIABLE `Jdot_sign` IN DIFFgEOMETRY/VARIABlES TO `-1`.
 
 
 ## Tutorials
