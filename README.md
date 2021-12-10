@@ -16,7 +16,7 @@ Nonholonomic Robots
 
 # IMPORTANT NOTE
 
-SET THE VARIABLE `Jdot_sign` IN DIFFgEOMETRY/VARIABlES TO `-1`.
+SET THE VARIABLE `Jdot_sign` IN diffGeometry/variabLes TO `-1`.
 
 
 ## Tutorials
