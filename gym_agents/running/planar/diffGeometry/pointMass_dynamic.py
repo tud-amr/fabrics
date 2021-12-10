@@ -43,7 +43,7 @@ def pointMassDynamicGoal(n_steps=5000):
         "child_link": 3,
         "trajectory": goalTraj,
         "epsilon": 0.2,
-        "type": "dynamicSubGoal",
+        "type": "analyticSubGoal",
     }
     goal = DynamicSubGoal(name='goal', contentDict=goalDict)
     n = 2
@@ -90,7 +90,7 @@ def pointMassDynamicGoal(n_steps=5000):
     planner.concretize()
     # setup environment
     # running the simulation
-    dynamicFabric = False
+    dynamicFabric = True
     x0 = np.array([2.3, -1.0])
     xdot0 = np.array([-1.0, -0.0])
     ob = env.reset(x0, xdot0)

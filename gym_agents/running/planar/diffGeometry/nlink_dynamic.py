@@ -2,6 +2,7 @@ import gym
 import nLinkReacher
 import casadi as ca
 import numpy as np
+import time
 
 from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
 from optFabrics.planner.default_geometries import CollisionGeometry
@@ -43,7 +44,7 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
         "child_link": 3,
         "trajectory": goalTraj,
         "epsilon": 0.2,
-        "type": "dynamicSubGoal",
+        "type": "analyticSubGoal",
     }
     goal = DynamicSubGoal(name='goal', contentDict=goalDict)
     planner = DefaultFabricPlanner(n, m_base=0.1)
@@ -104,11 +105,14 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
             qddot_g_t = np.zeros(2)
         q_t = ob[0:n]
         qdot_t = ob[n : 2 * n]
+        t0 = time.perf_counter()
         action = planner.computeAction(
             q_t, qdot_t,
             q_p_t, qdot_p_t, qddot_p_t,
             q_g_t, qdot_g_t, qddot_g_t
         )
+        t1 = time.perf_counter()
+        print(f"computational time in ms: {(t1 - t0)*1000}")
         ob, reward, done, info = env.step(action)
 
 
