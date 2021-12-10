@@ -4,9 +4,8 @@ import math
 
 from optFabrics.functions import generateLagrangian, createTimeVariantMapping, generateHamiltonian
 from optFabrics.damper import createDamper
-from optFabrics.diffMap import DiffMap, TimeVariantDiffMap
+from optFabrics.diffMap import DiffMap
 
-from splineFunctions import project
 
 class Leaf(object):
     def __init__(self, name, diffMap, le):
