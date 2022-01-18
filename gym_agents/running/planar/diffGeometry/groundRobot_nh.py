@@ -44,7 +44,7 @@ def pointMass(n_steps=5000):
     lag_col = CollisionLagrangian(x_col, xdot_col)
     geo_col = CollisionGeometry(x_col, xdot_col)
     fks = [x_ee, x_f]
-    r_body = 0.5
+    r_body = 0.1
     for obst in obsts:
         for fk in fks:
             dm_col = CollisionMap(x, xdot, fk, obst.position(), obst.radius() + r_body)
@@ -91,9 +91,9 @@ def pointMass(n_steps=5000):
     for i in range(n_steps):
         if i % 1000 == 0:
             print("time step : ", i)
-        x = ob[0:nx]
-        xdot = np.concatenate((ob[-nu:], ob[-nx:-nu]))
-        qdot = ob[nx: nx + nu]
+        x = ob['x']
+        xdot = ob['xdot']
+        qdot = ob['vel']
         t0 = time.perf_counter()
         action = planner.computeAction(x, xdot, qdot)
         t1 = time.perf_counter()

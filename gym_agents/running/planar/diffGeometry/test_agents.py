@@ -8,26 +8,19 @@ from nlink_dynamic import nlinkDynamicGoal
 
 
 def test_pointMassAvoidance():
-    res = pointMassAvoidance(10)
+    res = pointMassAvoidance(10, render=False)
     assert res is None
 
-"""
-def test_pointMass():
-    res = pointMass(10)
-    assert res
-"""
-
-
 def test_pointMassDynamic():
-    res = pointMassDynamicGoal(n_steps=10)
+    res = pointMassDynamicGoal(n_steps=10, render=False)
     assert res is None
 
 
 def test_nlink():
-    res = nlink(n=3, n_steps=10)
+    res = nlink(n=3, n_steps=10, render=False)
     assert res is None
 
 
 def test_nlinkDynamic():
-    res = nlinkDynamicGoal(n=7, n_steps=10)
+    res = nlinkDynamicGoal(n=7, n_steps=10, render=False)
     assert res is None

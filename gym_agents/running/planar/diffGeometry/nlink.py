@@ -13,9 +13,10 @@ from optFabrics.planner.default_leaves import defaultAttractor
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 
-from forwardKinematics.planarFks.planarArmFk import PlanarArmFk
+from forwardkinematics.planarFks.planarArmFk import PlanarArmFk
 
-def nlink(n=3, n_steps=5000):
+
+def nlink(n=3, n_steps=5000, render=True):
     # setting up the problem
     obst1Dict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [2.0, 4.0], 'radius': 0.5}} 
     obst2Dict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [0.0, 3.0], 'radius': 0.5}} 
@@ -70,7 +71,7 @@ def nlink(n=3, n_steps=5000):
     planner.concretize()
     # setup environment
     # running the simulation
-    env = gym.make("nLink-reacher-acc-v0", n=n, dt=0.05, render=True)
+    env = gym.make("nLink-reacher-acc-v0", n=n, dt=0.05, render=render)
     print("Starting episode")
     q0 = np.zeros(n)
     q0dot = np.array([0.1, 0.4, 0.1, 0.0, 0.0])
@@ -79,7 +80,7 @@ def nlink(n=3, n_steps=5000):
         env.addObstacle(obst)
     env.addGoal(goal)
     for i in range(n_steps):
-        action = planner.computeAction(ob[0:n], ob[n : 2 * n])
+        action = planner.computeAction(ob['x'], ob['xdot'])
         # env.render()
         ob, reward, done, info = env.step(action)
 

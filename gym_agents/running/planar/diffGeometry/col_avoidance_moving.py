@@ -66,10 +66,10 @@ def pointMassDynamicAvoidance(n_steps=500):
             print('time step : ', i)
         q_p_t, qdot_p_t, qddot_p_t = refTraj.evaluate(env.t())
         action = planner.computeAction(
-            ob[0:2], ob[2:4],
+            ob['x'], ob['xdot'],
             q_p_t, qdot_p_t, qddot_p_t
         )
-        _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
+        _, _, en_ex = exLag.evaluate(ob['x'], ob['xdot'])
         print(en_ex)
         ob, reward, done, info = env.step(action)
 

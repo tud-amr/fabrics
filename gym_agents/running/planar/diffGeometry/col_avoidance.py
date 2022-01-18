@@ -11,7 +11,7 @@ from optFabrics.diffGeometry.geometry import Geometry
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 
-def pointMassAvoidance(n_steps=1200):
+def pointMassAvoidance(n_steps=1200, render=True):
     ## setting up the problem
     obstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [0.0, 0.0], 'radius': 1.0}} 
     obst = SphereObstacle(name="obst", contentDict=obstDict)
@@ -40,11 +40,10 @@ def pointMassAvoidance(n_steps=1200):
     planner.setExecutionEnergy(exLag)
     planner.concretize()
     # setup environment
-    qs = []
     x0 = np.array([2.3, 0.5])
     xdot0 = np.array([-1.0, -0.0])
     # running the simulation
-    env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
+    env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
     ob = env.reset(x0, xdot0)
     env.addObstacle(obst)
     print("Starting episode")
@@ -52,9 +51,9 @@ def pointMassAvoidance(n_steps=1200):
         if i % 100 == 0:
             print('time step : ', i)
         # t0 = time.time()
-        action = planner.computeAction(ob[0:2], ob[2:4])
-        _, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
-        # print(en_ex)
+        action = planner.computeAction(ob['x'], ob['xdot'])
+        _, _, en_ex = exLag.evaluate(ob['x'], ob['xdot'])
+        print(f"Execution Energy : {en_ex}")
         ob, reward, done, info = env.step(action)
 
 

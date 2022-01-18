@@ -10,16 +10,15 @@ from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLa
 from optFabrics.planner.default_maps import CollisionMap
 from optFabrics.planner.default_leaves import defaultAttractor
 
-from obstacle import Obstacle
-from robotPlot import RobotPlot
-from solverPlot import SolverPlot
+from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
 
 def pointMass(n_steps=5000):
     ## setting up the problem
+    staticObstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [0.0, 0.0], 'radius': 1.0}} 
     obsts = [
-                Obstacle(np.array([0.0, 0.0]), 1.0),
-            ]
+        SphereObstacle(name="staticObst", contentDict=staticObstDict),
+    ]
     n = 2
     planner = DefaultFabricPlanner(n)
     q, qdot = planner.var()
@@ -31,7 +30,7 @@ def pointMass(n_steps=5000):
     fks = [q]
     for fk in fks:
         for obst in obsts:
-            dm_col = CollisionMap(q, qdot, fk, obst.x(), obst.r())
+            dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
             planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
     q_d = np.array([-2.0, -0.1])
@@ -54,8 +53,10 @@ def pointMass(n_steps=5000):
     # running the simulation
     for xdot0 in xdot0s:
         for x0 in x0s:
-            env = gym.make('point-robot-acc-v0', dt=0.01)
+            env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
             ob = env.reset(x0, xdot0)
+            for obst in obsts:
+                env.addObstacle(obst)
             print("Starting episode")
             q = np.zeros((n_steps, n))
             t = 0.0
@@ -67,13 +68,10 @@ def pointMass(n_steps=5000):
                 """
                 t += env._dt
                 t0 = time.time()
-                action = planner.computeAction(ob[0:2], ob[2:4])
-                #_, _, en_ex = exLag.evaluate(ob[0:2], ob[2:4])
-                #print(en_ex)
+                action = planner.computeAction(ob['x'], ob['xdot'])
                 solverTime[i] = time.time() - t0
-                # env.render()
                 ob, reward, done, info = env.step(action)
-                q[i, :] = ob[0:n]
+                q[i, :] = ob['x']
             qs.append(q)
             solverTimes.append(solverTime)
     ## Plotting the results
@@ -87,15 +85,3 @@ def pointMass(n_steps=5000):
 if __name__ == "__main__":
     n_steps = 5000
     res = pointMass(n_steps=n_steps)
-    fk_fun = lambda q : q
-    sol_indices = [0, 9]
-    robotPlot = RobotPlot([res['qs'][i] for i in sol_indices], fk_fun, 2, types=[0, 0])
-    robotPlot.initFig(2, 2)
-    robotPlot.addObstacle([0, 1], res['obsts'])
-    robotPlot.plot()
-    robotPlot.makeAnimation(n_steps)
-    robotPlot.addSolutions(0, res['qs'])
-    solverAxs = robotPlot.getAxs([2, 3])
-    solverPlot = SolverPlot([res['solverTimes'][i] for i in sol_indices], 1, 1, axs=solverAxs)
-    solverPlot.plot()
-    robotPlot.show()
