@@ -75,17 +75,24 @@ woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
 
 [[package]]
 name = "forwardkinematics"
-version = "0.4.0"
+version = "0.5.0"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = false
 
 [package.dependencies]
 casadi = "<=3.5.5"
-numpy = ">=1.15.5,<2.0.0"
-pytest = ">=6.2.5,<7.0.0"
+numpy = "^1.15.5"
+pytest = "^6.2.5"
 urdf_parser_py = ">=0.0.3"
+
+[package.source]
+type = "git"
+url = "ssh://git@github.com/maxspahn/forwardKinematics.git"
+reference = "main"
+resolved_reference = "a10c3fcf5964ecd390ee7dab722d29436bd0fc36"
 
 [[package]]
 name = "geomdl"
@@ -191,7 +198,7 @@ name = "motion-planning-scenes"
 version = "0.1.0"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
@@ -229,6 +236,32 @@ optional = true
 python-versions = ">=3.7"
 
 [[package]]
+name = "planarEnvs"
+version = "0.0.1"
+description = ""
+category = "main"
+optional = true
+python-versions = "*"
+develop = false
+
+[package.dependencies]
+casadi = "*"
+forwardkinematics = "*"
+gym = "*"
+numpy = "*"
+pyglet = "*"
+scipy = "*"
+
+[package.extras]
+scenes = ["motionplanningscenes"]
+
+[package.source]
+type = "git"
+url = "ssh://git@github.com/maxspahn/gym_envs_planar.git"
+reference = "master"
+resolved_reference = "e9737324a177939b50ac076a3c5fddd7aed47d04"
+
+[[package]]
 name = "pluggy"
 version = "1.0.0"
 description = "plugin and hook calling mechanisms for python"
@@ -250,6 +283,14 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "pyglet"
+version = "1.5.21"
+description = "Cross-platform windowing and multimedia library"
+category = "main"
+optional = true
+python-versions = "*"
 
 [[package]]
 name = "pyparsing"
@@ -316,7 +357,7 @@ numpy = ">=1.16.5,<1.23.0"
 
 [[package]]
 name = "setuptools-scm"
-version = "6.4.1"
+version = "6.4.2"
 description = "the blessed package to manage your versions by scm tags"
 category = "main"
 optional = true
@@ -387,13 +428,13 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-agents = ["gym", "motion_planning_scenes"]
+agents = ["gym", "planarenvs"]
 tutorials = ["scipy", "matplotlib"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7,<3.11"
-content-hash = "9d086622d9dd40662b3b2b000defbec1697d8d633ee0031bed8d76dbe4a3f6ec"
+content-hash = "a875314d026b68e04bac39553cddd2529d6e330442331e1a8279bcd45d99a13b"
 
 [metadata.files]
 atomicwrites = [
@@ -460,10 +501,7 @@ fonttools = [
     {file = "fonttools-4.28.5-py3-none-any.whl", hash = "sha256:edf251d5d2cc0580d5f72de4621c338d8c66c5f61abb50cf486640f73c8194d5"},
     {file = "fonttools-4.28.5.zip", hash = "sha256:545c05d0f7903a863c2020e07b8f0a57517f2c40d940bded77076397872d14ca"},
 ]
-forwardkinematics = [
-    {file = "forwardkinematics-0.4.0-py3-none-any.whl", hash = "sha256:dfec2a9bc07a312b3f1c5933e5fd6672d985b77d4922c9769adb0db4f44be41c"},
-    {file = "forwardkinematics-0.4.0.tar.gz", hash = "sha256:50c42690391bf77c8e41464eee7f4be7929bbfbe95c2c3436172c72afee0b628"},
-]
+forwardkinematics = []
 geomdl = [
     {file = "geomdl-5.3.1-py2.py3-none-any.whl", hash = "sha256:0f36a4bacde5b218c73aadc69ff152e7f7fb3aa7260df0e6647a701a5351d76a"},
     {file = "geomdl-5.3.1.tar.gz", hash = "sha256:e81a31b4d5f111267b16045ba1d9539235a98b2cff5e4bad18f7ddcd4cb804c8"},
@@ -698,6 +736,7 @@ pillow = [
     {file = "Pillow-9.0.0-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:95545137fc56ce8c10de646074d242001a112a92de169986abd8c88c27566a05"},
     {file = "Pillow-9.0.0.tar.gz", hash = "sha256:ee6e2963e92762923956fe5d3479b1fdc3b76c83f290aad131a2f98c3df0593e"},
 ]
+planarEnvs = []
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
@@ -705,6 +744,10 @@ pluggy = [
 py = [
     {file = "py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
     {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
+]
+pyglet = [
+    {file = "pyglet-1.5.21-py3-none-any.whl", hash = "sha256:11f11ddda4ee456284f2ddd1fe5c62fe29ba8c42074d3d9ae52d094abc2e1b7c"},
+    {file = "pyglet-1.5.21.zip", hash = "sha256:5aaaddb06dc4b6f9ba08254d8d806a2bd2406925a9caf3a51fdffbd5d09728e2"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.6-py3-none-any.whl", hash = "sha256:04ff808a5b90911829c55c4e26f75fa5ca8a2f5f36aa3a51f68e27033341d3e4"},
@@ -785,8 +828,8 @@ scipy = [
     {file = "scipy-1.7.3.tar.gz", hash = "sha256:ab5875facfdef77e0a47d5fd39ea178b58e60e454a4c85aa1e52fcb80db7babf"},
 ]
 setuptools-scm = [
-    {file = "setuptools_scm-6.4.1-py3-none-any.whl", hash = "sha256:93bbcc1d3e92f20eaef42df31e4b5e5a348f8cb0e48eaff3e060184a57e94b07"},
-    {file = "setuptools_scm-6.4.1.tar.gz", hash = "sha256:9bd9ff7fd5fa1cf469fe28a632336b9cfd351476c6d09379ff676d3945f669b9"},
+    {file = "setuptools_scm-6.4.2-py3-none-any.whl", hash = "sha256:acea13255093849de7ccb11af9e1fb8bde7067783450cee9ef7a93139bddf6d4"},
+    {file = "setuptools_scm-6.4.2.tar.gz", hash = "sha256:6833ac65c6ed9711a4d5d2266f8024cfa07c533a0e55f4c12f6eff280a5a9e30"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
