@@ -229,30 +229,30 @@ optional = true
 python-versions = ">=3.7"
 
 [[package]]
-name = "planarEnvs"
-version = "0.0.1"
-description = ""
+name = "planarenvs"
+version = "0.1.0"
+description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
-python-versions = "*"
+python-versions = "^3.7,<3.11"
 develop = false
 
 [package.dependencies]
-casadi = "*"
-forwardkinematics = "*"
-gym = "*"
-numpy = "*"
-pyglet = "*"
-scipy = "*"
+casadi = "<=3.5.5"
+forwardkinematics = "^0.5.0"
+gym = "^0.21.0"
+numpy = "^1.5.1"
+pyglet = "^1.5.21"
+scipy = "^1.7.3"
 
 [package.extras]
-scenes = ["motionplanningscenes"]
+scenes = ["motion-planning-scenes (>=0.1.0,<0.2.0)"]
 
 [package.source]
 type = "git"
 url = "ssh://git@github.com/maxspahn/gym_envs_planar.git"
-reference = "master"
-resolved_reference = "e9737324a177939b50ac076a3c5fddd7aed47d04"
+reference = "ft-clean-build"
+resolved_reference = "702018146daf7bf37ef9ab3b8eafd0ec129dd04b"
 
 [[package]]
 name = "pluggy"
@@ -427,7 +427,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7,<3.11"
-content-hash = "9ff752a620a104a0d4513102d7e0e77a52110fd366ff34b83a6bf965782903a1"
+content-hash = "290471c016c09536e7b377d1bd138e9ce3ad3084ed805673f43dd13941be5d15"
 
 [metadata.files]
 atomicwrites = [
@@ -732,7 +732,7 @@ pillow = [
     {file = "Pillow-9.0.0-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:95545137fc56ce8c10de646074d242001a112a92de169986abd8c88c27566a05"},
     {file = "Pillow-9.0.0.tar.gz", hash = "sha256:ee6e2963e92762923956fe5d3479b1fdc3b76c83f290aad131a2f98c3df0593e"},
 ]
-planarEnvs = []
+planarenvs = []
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
