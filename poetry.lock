@@ -79,20 +79,13 @@ version = "0.5.0"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
-python-versions = "^3.6"
-develop = false
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
 casadi = "<=3.5.5"
-numpy = "^1.15.5"
-pytest = "^6.2.5"
+numpy = ">=1.15.5,<2.0.0"
+pytest = ">=6.2.5,<7.0.0"
 urdf_parser_py = ">=0.0.3"
-
-[package.source]
-type = "git"
-url = "ssh://git@github.com/maxspahn/forwardKinematics.git"
-reference = "main"
-resolved_reference = "a10c3fcf5964ecd390ee7dab722d29436bd0fc36"
 
 [[package]]
 name = "geomdl"
@@ -434,7 +427,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7,<3.11"
-content-hash = "a875314d026b68e04bac39553cddd2529d6e330442331e1a8279bcd45d99a13b"
+content-hash = "9ff752a620a104a0d4513102d7e0e77a52110fd366ff34b83a6bf965782903a1"
 
 [metadata.files]
 atomicwrites = [
@@ -501,7 +494,10 @@ fonttools = [
     {file = "fonttools-4.28.5-py3-none-any.whl", hash = "sha256:edf251d5d2cc0580d5f72de4621c338d8c66c5f61abb50cf486640f73c8194d5"},
     {file = "fonttools-4.28.5.zip", hash = "sha256:545c05d0f7903a863c2020e07b8f0a57517f2c40d940bded77076397872d14ca"},
 ]
-forwardkinematics = []
+forwardkinematics = [
+    {file = "forwardkinematics-0.5.0-py3-none-any.whl", hash = "sha256:6d36f4a62d04cf0f9df666925255175fcf8edc7ff98febb529c7e350c96598fe"},
+    {file = "forwardkinematics-0.5.0.tar.gz", hash = "sha256:415325c3458bef26b53775219bde2e6a9068ab85dded800bfd2a6887c12978b5"},
+]
 geomdl = [
     {file = "geomdl-5.3.1-py2.py3-none-any.whl", hash = "sha256:0f36a4bacde5b218c73aadc69ff152e7f7fb3aa7260df0e6647a701a5351d76a"},
     {file = "geomdl-5.3.1.tar.gz", hash = "sha256:e81a31b4d5f111267b16045ba1d9539235a98b2cff5e4bad18f7ddcd4cb804c8"},
