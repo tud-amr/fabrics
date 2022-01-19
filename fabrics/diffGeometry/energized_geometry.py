@@ -2,14 +2,14 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from optFabrics.diffGeometry.spec import Spec, checkCompatability
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.casadi_helpers import outerProduct
-from optFabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.spec import Spec, checkCompatability
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.casadi_helpers import outerProduct
+from fabrics.diffGeometry.variables import eps
 
-from optFabrics.helper_functions import joinRefTrajs
+from fabrics.helpers.functions import joinRefTrajs
 
 class EnergizedGeometry(Spec):
     # Should not be used as it is not compliant with summation

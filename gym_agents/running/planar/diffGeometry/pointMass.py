@@ -4,11 +4,11 @@ import time
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
-from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
-from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian, GoalLagrangian
-from optFabrics.planner.default_maps import CollisionMap
-from optFabrics.planner.default_leaves import defaultAttractor
+from fabrics.planner.fabricPlanner import DefaultFabricPlanner
+from fabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
+from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian, GoalLagrangian
+from fabrics.planner.default_maps import CollisionMap
+from fabrics.planner.default_leaves import defaultAttractor
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
@@ -54,7 +54,7 @@ def pointMass(n_steps=5000):
     for xdot0 in xdot0s:
         for x0 in x0s:
             env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
-            ob = env.reset(x0, xdot0)
+            ob = env.reset(pos=x0, vel=xdot0)
             for obst in obsts:
                 env.addObstacle(obst)
             print("Starting episode")

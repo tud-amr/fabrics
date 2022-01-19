@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from optFabrics.diffGeometry.variables import Jdot_sign
+from fabrics.diffGeometry.variables import Jdot_sign
 
 
 class DifferentialMap:

@@ -1,15 +1,15 @@
 import casadi as ca
 import numpy as np
 from copy import deepcopy
-from optFabrics.planner.fabricPlanner import FabricPlanner
+from fabrics.planner.fabricPlanner import FabricPlanner
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
-from optFabrics.diffGeometry.speedControl import Damper
-from optFabrics.diffGeometry.variables import eps
-from optFabrics.helper_functions import joinVariables
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.speedControl import Damper
+from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.functions import joinVariables
 
 
 class NonHolonomicPlanner(FabricPlanner):

@@ -1,7 +1,7 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.splineTrajectory import SplineTrajectory
+from fabrics.diffGeometry.splineTrajectory import SplineTrajectory
 
 
 @pytest.mark.skip(reason="Spline trajectories currently not maintained")

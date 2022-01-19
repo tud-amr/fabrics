@@ -1,9 +1,9 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
-from optFabrics.diffGeometry.energy import FinslerStructure
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.energy import FinslerStructure
 
 
 @pytest.fixture

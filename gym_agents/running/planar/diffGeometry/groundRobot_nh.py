@@ -4,16 +4,16 @@ import time
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.nonHolonomicPlanner import (
+from fabrics.planner.nonHolonomicPlanner import (
     DefaultNonHolonomicPlanner,
 )
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.planner.default_leaves import defaultAttractor
-from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
-from optFabrics.planner.default_maps import CollisionMap
-from optFabrics.planner.default_energies import (
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.planner.default_leaves import defaultAttractor
+from fabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
+from fabrics.planner.default_maps import CollisionMap
+from fabrics.planner.default_energies import (
     CollisionLagrangian,
     ExecutionLagrangian,
 )

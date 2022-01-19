@@ -2,9 +2,9 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.variables import eps
-from optFabrics.helper_functions import joinVariables, checkCompatability
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.functions import joinVariables, checkCompatability
 
 
 class Spec:

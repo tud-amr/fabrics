@@ -1,10 +1,10 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.planner.nonHolonomicPlanner import NonHolonomicPlanner
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
-from optFabrics.diffGeometry.geometry import Geometry
+from fabrics.planner.nonHolonomicPlanner import NonHolonomicPlanner
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.energy import FinslerStructure, Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
 
 
 @pytest.fixture

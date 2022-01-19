@@ -3,10 +3,10 @@ import numpy as np
 
 from copy import deepcopy
 
-from optFabrics.diffGeometry.spec import Spec, checkCompatability
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.spec import Spec, checkCompatability
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 
-from optFabrics.helper_functions import joinRefTrajs
+from fabrics.helpers.functions import joinRefTrajs
 
 
 class LagrangianException(Exception):

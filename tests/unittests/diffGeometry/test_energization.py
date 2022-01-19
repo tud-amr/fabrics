@@ -1,14 +1,14 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.energized_geometry import (
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energized_geometry import (
     EnergizedGeometry,
     WeightedGeometry,
 )
-from optFabrics.diffGeometry.energy import Lagrangian, FinslerStructure
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.energy import Lagrangian, FinslerStructure
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.variables import eps
 
 
 @pytest.fixture

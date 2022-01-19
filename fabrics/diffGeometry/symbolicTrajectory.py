@@ -2,8 +2,8 @@ import casadi as ca
 import numpy as np
 from abc import ABC, abstractmethod
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.variables import eps
 from MotionPlanningSceneHelpers.referenceTrajectory import ReferenceTrajectory
 
 
