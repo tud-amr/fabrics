@@ -250,7 +250,7 @@ scenes = ["motion-planning-scenes (>=0.1.0,<0.2.0)"]
 
 [package.source]
 type = "git"
-url = "ssh://git@github.com/maxspahn/gym_envs_planar.git"
+url = "https://git@github.com/maxspahn/gym_envs_planar.git"
 reference = "ft-clean-build"
 resolved_reference = "702018146daf7bf37ef9ab3b8eafd0ec129dd04b"
 
@@ -427,7 +427,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7,<3.11"
-content-hash = "290471c016c09536e7b377d1bd138e9ce3ad3084ed805673f43dd13941be5d15"
+content-hash = "a12fc6f08cddc019f15c0d7e8425c9a97daeb24b01be34d038cbaac972bdb279"
 
 [metadata.files]
 atomicwrites = [
