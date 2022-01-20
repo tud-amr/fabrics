@@ -1,5 +1,5 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import time
 import casadi as ca
 import numpy as np
@@ -106,7 +106,6 @@ def pointMassDynamic(n_steps=5000):
                 if i % 100 == 0:
                     print('time step : ', i)
                 """
-                t += env._dt
                 t0 = time.time()
                 q_p_t, qdot_p_t, qddot_p_t = refTraj_obst1.evaluate(t)
                 q2_p_t, q2dot_p_t, q2ddot_p_t = refTraj_obst2.evaluate(t)
@@ -131,7 +130,7 @@ def pointMassDynamic(n_steps=5000):
     res['qs'] = qs
     res['solverTimes'] = solverTimes
     res['obsts'] = obsts
-    res['dt'] = env._dt
+    res['dt'] = env.dt()
     return res
 
 if __name__ == "__main__":

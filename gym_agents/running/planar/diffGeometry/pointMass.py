@@ -1,5 +1,5 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import time
 import casadi as ca
 import numpy as np
@@ -66,7 +66,6 @@ def pointMass(n_steps=5000):
                 if i % 100 == 0:
                     print('time step : ', i)
                 """
-                t += env._dt
                 t0 = time.time()
                 action = planner.computeAction(ob['x'], ob['xdot'])
                 solverTime[i] = time.time() - t0
@@ -79,7 +78,7 @@ def pointMass(n_steps=5000):
     res['qs'] = qs
     res['solverTimes'] = solverTimes
     res['obsts'] = obsts
-    res['dt'] = env._dt
+    res['dt'] = env.dt()
     return res
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import gym
-import groundRobots
+import planarenvs.groundRobots
 import time
 import casadi as ca
 import numpy as np

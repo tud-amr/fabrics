@@ -1,5 +1,5 @@
 import gym
-import nLinkReacher
+import planarenvs.nLinkReacher
 import casadi as ca
 import numpy as np
 import time

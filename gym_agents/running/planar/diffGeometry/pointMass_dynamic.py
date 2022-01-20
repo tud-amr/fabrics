@@ -1,5 +1,5 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import time
 import casadi as ca
 import numpy as np
