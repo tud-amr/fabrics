@@ -6,5 +6,6 @@ __pycache__/*
 *.coverage
 tests/unittests/diffGeometry/htmlcov/
 dist
+build
 fabrics.egg-info/
 setup.py

@@ -54,14 +54,14 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "fonttools"
-version = "4.28.5"
+version = "4.29.0"
 description = "Tools to manipulate font files"
 category = "main"
 optional = true
 python-versions = ">=3.7"
 
 [package.extras]
-all = ["fs (>=2.2.0,<3)", "lxml (>=4.0,<5)", "zopfli (>=0.1.4)", "lz4 (>=1.7.4.2)", "matplotlib", "sympy", "skia-pathops (>=0.5.0)", "brotlicffi (>=0.8.0)", "scipy", "brotli (>=1.0.1)", "munkres", "unicodedata2 (>=13.0.0)", "xattr"]
+all = ["fs (>=2.2.0,<3)", "lxml (>=4.0,<5)", "zopfli (>=0.1.4)", "lz4 (>=1.7.4.2)", "matplotlib", "sympy", "skia-pathops (>=0.5.0)", "brotlicffi (>=0.8.0)", "scipy", "brotli (>=1.0.1)", "munkres", "unicodedata2 (>=14.0.0)", "xattr"]
 graphite = ["lz4 (>=1.7.4.2)"]
 interpolatable = ["scipy", "munkres"]
 lxml = ["lxml (>=4.0,<5)"]
@@ -70,22 +70,29 @@ plot = ["matplotlib"]
 symfont = ["sympy"]
 type1 = ["xattr"]
 ufo = ["fs (>=2.2.0,<3)"]
-unicode = ["unicodedata2 (>=13.0.0)"]
+unicode = ["unicodedata2 (>=14.0.0)"]
 woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
 
 [[package]]
 name = "forwardkinematics"
-version = "0.5.0"
+version = "0.5.1"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = false
 
 [package.dependencies]
 casadi = "<=3.5.5"
-numpy = ">=1.15.5,<2.0.0"
-pytest = ">=6.2.5,<7.0.0"
+numpy = "^1.15.5"
+pytest = "^6.2.5"
 urdf_parser_py = ">=0.0.3"
+
+[package.source]
+type = "git"
+url = "https://git@github.com/maxspahn/forwardKinematics.git"
+reference = "main"
+resolved_reference = "86a28276ef85e1636d29e474b1307255aa1bdbc2"
 
 [[package]]
 name = "geomdl"
@@ -188,7 +195,7 @@ setuptools_scm = ">=4"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.0"
+version = "0.1.1"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -287,7 +294,7 @@ python-versions = "*"
 
 [[package]]
 name = "pyparsing"
-version = "3.0.6"
+version = "3.0.7"
 description = "Python parsing module"
 category = "main"
 optional = false
@@ -427,7 +434,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7,<3.11"
-content-hash = "a12fc6f08cddc019f15c0d7e8425c9a97daeb24b01be34d038cbaac972bdb279"
+content-hash = "3ce93f093c0127a8fbcdc29dcf7839865c59601fe02bed5a2483ed0f0561f6d2"
 
 [metadata.files]
 atomicwrites = [
@@ -491,13 +498,10 @@ cycler = [
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
 ]
 fonttools = [
-    {file = "fonttools-4.28.5-py3-none-any.whl", hash = "sha256:edf251d5d2cc0580d5f72de4621c338d8c66c5f61abb50cf486640f73c8194d5"},
-    {file = "fonttools-4.28.5.zip", hash = "sha256:545c05d0f7903a863c2020e07b8f0a57517f2c40d940bded77076397872d14ca"},
+    {file = "fonttools-4.29.0-py3-none-any.whl", hash = "sha256:ed9496e5650b977a697c50ac99c8e8331f9eae3f99e5ae649623359103306dfe"},
+    {file = "fonttools-4.29.0.zip", hash = "sha256:f4834250db2c9855c3385459579dbb5cdf74349ab059ea0e619359b65ae72037"},
 ]
-forwardkinematics = [
-    {file = "forwardkinematics-0.5.0-py3-none-any.whl", hash = "sha256:6d36f4a62d04cf0f9df666925255175fcf8edc7ff98febb529c7e350c96598fe"},
-    {file = "forwardkinematics-0.5.0.tar.gz", hash = "sha256:415325c3458bef26b53775219bde2e6a9068ab85dded800bfd2a6887c12978b5"},
-]
+forwardkinematics = []
 geomdl = [
     {file = "geomdl-5.3.1-py2.py3-none-any.whl", hash = "sha256:0f36a4bacde5b218c73aadc69ff152e7f7fb3aa7260df0e6647a701a5351d76a"},
     {file = "geomdl-5.3.1.tar.gz", hash = "sha256:e81a31b4d5f111267b16045ba1d9539235a98b2cff5e4bad18f7ddcd4cb804c8"},
@@ -659,8 +663,8 @@ matplotlib = [
     {file = "matplotlib-3.5.1.tar.gz", hash = "sha256:b2e9810e09c3a47b73ce9cab5a72243a1258f61e7900969097a817232246ce1c"},
 ]
 motion-planning-scenes = [
-    {file = "motion_planning_scenes-0.1.0-py3-none-any.whl", hash = "sha256:f99ec9109816530dff8408fefc4fb94dd4be8781df6f2a68c2387c3c9bdd2fe5"},
-    {file = "motion_planning_scenes-0.1.0.tar.gz", hash = "sha256:8c28450e656925e3a40e29547c351e739170d655f3a52dcba394b3783c3c7b0b"},
+    {file = "motion_planning_scenes-0.1.1-py3-none-any.whl", hash = "sha256:77b58109266a80cb841aaf03200dee72bfc0c2d6b15aeaa6f592353299bd644b"},
+    {file = "motion_planning_scenes-0.1.1.tar.gz", hash = "sha256:e8074211306ace4df3b072a6fcbf87a162cdd2e1907f7f6b9433b1e4b24fd8bb"},
 ]
 numpy = [
     {file = "numpy-1.21.5-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:301e408a052fdcda5cdcf03021ebafc3c6ea093021bf9d1aa47c54d48bdad166"},
@@ -746,8 +750,8 @@ pyglet = [
     {file = "pyglet-1.5.21.zip", hash = "sha256:5aaaddb06dc4b6f9ba08254d8d806a2bd2406925a9caf3a51fdffbd5d09728e2"},
 ]
 pyparsing = [
-    {file = "pyparsing-3.0.6-py3-none-any.whl", hash = "sha256:04ff808a5b90911829c55c4e26f75fa5ca8a2f5f36aa3a51f68e27033341d3e4"},
-    {file = "pyparsing-3.0.6.tar.gz", hash = "sha256:d9bdec0013ef1eb5a84ab39a3b3868911598afa494f5faa038647101504e2b81"},
+    {file = "pyparsing-3.0.7-py3-none-any.whl", hash = "sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484"},
+    {file = "pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
 ]
 pytest = [
     {file = "pytest-6.2.5-py3-none-any.whl", hash = "sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134"},
