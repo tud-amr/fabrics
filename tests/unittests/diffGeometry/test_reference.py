@@ -1,8 +1,8 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
-from optFabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.diffMap import DifferentialMap
 
 
 def test_ref_creation():

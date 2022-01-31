@@ -1,14 +1,14 @@
 import gym
-import nLinkReacher
+import planarenvs.nLinkReacher
 import time
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
-from optFabrics.planner.default_geometries import CollisionGeometry, LimitGeometry, GoalGeometry
-from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
-from optFabrics.planner.default_leaves import defaultAttractor
+from fabrics.planner.fabricPlanner import DefaultFabricPlanner
+from fabrics.planner.default_geometries import CollisionGeometry, LimitGeometry, GoalGeometry
+from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
+from fabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
+from fabrics.planner.default_leaves import defaultAttractor
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
@@ -75,7 +75,7 @@ def nlink(n=3, n_steps=5000, render=True):
     print("Starting episode")
     q0 = np.zeros(n)
     q0dot = np.array([0.1, 0.4, 0.1, 0.0, 0.0])
-    ob = env.reset(q0, q0dot)
+    ob = env.reset(pos=q0, vel=q0dot)
     for obst in obsts:
         env.addObstacle(obst)
     env.addGoal(goal)

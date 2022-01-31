@@ -5,3 +5,6 @@ __pycache__/*
 *.pyc
 *.coverage
 tests/unittests/diffGeometry/htmlcov/
+dist
+fabrics.egg-info/
+setup.py

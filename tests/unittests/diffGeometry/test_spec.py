@@ -1,8 +1,8 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.spec import Spec
-from optFabrics.exceptions.spec_exception import SpecException
+from fabrics.diffGeometry.spec import Spec
+from fabrics.helpers.exceptions import SpecException
 
 
 @pytest.fixture

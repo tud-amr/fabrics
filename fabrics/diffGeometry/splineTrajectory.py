@@ -3,11 +3,10 @@ import numpy as np
 
 from geomdl import BSpline
 from geomdl import utilities
-from geomdl.visualization import VisMPL
 
-from optFabrics.diffGeometry.variables import eps
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.symbolicTrajectory import SymbolicTrajectory
+from fabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.symbolicTrajectory import SymbolicTrajectory
 
 
 class SplineTrajectory(SymbolicTrajectory):

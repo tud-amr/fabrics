@@ -1,10 +1,10 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.spec import Spec
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.spec import Spec
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 
 @pytest.fixture

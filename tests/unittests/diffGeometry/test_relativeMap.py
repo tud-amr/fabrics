@@ -1,12 +1,12 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.spec import Spec
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
-from optFabrics.diffGeometry.diffMap import RelativeDifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.spec import Spec
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.diffMap import RelativeDifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 
 @pytest.fixture

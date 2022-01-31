@@ -1,7 +1,7 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.casadi_helpers import outerProduct
+from fabrics.diffGeometry.casadi_helpers import outerProduct
 
 
 def test_outer_product():

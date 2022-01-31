@@ -1,9 +1,9 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.spec import Spec
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.variables import Jdot_sign
+from fabrics.diffGeometry.spec import Spec
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.variables import Jdot_sign
 
 
 @pytest.fixture

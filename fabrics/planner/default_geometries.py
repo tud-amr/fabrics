@@ -1,6 +1,6 @@
 import casadi as ca
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.variables import eps
 
 
 class CollisionGeometry(Geometry):

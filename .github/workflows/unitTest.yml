@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: DiffGeo Agents
+name: Testing Differential Geometry
 
 # Controls when the workflow will run
 on: 
@@ -12,7 +12,7 @@ on:
       - master
 
 jobs:
-  test-agents:
+  unit-testing:
     runs-on: ubuntu-latest
 
     steps:
@@ -50,15 +50,16 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root -E agents
+        run: poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: poetry install --no-interaction -E agents
+        run: poetry install --no-interaction
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
       # Runs a set of commands using the runners shell
-      - name: Test agents
-        run: PYTHONPATH=src/ poetry run python -m pytest gym_agents/running/planar/diffGeometry/test_agents.py
+      - name: Run pytest
+        run: PYTHONPATH=src/ poetry run python -m pytest tests/
+

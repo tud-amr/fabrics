@@ -1,15 +1,15 @@
 import casadi as ca
 import numpy as np
 from copy import deepcopy
-from optFabrics.planner.fabricPlanner import FabricPlanner
+from fabrics.planner.fabricPlanner import FabricPlanner
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
-from optFabrics.diffGeometry.speedControl import Damper
-from optFabrics.diffGeometry.variables import eps
-from optFabrics.helper_functions import joinVariables
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.speedControl import Damper
+from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.functions import joinVariables
 
 
 class NonHolonomicPlanner(FabricPlanner):
@@ -103,13 +103,14 @@ class DefaultNonHolonomicPlanner(NonHolonomicPlanner):
         qudot = ca.SX.sym("qdot", n-1)
         M = np.identity(n) * p['m_base']
         M[0:3, 0:3] = np.identity(3) * 0.1
+        M[2, 2] = 0.1
         l_base = 0.5 * ca.dot(qdot, ca.mtimes(M, qdot))
         h_base = ca.SX(np.zeros(n))
         baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
         baseLag = Lagrangian(l_base, x=q, xdot=qdot)
         J_nh = ca.SX(np.zeros((n, n-1)))
-        #J_nh[0:2, 0] = np.array([ca.cos(q[2]), ca.sin(q[2])])
-        J_nh[0:2, 0] = np.array([ca.sin(q[2]), -ca.cos(q[2])])
+        J_nh[0, 0] = ca.sin(q[2])
+        J_nh[1, 0] = -ca.cos(q[2])
         for i in range(2, n):
             J_nh[i, i-1] = 1
         f_extra = ca.SX(np.zeros((n, 1)))

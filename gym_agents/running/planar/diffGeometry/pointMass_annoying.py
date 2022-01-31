@@ -1,18 +1,18 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import time
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
-from optFabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
-from optFabrics.planner.default_geometries import CollisionGeometry, LimitGeometry, GoalGeometry
-from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
-from optFabrics.planner.default_leaves import defaultAttractor
+from fabrics.planner.fabricPlanner import DefaultFabricPlanner
+from fabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
+from fabrics.planner.default_geometries import CollisionGeometry, LimitGeometry, GoalGeometry
+from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
+from fabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
+from fabrics.planner.default_leaves import defaultAttractor
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
@@ -94,7 +94,7 @@ def pointMassDynamic(n_steps=5000):
     for xdot0 in xdot0s:
         for x0 in x0s:
             env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
-            ob = env.reset(x0, xdot0)
+            ob = env.reset(pos=x0, vel=xdot0)
             for obst in obsts:
                 env.addObstacle(obst)
             print("Starting episode")
@@ -106,7 +106,6 @@ def pointMassDynamic(n_steps=5000):
                 if i % 100 == 0:
                     print('time step : ', i)
                 """
-                t += env._dt
                 t0 = time.time()
                 q_p_t, qdot_p_t, qddot_p_t = refTraj_obst1.evaluate(t)
                 q2_p_t, q2dot_p_t, q2ddot_p_t = refTraj_obst2.evaluate(t)
@@ -131,7 +130,7 @@ def pointMassDynamic(n_steps=5000):
     res['qs'] = qs
     res['solverTimes'] = solverTimes
     res['obsts'] = obsts
-    res['dt'] = env._dt
+    res['dt'] = env.dt()
     return res
 
 if __name__ == "__main__":

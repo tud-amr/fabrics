@@ -1,15 +1,15 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
-from optFabrics.planner.default_geometries import CollisionGeometry
-from optFabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from optFabrics.planner.default_maps import CollisionMap
+from fabrics.planner.fabricPlanner import DefaultFabricPlanner
+from fabrics.planner.default_geometries import CollisionGeometry
+from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
+from fabrics.planner.default_maps import CollisionMap
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle

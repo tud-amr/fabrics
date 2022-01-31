@@ -1,5 +1,5 @@
 import casadi as ca
-from optFabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap
 
 
 class CollisionMap(DifferentialMap):

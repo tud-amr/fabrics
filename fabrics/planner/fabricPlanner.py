@@ -2,14 +2,14 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.energized_geometry import WeightedGeometry
-from optFabrics.diffGeometry.speedControl import Damper
-from optFabrics.helper_functions import joinVariables, joinRefTrajs
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.speedControl import Damper
+from fabrics.helpers.functions import joinVariables, joinRefTrajs
 
-from optFabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.variables import eps
 
 
 class FabricPlannerException(Exception):

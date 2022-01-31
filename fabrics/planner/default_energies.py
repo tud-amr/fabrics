@@ -1,6 +1,6 @@
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.energy import Lagrangian
 
 
 class CollisionLagrangian(Lagrangian):

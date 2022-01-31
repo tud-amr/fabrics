@@ -1,12 +1,12 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import FabricPlanner
-from optFabrics.diffGeometry.diffMap import DifferentialMap
-from optFabrics.diffGeometry.energy import Lagrangian
-from optFabrics.diffGeometry.geometry import Geometry
+from fabrics.planner.fabricPlanner import FabricPlanner
+from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
@@ -44,7 +44,7 @@ def pointMassAvoidance(n_steps=1200, render=True):
     xdot0 = np.array([-1.0, -0.0])
     # running the simulation
     env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
-    ob = env.reset(x0, xdot0)
+    ob = env.reset(pos=x0, vel=xdot0)
     env.addObstacle(obst)
     print("Starting episode")
     for i in range(n_steps):

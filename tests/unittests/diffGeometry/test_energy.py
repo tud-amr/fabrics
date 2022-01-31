@@ -1,9 +1,9 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.diffGeometry.spec import Spec
-from optFabrics.diffGeometry.energy import Lagrangian, FinslerStructure
-from optFabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.spec import Spec
+from fabrics.diffGeometry.energy import Lagrangian, FinslerStructure
+from fabrics.diffGeometry.diffMap import DifferentialMap
 
 
 @pytest.fixture

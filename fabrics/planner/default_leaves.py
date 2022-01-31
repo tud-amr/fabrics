@@ -1,12 +1,12 @@
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.default_geometries import GoalGeometry
-from optFabrics.planner.default_energies import GoalLagrangian
-from optFabrics.planner.default_maps import GoalMap
+from fabrics.planner.default_geometries import GoalGeometry
+from fabrics.planner.default_energies import GoalLagrangian
+from fabrics.planner.default_maps import GoalMap
 
-from optFabrics.diffGeometry.diffMap import RelativeDifferentialMap, DifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.diffMap import RelativeDifferentialMap, DifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 
 def defaultAttractor(q: ca.SX, qdot: ca.SX, goal: np.ndarray, fk: ca.SX, **kwargs):

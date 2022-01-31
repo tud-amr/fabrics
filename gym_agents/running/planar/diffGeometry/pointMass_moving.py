@@ -1,21 +1,21 @@
 import gym
-import pointRobot
+import planarenvs.pointRobot
 import time
 import casadi as ca
 import numpy as np
 
-from optFabrics.planner.fabricPlanner import DefaultFabricPlanner
-from optFabrics.planner.default_geometries import CollisionGeometry
-from optFabrics.planner.default_energies import (
+from fabrics.planner.fabricPlanner import DefaultFabricPlanner
+from fabrics.planner.default_geometries import CollisionGeometry
+from fabrics.planner.default_energies import (
     CollisionLagrangian,
     ExecutionLagrangian,
 )
-from optFabrics.planner.default_maps import (
+from fabrics.planner.default_maps import (
     CollisionMap,
 )
-from optFabrics.planner.default_leaves import defaultDynamicAttractor, defaultAttractor
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.planner.default_leaves import defaultDynamicAttractor, defaultAttractor
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
@@ -91,7 +91,7 @@ def pointMassDynamicGoal(n_steps=5000):
     dynamicFabric = False
     x0 = np.array([0.3, 4.0])
     xdot0 = np.array([-1.0, -0.0])
-    ob = env.reset(x0, xdot0)
+    ob = env.reset(pos=x0, vel=xdot0)
     for obst in obsts:
         env.addObstacle(obst)
     env.addGoal(goal)

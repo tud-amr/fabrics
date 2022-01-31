@@ -1,6 +1,6 @@
 import casadi as ca
 
-from optFabrics.exceptions.spec_exception import SpecException
+from fabrics.helpers.exceptions import SpecException
 
 
 def checkCompatability(a, b):

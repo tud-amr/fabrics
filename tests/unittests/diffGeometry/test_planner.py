@@ -1,11 +1,11 @@
 import pytest
 import casadi as ca
 import numpy as np
-from optFabrics.planner.fabricPlanner import FabricPlanner
-from optFabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
-from optFabrics.diffGeometry.energy import FinslerStructure, Lagrangian
-from optFabrics.diffGeometry.geometry import Geometry
-from optFabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.planner.fabricPlanner import FabricPlanner
+from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.energy import FinslerStructure, Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 
 @pytest.fixture
