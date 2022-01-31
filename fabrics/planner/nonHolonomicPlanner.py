@@ -103,7 +103,7 @@ class DefaultNonHolonomicPlanner(NonHolonomicPlanner):
         qudot = ca.SX.sym("qdot", n-1)
         M = np.identity(n) * p['m_base']
         M[0:3, 0:3] = np.identity(3) * 0.1
-        M[2, 2] = 10
+        M[2, 2] = 0.1
         l_base = 0.5 * ca.dot(qdot, ca.mtimes(M, qdot))
         h_base = ca.SX(np.zeros(n))
         baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
