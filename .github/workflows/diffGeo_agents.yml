@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - master
-      - ft-build-cleanup
   pull_request:
     branches:
       - master
