@@ -37,8 +37,13 @@ They are installed using the pip installation.
 
 Install the package through pip, using 
 ```bash
-pip3 install -r requirements.txt
-pip3 install -e fabrics_package
+pip3 install ".<options>"
+```
+Options are [agents] and [tutorial]. Those con be installed using
+
+Install the package through poetry, using
+```bash
+poetry install -E <option>
 ```
 
 ## Gym Agents
