@@ -93,7 +93,7 @@ class NonHolonomicPlanner(FabricPlanner):
 
 class DefaultNonHolonomicPlanner(NonHolonomicPlanner):
     def __init__(self, n: int, **kwargs):
-        p = {'m_base': 0.5, 'm_ratio': 1, 'debug': False}
+        p = {'m_base': 0.5, 'm_rot': 1, 'm_arm': 1, 'debug': False}
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
@@ -102,9 +102,10 @@ class DefaultNonHolonomicPlanner(NonHolonomicPlanner):
         qdot = ca.SX.sym("qdot", n)
         qu = ca.SX.sym('q', n-1)
         qudot = ca.SX.sym("qdot", n-1)
-        M = np.identity(n) * p['m_base']
-        M[0:3, 0:3] = np.identity(3) * p['m_base']
-        M[2, 2] *= p['m_ratio']
+        M = np.identity(n)
+        M[0:2, 0:2] *= p['m_base']
+        M[2, 2] *= p['m_rot']
+        M[3:n, 3:n] *= p['m_arm']
         l_base = 0.5 * ca.dot(qdot, ca.mtimes(M, qdot))
         h_base = ca.SX(np.zeros(n))
         baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
