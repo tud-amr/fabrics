@@ -30,7 +30,7 @@ def static_map():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     phi = ca.norm_2(q)
-    dm = DifferentialMap(phi, q=q, qdot=qdot)
+    dm = DifferentialMap(phi, q=q, qdot=qdot, Jdot_sign=+1)
     return dm
 
 
