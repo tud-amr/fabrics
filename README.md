@@ -14,10 +14,6 @@ Nonholonomic Robots
 :-------------------------:
 ![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
 
-# IMPORTANT NOTE
-
-SET THE VARIABLE `Jdot_sign` IN diffGeometry/variabLes TO `-1`.
-
 
 ## Tutorials
 

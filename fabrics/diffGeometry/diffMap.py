@@ -1,18 +1,19 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.diffGeometry.variables import Jdot_sign
-
 
 class DifferentialMap:
     """description"""
 
     def __init__(self, phi: ca.SX, **kwargs):
-        if len(kwargs) == 2:
+        if 'q' in kwargs.keys() and 'qdot' in kwargs.keys():
             q = kwargs.get('q')
             qdot = kwargs.get('qdot')
-        elif len(kwargs) == 1:
+        elif 'var' in kwargs.keys():
             q, qdot = kwargs.get('var')
+        Jdot_sign = -1
+        if 'Jdot_sign' in kwargs.keys():
+            Jdot_sign = kwargs.get('Jdot_sign')
         assert isinstance(q, ca.SX)
         assert isinstance(qdot, ca.SX)
         assert isinstance(phi, ca.SX)
