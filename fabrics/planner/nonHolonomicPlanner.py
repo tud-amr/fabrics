@@ -93,7 +93,7 @@ class NonHolonomicPlanner(FabricPlanner):
 
 class DefaultNonHolonomicPlanner(NonHolonomicPlanner):
     def __init__(self, n: int, **kwargs):
-        p = {'m_base': 0.5, 'm_rot': 1, 'm_arm': 1, 'debug': False}
+        p = {'m_base': 0.5, 'm_rot': 1, 'm_arm': 1, 'l_offset': 0.3, 'debug': False}
         for key in p.keys():
             if key in kwargs:
                 p[key] = kwargs.get(key)
@@ -112,10 +112,12 @@ class DefaultNonHolonomicPlanner(NonHolonomicPlanner):
         baseLag = Lagrangian(l_base, x=q, xdot=qdot)
         J_nh = ca.SX(np.zeros((n, n-1)))
         J_nh[0, 0] = ca.cos(q[2])
+        J_nh[0, 1] = -p['l_offset'] * ca.sin(q[2])
         J_nh[1, 0] = ca.sin(q[2])
+        J_nh[1, 1] = p['l_offset'] * ca.cos(q[2])
         for i in range(2, n):
             J_nh[i, i-1] = 1
         f_extra = ca.SX(np.zeros((n, 1)))
-        #f_extra[0:2] = qudot[0] * qudot[1] * ca.vertcat(-ca.sin(q[2]), ca.cos(q[2]))
-        f_extra[0:2] = qudot[0] * qudot[1] * ca.vertcat(ca.cos(q[2]), ca.sin(q[2]))
+        f_extra[0] = qudot[0] * qudot[1] * -ca.sin(q[2]) - p['l_offset'] * ca.cos(q[2]) * qudot[1]**2
+        f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) - p['l_offset'] * ca.sin(q[2]) * qudot[1]**2
         super().__init__(baseGeo, baseLag, J_nh, qudot, f_extra, debug=p['debug'])
