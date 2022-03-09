@@ -15,10 +15,10 @@ from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 
 
-def pointMassDynamicAvoidance(n_steps=500):
+def pointMassDynamicAvoidance(n_steps=500, render=True):
     # Define the robot
     n = 2
-    env = gym.make('point-robot-acc-v0', dt=0.001, render=True)
+    env = gym.make('point-robot-acc-v0', dt=0.001, render=render)
     # setting up the problem
     x_obst = ['-3.0 + (0.5 * t)**2', '-t * 0.1 + 0.1 * t**2']
     refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, traj=x_obst)
@@ -72,6 +72,7 @@ def pointMassDynamicAvoidance(n_steps=500):
         _, _, en_ex = exLag.evaluate(ob['x'], ob['xdot'])
         print(en_ex)
         ob, reward, done, info = env.step(action)
+    return {}
 
 
 if __name__ == "__main__":

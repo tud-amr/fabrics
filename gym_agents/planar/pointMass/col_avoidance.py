@@ -9,7 +9,6 @@ from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
-from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 
 def pointMassAvoidance(n_steps=1200, render=True):
     ## setting up the problem
@@ -55,6 +54,7 @@ def pointMassAvoidance(n_steps=1200, render=True):
         _, _, en_ex = exLag.evaluate(ob['x'], ob['xdot'])
         print(f"Execution Energy : {en_ex}")
         ob, reward, done, info = env.step(action)
+    return {}
 
 
 if __name__ == "__main__":

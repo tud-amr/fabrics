@@ -21,8 +21,9 @@ from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 
-def pointMassDynamicGoal(n_steps=5000):
-    env = gym.make("point-robot-acc-v0", dt=0.01, render=True)
+
+def pointMassDynamicAnnoying(n_steps=5000, render=True):
+    env = gym.make("point-robot-acc-v0", dt=0.01, render=render)
     # obstacles
     obstTraj = ["0.5", "6.0 * ca.cos(0.2 * t)"]
     dynamicObstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'trajectory': obstTraj, 'radius': 1.0}} 
@@ -111,8 +112,9 @@ def pointMassDynamicGoal(n_steps=5000):
             qddot_p_t,
         )
         ob, reward, done, info = env.step(action)
+    return {}
 
 
 if __name__ == "__main__":
     n_steps = 4000
-    pointMassDynamicGoal(n_steps=n_steps)
+    pointMassDynamicAnnoying(n_steps=n_steps)

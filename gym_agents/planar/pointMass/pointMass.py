@@ -13,7 +13,7 @@ from fabrics.planner.default_leaves import defaultAttractor
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
 
-def pointMass(n_steps=5000):
+def pointMass(n_steps=5000, render=True):
     ## setting up the problem
     staticObstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [0.0, 0.0], 'radius': 1.0}} 
     obsts = [
@@ -53,7 +53,7 @@ def pointMass(n_steps=5000):
     # running the simulation
     for xdot0 in xdot0s:
         for x0 in x0s:
-            env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
+            env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
             ob = env.reset(pos=x0, vel=xdot0)
             for obst in obsts:
                 env.addObstacle(obst)
