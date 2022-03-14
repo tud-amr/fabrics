@@ -117,6 +117,7 @@ def pointMassDynamicGoal(n_steps=5000, render=True):
             qddot_g_t,
         )
         ob, reward, done, info = env.step(action)
+    return {}
 
 
 if __name__ == "__main__":

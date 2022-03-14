@@ -83,6 +83,7 @@ def nlink(n=3, n_steps=5000, render=True):
         action = planner.computeAction(ob['x'], ob['xdot'])
         # env.render()
         ob, reward, done, info = env.step(action)
+    return {}
 
 if __name__ == "__main__":
     n_steps = 5000

@@ -13,28 +13,28 @@ from fabrics.planner.default_energies import (
 from fabrics.planner.default_maps import (
     CollisionMap,
 )
-from fabrics.planner.default_leaves import defaultAttractor
+from fabrics.planner.default_leaves import defaultDynamicAttractor
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 from MotionPlanningGoal.dynamicSubGoal import DynamicSubGoal
-from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 
 from forwardkinematics.planarFks.planarArmFk import PlanarArmFk
 
 
-def nlinkDynamicGoal(n=3, n_steps=5000):
-    env = gym.make("nLink-reacher-acc-v0", n=n, dt=0.01, render=True)
-    obstTraj = ["1.4", "-2.0 + 0.1 * t"]
-    dynamicObstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'trajectory': obstTraj, 'radius': 0.4}} 
+def nlinkDynamicGoal(n=3, n_steps=5000, render=True):
+    env = gym.make("nLink-reacher-acc-v0", n=n, dt=0.01, render=render)
+    obstTraj = ["5 * ca.sin(0.3 * t)", "-3.0"]
+    dynamicObstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'trajectory': obstTraj, 'radius': 1.0}} 
     staticObstDict = {'dim': 2, 'type': 'sphere', 'geometry': {'position': [0.0, 3.0], 'radius': 1.0}} 
     obsts = [
         DynamicSphereObstacle(name="dynamicObst", contentDict=dynamicObstDict),
         SphereObstacle(name="staticObst", contentDict=staticObstDict),
     ]
     # goal
+    goalTraj = ["1.5 + 0.7 * ca.sin(1.0 * t)", "-1 + 1 * ca.cos(1.0 * t)"]
     goalDict = {
         "m": 2,
         "w": 1.0,
@@ -42,11 +42,11 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
         "indices": [0, 1],
         "parent_link": 0,
         "child_link": 3,
-        "desired_position": [0.5, -1.5],
+        "trajectory": goalTraj,
         "epsilon": 0.2,
-        "type": "staticSubGoal",
+        "type": "analyticSubGoal",
     }
-    goal = StaticSubGoal(name='goal', contentDict=goalDict)
+    goal = DynamicSubGoal(name='goal', contentDict=goalDict)
     planner = DefaultFabricPlanner(n, m_base=1.0)
     q, qdot = planner.var()
     planarArmFk = PlanarArmFk(n)
@@ -74,9 +74,13 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
                 dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
                 planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
+    goalSymbolicTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, traj=goalTraj)
+    goalSymbolicTraj.concretize()
     fk_ee = planarArmFk.fk(q, n, positionOnly=True)
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi  = defaultAttractor(q, qdot, goal.position(), fk_ee)
-    planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
+    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultDynamicAttractor(
+        q, qdot, fk_ee, goalSymbolicTraj, k_psi=10.0
+    )
+    planner.addForcingGeometry(dm_psi, lag_psi, geo_psi, goalVelocity=goalSymbolicTraj.xdot())
     # execution energy
     exLag = ExecutionLagrangian(q, qdot)
     exLag.concretize()
@@ -85,8 +89,8 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
     ex_factor = 1.0
     planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, b=[0.05, 8.0])
     planner.concretize()
-    dynamicFabrics = True
-    ob = env.reset(pos=np.array([1.0, -0.2]))
+    dynamicFabrics = False
+    ob = env.reset()
     for obst in obsts:
         env.addObstacle(obst)
     env.addGoal(goal)
@@ -95,22 +99,25 @@ def nlinkDynamicGoal(n=3, n_steps=5000):
         if i % 1000 == 0:
             print("time step : ", i)
         q_p_t, qdot_p_t, qddot_p_t = refTraj.evaluate(env.t())
+        q_g_t, qdot_g_t, qddot_g_t = goalSymbolicTraj.evaluate(env.t())
         if not dynamicFabrics:
-            qdot_p_t = np.zeros(2)
-            qddot_p_t = np.zeros(2)
+            qdot_g_t = np.zeros(2)
+            qddot_g_t = np.zeros(2)
         q_t = ob['x']
         qdot_t = ob['xdot']
         t0 = time.perf_counter()
         action = planner.computeAction(
             q_t, qdot_t,
             q_p_t, qdot_p_t, qddot_p_t,
+            q_g_t, qdot_g_t, qddot_g_t
         )
         t1 = time.perf_counter()
         print(f"computational time in ms: {(t1 - t0)*1000}")
         ob, reward, done, info = env.step(action)
+    return {}
 
 
 if __name__ == "__main__":
     n_steps = 5000
-    n = 2
+    n = 3
     nlinkDynamicGoal(n=n, n_steps=n_steps)
