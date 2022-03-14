@@ -212,18 +212,25 @@ python-dateutil = ">=2.1"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.1"
+version = "0.1.6"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = false
 
 [package.dependencies]
 casadi = "<=3.5.5"
-geomdl = ">=5.3.1,<6.0.0"
-numpy = ">=1.15.0,<2.0.0"
-pytest = ">=6.2.5,<7.0.0"
-PyYAML = ">=6.0,<7.0"
+geomdl = "^5.3.1"
+numpy = "^1.15.0"
+pytest = "^6.2.5"
+PyYAML = "^6.0"
+
+[package.source]
+type = "git"
+url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
+reference = "main"
+resolved_reference = "1734cb52e41d25b4d65264d172878b0279bfad79"
 
 [[package]]
 name = "networkx"
@@ -300,7 +307,7 @@ scenes = ["motion-planning-scenes (>=0.1.0,<0.2.0)"]
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_planar.git"
 reference = "master"
-resolved_reference = "1a202926407cf213b7f890e43c9e893434341252"
+resolved_reference = "6e9f0636d907d29cb0ef549c9f42f70043748140"
 
 [[package]]
 name = "pluggy"
@@ -529,7 +536,7 @@ docs = ["Sphinx (==4.2.0)", "sphinx-rtd-theme (==1.0.0)", "sphinxcontrib-napoleo
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_urdf.git"
 reference = "master"
-resolved_reference = "273ccfc104d963ef81ae3ba73a45bc5347782172"
+resolved_reference = "4e4247b2446600c1cd65f53e918acae84bc3f3f5"
 
 [[package]]
 name = "urdfpy"
@@ -580,7 +587,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6,<3.11"
-content-hash = "3ddbf4520aa11ebf63ab4f17441b7350cf94e258f583d5bd57153bf02a341f8c"
+content-hash = "6c444f3aafc70f97daa0bc8c1ac5d4b4d5dab261774701db52e531039b98821b"
 
 [metadata.files]
 atomicwrites = [
@@ -802,10 +809,7 @@ matplotlib = [
     {file = "matplotlib-3.3.4-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:cf3a7e54eff792f0815dbbe9b85df2f13d739289c93d346925554f71d484be78"},
     {file = "matplotlib-3.3.4.tar.gz", hash = "sha256:3e477db76c22929e4c6876c44f88d790aacdf3c3f8f3a90cb1975c0bf37825b0"},
 ]
-motion-planning-scenes = [
-    {file = "motion_planning_scenes-0.1.1-py3-none-any.whl", hash = "sha256:77b58109266a80cb841aaf03200dee72bfc0c2d6b15aeaa6f592353299bd644b"},
-    {file = "motion_planning_scenes-0.1.1.tar.gz", hash = "sha256:e8074211306ace4df3b072a6fcbf87a162cdd2e1907f7f6b9433b1e4b24fd8bb"},
-]
+motion-planning-scenes = []
 networkx = [
     {file = "networkx-2.5.1-py3-none-any.whl", hash = "sha256:0635858ed7e989f4c574c2328380b452df892ae85084144c73d8cd819f0c4e06"},
     {file = "networkx-2.5.1.tar.gz", hash = "sha256:109cd585cac41297f71103c3c42ac6ef7379f29788eb54cb751be5a663bb235a"},
