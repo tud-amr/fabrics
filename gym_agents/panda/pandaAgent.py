@@ -12,7 +12,7 @@ from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagra
 from fabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
 from fabrics.planner.default_leaves import defaultAttractor
 
-import urdfenvs.pandaReacher
+import urdfenvs.panda_reacher
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 
@@ -28,7 +28,7 @@ def pandaFabric(n_steps=1000, render=True):
     ]
     planner = DefaultFabricPlanner(n)
     q, qdot = planner.var()
-    pandaFk = PandaFk(n)
+    pandaFk = PandaFk()
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
@@ -66,8 +66,8 @@ def pandaFabric(n_steps=1000, render=True):
     env = gym.make('panda-reacher-acc-v0', dt=0.01, render=render, gripper=False)
     print("Starting episode")
     q0 = np.array([0.8, 0.7, 0.0, -1.501, 0.0, 1.8675, 0.0])
-    env.addObstacle(obsts[0])
-    env.addGoal(goal)
+    env.add_obstacle(obsts[0])
+    env.add_goal(goal)
     ob = env.reset(pos=q0)
     for i in range(n_steps):
         action = planner.computeAction(ob['x'], ob['xdot'])
