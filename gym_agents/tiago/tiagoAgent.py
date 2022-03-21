@@ -152,9 +152,6 @@ def tiagoFabric(n_steps=1000, render=True):
     ## running the simulation
     env = gym.make("tiago-reacher-acc-v0", dt=0.01, render=render)
     print("Starting episode")
-    # env.add_obstacle(obsts[0])
-    env.add_goal(goal1)
-    env.add_goal(goal2)
     q0 = np.zeros(20)
     q0[3] = 0.1
     q0[6] = 1
@@ -165,10 +162,13 @@ def tiagoFabric(n_steps=1000, render=True):
     q0[14] = 1
     q0[16] = 1
     ob = env.reset(pos=q0)
+    env.add_goal(goal1)
+    env.add_goal(goal2)
     for i in range(n_steps):
         qudot = np.concatenate((ob["vel"], ob["xdot"][3:]))
         action = planner.computeAction(ob["x"], ob["xdot"], qudot)
         ob, _, _, _ = env.step(action)
+    env.close()
     return {}
 
 

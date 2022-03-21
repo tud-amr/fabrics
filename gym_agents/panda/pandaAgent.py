@@ -72,6 +72,7 @@ def pandaFabric(n_steps=1000, render=True):
     for i in range(n_steps):
         action = planner.computeAction(ob['x'], ob['xdot'])
         ob, reward, done, info = env.step(action)
+    env.close()
     return {}
 
 
