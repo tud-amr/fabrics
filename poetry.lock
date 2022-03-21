@@ -76,7 +76,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 
 [[package]]
 name = "forwardkinematics"
-version = "0.5.10"
+version = "0.5.11"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
@@ -90,11 +90,14 @@ pytest = "^6.2.5"
 pytest-coverage = "^0.0"
 urdf_parser_py = ">=0.0.3"
 
+[package.extras]
+env = ["urdfenvs @ git+https://git@github.com/maxspahn/gym_envs_urdf.git@master", "motion-planning-scenes @ git+https://git@github.com/maxspahn/motion_planning_scenes.git@main"]
+
 [package.source]
 type = "git"
 url = "https://git@github.com/maxspahn/forwardKinematics.git"
 reference = "main"
-resolved_reference = "a3bf50a55cc4f686b9d3ba20dd7c798c367f9c0d"
+resolved_reference = "c7dc257450d9ac3535dbaa749c31d323bd4bea2e"
 
 [[package]]
 name = "freetype-py"
