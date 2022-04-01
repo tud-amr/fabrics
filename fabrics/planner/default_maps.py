@@ -1,5 +1,5 @@
 import casadi as ca
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap
 
 
 class CollisionMap(DifferentialMap):
@@ -27,4 +27,9 @@ class GoalMap(DifferentialMap):
     def __init__(self, q, qdot, fk, goal):
         phi = fk - goal
         super().__init__(phi, q=q, qdot=qdot)
+
+class ParameterizedGoalMap(ParameterizedDifferentialMap):
+    def __init__(self, q, qdot, fk, goal):
+        phi = fk - goal
+        super().__init__(phi, goal, q=q, qdot=qdot)
 

@@ -8,7 +8,7 @@ from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
 from fabrics.diffGeometry.speedControl import Damper
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables
 
 

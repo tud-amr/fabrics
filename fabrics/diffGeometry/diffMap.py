@@ -1,6 +1,9 @@
 import casadi as ca
 import numpy as np
 
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+from fabrics.helpers.variables import Variables
+
 
 class DifferentialMap:
     """description"""
@@ -9,16 +12,17 @@ class DifferentialMap:
         if 'q' in kwargs.keys() and 'qdot' in kwargs.keys():
             q = kwargs.get('q')
             qdot = kwargs.get('qdot')
+            self._vars = Variables(state_variables={'q': q, 'qdot': qdot})
         elif 'var' in kwargs.keys():
-            q, qdot = kwargs.get('var')
+            self._vars = kwargs.get('var')
         Jdot_sign = -1
         if 'Jdot_sign' in kwargs.keys():
             Jdot_sign = kwargs.get('Jdot_sign')
-        assert isinstance(q, ca.SX)
-        assert isinstance(qdot, ca.SX)
         assert isinstance(phi, ca.SX)
-        self._vars = [q, qdot]
+        self._vars.verify()
         self._phi = phi
+        q = self._vars.variable_by_name('q')
+        qdot = self._vars.variable_by_name('qdot')
         self._J = ca.jacobian(phi, q)
         self._Jdot = Jdot_sign * ca.jacobian(ca.mtimes(self._J, qdot), q)
 
@@ -29,53 +33,62 @@ class DifferentialMap:
         return ca.mtimes(self._J, self.qdot())
 
     def concretize(self):
-        self._fun = ca.Function(
-            "forward", self._vars, [self._phi, self._J, self._Jdot]
+        self._funs = CasadiFunctionWrapper(
+            "funs", self._vars.asDict(), {"phi": self._phi, "J": self._J, "Jdot": self._Jdot}
         )
 
-    def forward(self, q: np.ndarray, qdot: np.ndarray):
-        assert isinstance(q, np.ndarray)
-        assert isinstance(qdot, np.ndarray)
-        funs = self._fun(q, qdot)
-        x = np.array(funs[0])[:, 0]
-        J = np.array(funs[1])
-        Jdot = np.array(funs[2])
+    def params(self):
+        return []
+
+    def forward(self, values):
+        for key in values:
+            assert isinstance(values[key], np.ndarray)
+        funs = self._funs.evaluate(values)
+        x = np.array(funs['phi'])[:, 0]
+        J = np.array(funs['J'])
+        Jdot = np.array(funs['Jdot'])
         return x, J, Jdot
 
     def q(self):
-        return self._vars[0]
+        return self._vars.variable_by_name('q')
 
     def qdot(self):
-        return self._vars[1]
+        return self._vars.variable_by_name('qdot')
+
+class ParameterizedDifferentialMap(DifferentialMap):
+    def __init__(self, phi: ca.SX, params, **kwargs):
+        super().__init__(phi, **kwargs)
+        self._params = params
+
+    def params(self):
+        return self._params
 
 
 class RelativeDifferentialMap(DifferentialMap):
     def __init__(self, **kwargs):
-        if 'q' in kwargs:
+        if 'q' in kwargs.keys() and 'qdot' in kwargs.keys():
             q = kwargs.get('q')
             qdot = kwargs.get('qdot')
-        elif 'var' in kwargs:
-            q, qdot = kwargs.get('var')
+            self._vars = Variables(state_variables={'q': q, 'qdot': qdot})
+        elif 'var' in kwargs.keys():
+            self._vars = kwargs.get('var')
         if 'refTraj' in kwargs:
             self._refTraj = kwargs.get('refTraj')
-        phi = q - self._refTraj.x()
-        super().__init__(phi, q=q, qdot=qdot)
+        phi = self._vars.variable_by_name('q') - self._refTraj.x()
+        super().__init__(phi, var=self._vars)
 
-    def forward(self, q: np.ndarray, qdot: np.ndarray, q_p: np.ndarray, qdot_p: np.ndarray, qddot_p: np.ndarray):
-        assert isinstance(q, np.ndarray)
-        assert isinstance(qdot, np.ndarray)
-        assert isinstance(q_p, np.ndarray)
-        assert isinstance(qdot_p, np.ndarray)
-        assert isinstance(qddot_p, np.ndarray)
-        funs = self._fun(q, qdot, q_p, qdot_p, qddot_p)
-        x = np.array(funs[0])[:, 0]
-        xdot = qdot - qdot_p
+    def forward(self, values):
+        for key in values:
+            assert isinstance(values[key], np.ndarray)
+        funs = self._funs.evaluate(values)
+        x = np.array(funs['phi'])[:, 0]
+        xdot = values['qdot'] - values['xdot']
         return x, xdot
 
     def concretize(self):
         var = self._vars + self._refTraj._vars
-        self._fun = ca.Function(
-            "forward", var, [self._phi, self._J, self._Jdot]
+        self._funs = CasadiFunctionWrapper(
+            "funs", var.asDict(), {"phi": self._phi, "J": self._J, "Jdot": self._Jdot}
         )
 
     def Jdotqdot(self):

@@ -3,7 +3,8 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 from fabrics.diffGeometry.diffMap import DifferentialMap
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
+from fabrics.helpers.variables import Variables
 from MotionPlanningSceneHelpers.referenceTrajectory import ReferenceTrajectory
 
 
@@ -20,7 +21,7 @@ class SymbolicTrajectory(ABC):
             x = ca.SX.sym("x_" + suffix, self.n())
             xdot = ca.SX.sym("xdot_" + suffix, self.n())
             xddot = ca.SX.sym("xddot_" + suffix, self.n())
-            self._vars = [x, xdot, xddot]
+            self._vars = Variables(parameters={'x': x, 'xdot': xdot, 'xddot': xddot})
 
     def n(self):
         return self._refTraj.n()
@@ -41,13 +42,13 @@ class SymbolicTrajectory(ABC):
         return self._refTraj.evaluate(t)
 
     def x(self):
-        return self._vars[0]
+        return self._vars.parameter_by_name('x')
 
     def xdot(self):
-        return ca.mtimes(self.Jinv(), self._vars[1])
+        return ca.mtimes(self.Jinv(), self._vars.parameter_by_name('xdot'))
 
     def xddot(self):
-        return self._vars[2]
+        return self._vars.parameter_by_name('xddot')
 
     @abstractmethod
     def pull(self, dm: DifferentialMap):

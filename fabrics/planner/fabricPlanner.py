@@ -9,7 +9,11 @@ from fabrics.diffGeometry.energized_geometry import WeightedGeometry
 from fabrics.diffGeometry.speedControl import Damper
 from fabrics.helpers.functions import joinVariables, joinRefTrajs
 
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
+
+from fabrics.leaves.leaf import Leaf
+from fabrics.leaves.attractor import Attractor
+from fabrics.leaves.obstacle_leaf import ObstacleLeaf
 
 
 class FabricPlannerException(Exception):
@@ -37,6 +41,7 @@ class FabricPlanner:
         self._refTrajs = []
         self._debug = debug
         self._debugVars = []
+        self._params = []
 
     def var(self):
         try:
@@ -60,6 +65,12 @@ class FabricPlanner:
         self._eg += eg_pulled
         self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
 
+    def add_leaf(self, leaf: Leaf) -> None:
+        if isinstance(leaf, Attractor):
+            self.addForcingGeometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+        if isinstance(leaf, ObstacleLeaf):
+            self.addGeometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+
     def addForcingGeometry(
         self, dm: DifferentialMap, le: Lagrangian, g: Geometry, goalVelocity=None
     ):
@@ -75,6 +86,7 @@ class FabricPlanner:
         # TODO: The following should be identitical <19-08-21, mspahn> #
         # self._eg_f += WeightedGeometry(g=g.pull(dm), le=le.pull(dm))
         self._vars = joinVariables(self._vars, self._eg_f._vars)
+        self._params.append(dm.params())
         if goalVelocity is not None:
             self._targetVelocity += ca.mtimes(ca.transpose(dm._J), goalVelocity)
         self._eg_f.concretize()
@@ -132,6 +144,8 @@ class FabricPlanner:
         totalVar = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             totalVar += refTraj._vars
+        for param in self._params:
+            totalVar += [param]
         self._funs = ca.Function("planner", totalVar, [xddot])
         if self._debug:
             # Put all variables you want to debug in here

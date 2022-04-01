@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 
 from fabrics.diffGeometry.diffMap import DifferentialMap
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables
 
 

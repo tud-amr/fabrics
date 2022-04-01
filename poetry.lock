@@ -303,7 +303,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "planarenvs"
-version = "0.1.1"
+version = "0.1.3"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
@@ -325,7 +325,7 @@ scenes = ["motion-planning-scenes (>=0.1.0,<0.2.0)"]
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_planar.git"
 reference = "master"
-resolved_reference = "6e9f0636d907d29cb0ef549c9f42f70043748140"
+resolved_reference = "7ef0d2bdc986ad7db7027045a8d2439fdfb7ff93"
 
 [[package]]
 name = "pluggy"

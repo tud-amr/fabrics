@@ -7,7 +7,7 @@ from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.casadi_helpers import outerProduct
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
 
 from fabrics.helpers.functions import joinRefTrajs
 
