@@ -10,11 +10,14 @@ from fabrics.diffGeometry.speedControl import Damper
 from fabrics.helpers.functions import joinVariables, joinRefTrajs
 
 from fabrics.helpers.constants import eps
+from fabrics.helpers.variables import Variables
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 from fabrics.leaves.leaf import Leaf
 from fabrics.leaves.attractor import Attractor
 from fabrics.leaves.obstacle_leaf import ObstacleLeaf
+
+
 
 
 class FabricPlannerException(Exception):
@@ -86,7 +89,7 @@ class FabricPlanner:
         self._refTrajs = self._eg_f._refTrajs
         # TODO: The following should be identitical <19-08-21, mspahn> #
         # self._eg_f += WeightedGeometry(g=g.pull(dm), le=le.pull(dm))
-        self._vars = joinVariables(self._vars, self._eg_f._vars)
+        self._vars = self._vars + self._eg_f._vars
         self._params.append(dm.params())
         if goalVelocity is not None:
             self._targetVelocity += ca.mtimes(ca.transpose(dm._J), goalVelocity)
@@ -111,7 +114,7 @@ class FabricPlanner:
         composed_geometry = Geometry(s=self._eg)
         self._eg_ex = WeightedGeometry(g=composed_geometry, le=lex)
         self._eg_ex.concretize()
-        self._vars = joinVariables(self._vars, self._eg_ex._vars)
+        self._vars = self._vars + self._eg_ex._vars
         if self._forcing:
             forced_geometry = Geometry(s=self._eg_f)
             self._eg_f_ex = WeightedGeometry(g=forced_geometry, le=lex)
@@ -145,8 +148,10 @@ class FabricPlanner:
         totalVar = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             totalVar += refTraj._vars
+        """
         for param in self._params:
             totalVar += [param]
+        """
         # self._funs = ca.Function("planner", totalVar, [xddot])
         self._funs = CasadiFunctionWrapper(
             "funs", totalVar.asDict(), {"xddot": xddot}
@@ -222,6 +227,7 @@ class DefaultFabricPlanner(FabricPlanner):
     def __init__(self, n: int, **kwargs):
         q = ca.SX.sym("q", n)
         qdot = ca.SX.sym("qdot", n)
+        var_q = Variables(state_variables={'q': q, 'qdot': qdot})
         p = {"m_base": 0.5, 'debug': False}
         for key in p.keys():
             if key in kwargs:
@@ -229,6 +235,6 @@ class DefaultFabricPlanner(FabricPlanner):
         # base geometry
         l_base = 0.5 * p["m_base"] * ca.dot(qdot, qdot)
         h_base = ca.SX(np.zeros(n))
-        baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
-        baseLag = Lagrangian(l_base, x=q, xdot=qdot)
+        baseGeo = Geometry(h=h_base, var=var_q)
+        baseLag = Lagrangian(l_base, var=var_q)
         super().__init__(baseGeo, baseLag, debug=p['debug'])

@@ -10,6 +10,8 @@ from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagra
 from fabrics.planner.default_maps import CollisionMap
 from fabrics.planner.default_leaves import defaultAttractor
 
+from fabrics.helpers.variables import Variables
+
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
 
@@ -21,65 +23,45 @@ def pointMass(n_steps=5000, render=True):
     ]
     n = 2
     planner = DefaultFabricPlanner(n)
-    q, qdot = planner.var()
+    var_q = planner.var()
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=2.0)
-    fks = [q]
+    var_x = Variables(state_variables={'x': x, 'xdot': xdot})
+    lag_col = CollisionLagrangian(var_x)
+    geo_col = CollisionGeometry(var_x, exp=2.0)
+    fks = [var_q.position_variable()]
     for fk in fks:
         for obst in obsts:
-            dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
+            dm_col = CollisionMap(var_q, fk, obst.position(), obst.radius())
             planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
     q_d = np.array([-2.0, -0.1])
-    dm_psi, lag_psi, _, x_psi, xdot_psi  = defaultAttractor(q, qdot, q_d, fk)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=5)
+    dm_psi, lag_psi, _, var_psi  = defaultAttractor(var_q, q_d, fk)
+    geo_psi = GoalGeometry(var_psi, k_psi=5)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # execution energy
-    exLag = ExecutionLagrangian(q, qdot)
+    exLag = ExecutionLagrangian(var_q)
     exLag.concretize()
     planner.setExecutionEnergy(exLag)
     # Speed control
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor)
+    planner.setDefaultSpeedControl(var_psi.position_variable(), dm_psi, exLag, ex_factor)
     planner.concretize()
     # setup environment
-    qs = []
-    solverTimes = []
-    x0s = [np.array([4.3, -1.0 + i * 0.2]) for i in range(11)]
-    xdot0s = [np.array([-1.0, -0.0])]
+    x0 = np.array([4.3, 0.8])
+    xdot0 = np.array([-1.0, -0.0])
     # running the simulation
-    for xdot0 in xdot0s:
-        for x0 in x0s:
-            env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
-            ob = env.reset(pos=x0, vel=xdot0)
-            for obst in obsts:
-                env.addObstacle(obst)
-            print("Starting episode")
-            q = np.zeros((n_steps, n))
-            t = 0.0
-            solverTime = np.zeros(n_steps)
-            for i in range(n_steps):
-                """
-                if i % 100 == 0:
-                    print('time step : ', i)
-                """
-                t0 = time.time()
-                action = planner.computeAction(ob['x'], ob['xdot'])
-                solverTime[i] = time.time() - t0
-                ob, reward, done, info = env.step(action)
-                q[i, :] = ob['x']
-            qs.append(q)
-            solverTimes.append(solverTime)
+    env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
+    ob = env.reset(pos=x0, vel=xdot0)
+    for obst in obsts:
+        env.addObstacle(obst)
+    print("Starting episode")
+    for _ in range(n_steps):
+        action = planner.computeAction(q=ob['x'], qdot=ob['xdot'])
+        ob, _, _, _ = env.step(action)
     ## Plotting the results
-    res = {}
-    res['qs'] = qs
-    res['solverTimes'] = solverTimes
-    res['obsts'] = obsts
-    res['dt'] = env.dt()
-    return res
+    return {}
 
 if __name__ == "__main__":
     n_steps = 5000
