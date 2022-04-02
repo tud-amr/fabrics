@@ -34,7 +34,7 @@ def test_pullback(simple_spec, simple_differentialMap):
     s_pulled.concretize()
     q = np.array([1.7, -np.pi / 3])
     qdot = np.array([1.2, 1.3])
-    M, f, _ = s_pulled.evaluate({'q': q, 'qdot': qdot})
+    M, f, _ = s_pulled.evaluate(q=q, qdot=qdot)
     """manually computed result"""
     cost = np.cos(q[1])
     sint = np.sin(q[1])
@@ -47,8 +47,7 @@ def test_pullback(simple_spec, simple_differentialMap):
     f0 = np.array([-0.5 / (x1 ** 2), -0.5 / (x2 ** 2)])
     f1 = np.dot(Jt, f0)
     JtMJdot = Jdot_sign * np.array([[0, -r * tdot], [r * tdot, r * rdot]])
-    f2 = -np.dot(JtMJdot, qdot)
-    """"""
+    f2 = -1 * np.dot(JtMJdot, qdot)
     assert ca.is_equal(s_pulled.x(), dm.q())
     assert ca.is_equal(s_pulled.xdot(), dm.qdot())
     assert M[0, 0] == 1
@@ -68,11 +67,11 @@ def test_equal_results(simple_spec, simple_differentialMap):
     s.concretize()
     q = np.array([1.7, -np.pi / 3])
     qdot = np.array([1.2, 1.3])
-    x, J, Jdot = dm.forward({"q": q, "qdot": qdot})
+    x, J, Jdot = dm.forward(q=q, qdot=qdot)
     xdot = np.dot(J, qdot)
     Jt = np.transpose(J)
-    M_q, f_q, qddot = s_pulled.evaluate({"q": q, "qdot": qdot})
-    M_x, f_x, xddot = s.evaluate({"x": x, "xdot": xdot})
+    M_q, f_q, qddot = s_pulled.evaluate(q=q, qdot=qdot)
+    M_x, f_x, xddot = s.evaluate(x=x, xdot=xdot)
     xddot_man = np.dot(J, qddot) + np.dot(Jdot, qdot)
     f_q_man = np.dot(Jt, f_x) + np.dot(Jt, np.dot(M_x, np.dot(Jdot, qdot)))
     M_q_man = np.dot(Jt, np.dot(M_x, J))

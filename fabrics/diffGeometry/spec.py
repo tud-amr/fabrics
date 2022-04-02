@@ -69,13 +69,13 @@ class Spec:
             "funs", var.asDict(), {"M": self.M(), "f": self.f(), "xddot": self._xddot}
         )
 
-    def evaluate(self, values):
-        for key in values:
-            assert isinstance(values[key], np.ndarray)
-        funs = self._funs.evaluate(values)
-        M_eval = np.array(funs["M"])
-        f_eval = np.array(funs["f"])[:, 0]
-        xddot_eval = np.array(funs["xddot"])[:, 0]
+    def evaluate(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        M_eval = evaluations["M"]
+        if len(M_eval.shape) == 1:
+            M_eval = np.array([M_eval])
+        f_eval = evaluations["f"]
+        xddot_eval = evaluations["xddot"]
         return [M_eval, f_eval, xddot_eval]
 
     def __add__(self, b):
@@ -94,8 +94,8 @@ class Spec:
         f_1 = ca.mtimes(Jt, ca.mtimes(self.M(), dm.Jdotqdot()))
         f_2 = ca.mtimes(Jt, self.f())
         f_pulled = f_1 + f_2
-        x = self._vars.variable_by_name('x')
-        xdot = self._vars.variable_by_name('xdot')
+        x = self._vars.position_variable()
+        xdot = self._vars.velocity_variable()
         M_pulled_subst_x = ca.substitute(M_pulled, x, dm._phi)
         M_pulled_subst_x_xdot = ca.substitute(
             M_pulled_subst_x, xdot, dm.phidot()

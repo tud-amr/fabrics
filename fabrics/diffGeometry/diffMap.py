@@ -21,8 +21,8 @@ class DifferentialMap:
         assert isinstance(phi, ca.SX)
         self._vars.verify()
         self._phi = phi
-        q = self._vars.variable_by_name('q')
-        qdot = self._vars.variable_by_name('qdot')
+        q = self._vars.position_variable()
+        qdot = self._vars.velocity_variable()
         self._J = ca.jacobian(phi, q)
         self._Jdot = Jdot_sign * ca.jacobian(ca.mtimes(self._J, qdot), q)
 
@@ -40,20 +40,18 @@ class DifferentialMap:
     def params(self):
         return []
 
-    def forward(self, values):
-        for key in values:
-            assert isinstance(values[key], np.ndarray)
-        funs = self._funs.evaluate(values)
-        x = np.array(funs['phi'])[:, 0]
-        J = np.array(funs['J'])
-        Jdot = np.array(funs['Jdot'])
+    def forward(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        x = evaluations['phi']
+        J = evaluations['J']
+        Jdot = evaluations['Jdot']
         return x, J, Jdot
 
     def q(self):
-        return self._vars.variable_by_name('q')
+        return self._vars.position_variable()
 
     def qdot(self):
-        return self._vars.variable_by_name('qdot')
+        return self._vars.velocity_variable()
 
 class ParameterizedDifferentialMap(DifferentialMap):
     def __init__(self, phi: ca.SX, params, **kwargs):
@@ -74,21 +72,28 @@ class RelativeDifferentialMap(DifferentialMap):
             self._vars = kwargs.get('var')
         if 'refTraj' in kwargs:
             self._refTraj = kwargs.get('refTraj')
-        phi = self._vars.variable_by_name('q') - self._refTraj.x()
+        phi = self._vars.position_variable() - self._refTraj.x()
         super().__init__(phi, var=self._vars)
+        self._relative_velocity = self._vars.velocity_variable() - self._refTraj.xdot()
 
-    def forward(self, values):
-        for key in values:
-            assert isinstance(values[key], np.ndarray)
-        funs = self._funs.evaluate(values)
-        x = np.array(funs['phi'])[:, 0]
-        xdot = values['qdot'] - values['xdot']
+    def forward(self, **kwargs):
+        for key in kwargs:
+            assert isinstance(kwargs[key], np.ndarray)
+        evaluations = self._funs.evaluate(**kwargs)
+        x = evaluations['phi']
+        xdot = evaluations['relative_velocity']
         return x, xdot
 
     def concretize(self):
         var = self._vars + self._refTraj._vars
         self._funs = CasadiFunctionWrapper(
-            "funs", var.asDict(), {"phi": self._phi, "J": self._J, "Jdot": self._Jdot}
+                "funs", var.asDict(), 
+                {
+                    "phi": self._phi,
+                    "J": self._J,
+                    "Jdot": self._Jdot,
+                    "relative_velocity": self._relative_velocity
+                }
         )
 
     def Jdotqdot(self):

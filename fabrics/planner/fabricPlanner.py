@@ -10,6 +10,7 @@ from fabrics.diffGeometry.speedControl import Damper
 from fabrics.helpers.functions import joinVariables, joinRefTrajs
 
 from fabrics.helpers.constants import eps
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 from fabrics.leaves.leaf import Leaf
 from fabrics.leaves.attractor import Attractor
@@ -146,18 +147,19 @@ class FabricPlanner:
             totalVar += refTraj._vars
         for param in self._params:
             totalVar += [param]
-        self._funs = ca.Function("planner", totalVar, [xddot])
+        # self._funs = ca.Function("planner", totalVar, [xddot])
+        self._funs = CasadiFunctionWrapper(
+            "funs", totalVar.asDict(), {"xddot": xddot}
+        )
         if self._debug:
             # Put all variables you want to debug in here
             self._debugFuns = ca.Function("planner_debug", totalVar,
                 self._debugVars
             )
 
-    def computeAction(self, *args):
-        for arg in args:
-            assert isinstance(arg, np.ndarray)
-        funs_val = self._funs(*args)
-        action = np.array(funs_val)[:, 0]
+    def computeAction(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        action = evaluations['xddot']
         # avoid to small actions
         if np.linalg.norm(action) < eps:
             action = np.zeros(self._n)

@@ -5,6 +5,8 @@ from copy import deepcopy
 from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables
+from fabrics.helpers.variables import Variables
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 
 class Geometry:
@@ -13,9 +15,7 @@ class Geometry:
     def __init__(self, **kwargs):
         if 'x' in kwargs:
             h = kwargs.get("h")
-            x = kwargs.get("x")
-            xdot = kwargs.get("xdot")
-            self._vars = [x, xdot]
+            self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
         elif 'var' in kwargs:
             h = kwargs.get("h")
             self._vars = kwargs.get('var')
@@ -31,10 +31,10 @@ class Geometry:
         self._h = h
 
     def x(self):
-        return self._vars[0]
+        return self._vars.position_variable()
 
     def xdot(self):
-        return self._vars[1]
+        return self._vars.velocity_variable()
 
     def __add__(self, b):
         assert isinstance(b, Geometry)
@@ -69,12 +69,14 @@ class Geometry:
         var = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             var += refTraj._vars
-        self._funs = ca.Function("funs", var, [self._h, self._xddot])
+        self._funs = CasadiFunctionWrapper(
+            "funs", var.asDict(), {"h": self._h, "xddot": self._xddot}
+        )
 
-    def evaluate(self, *args):
-        funs = self._funs(*args)
-        h_eval = np.array(funs[0])[:, 0]
-        xddot_eval = np.array(funs[1])[:, 0]
+    def evaluate(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        h_eval = evaluations['h']
+        xddot_eval = evaluations['xddot']
         return [h_eval, xddot_eval]
 
     def testHomogeneousDegree2(self):
@@ -82,6 +84,6 @@ class Geometry:
         xdot = np.random.rand(self.xdot().size()[0])
         alpha = 2.0
         xdot2 = alpha * xdot
-        h, _ = self.evaluate(x, xdot)
-        h2, _ = self.evaluate(x, xdot2)
+        h, _ = self.evaluate(x=x, xdot=xdot)
+        h2, _ = self.evaluate(x=x, xdot=xdot2)
         return h * alpha ** 2 == h2

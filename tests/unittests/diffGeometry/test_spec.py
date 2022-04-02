@@ -70,7 +70,7 @@ def test_simple_spec(simple_spec):
     simple_spec[0].concretize()
     x = np.array([1.0, 0.5])
     xdot = np.array([1.0, 0.0])
-    M, f, _ = simple_spec[0].evaluate({"x": x, "xdot": xdot})
+    M, f, _ = simple_spec[0].evaluate(x=x, xdot=xdot)
     assert isinstance(M, np.ndarray)
     assert isinstance(f, np.ndarray)
     assert M[0, 0] == 1.0
@@ -86,7 +86,7 @@ def test_add_specs(simple_spec):
     s.concretize()
     x = np.array([1.0, 0.5])
     xdot = np.array([1.0, 0.0])
-    M, f, _ = s.evaluate({'xdot': xdot, 'x': x})
+    M, f, _ = s.evaluate(xdot=xdot, x=x)
     assert M[0, 0] == 1.5
     assert M[0, 1] == 0.0
     assert M[1, 1] == 1.5

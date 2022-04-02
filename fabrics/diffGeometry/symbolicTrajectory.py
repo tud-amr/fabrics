@@ -7,6 +7,8 @@ from fabrics.helpers.constants import eps
 from fabrics.helpers.variables import Variables
 from MotionPlanningSceneHelpers.referenceTrajectory import ReferenceTrajectory
 
+from fabrics.helpers.variables import Variables
+
 
 class SymbolicTrajectory(ABC):
     def __init__(self, refTraj: ReferenceTrajectory, J: ca.SX, **kwargs):
@@ -42,13 +44,20 @@ class SymbolicTrajectory(ABC):
         return self._refTraj.evaluate(t)
 
     def x(self):
-        return self._vars.parameter_by_name('x')
+        return self.parameters()[0]
 
     def xdot(self):
-        return ca.mtimes(self.Jinv(), self._vars.parameter_by_name('xdot'))
+        return ca.mtimes(self.Jinv(), self.parameters()[1])
 
     def xddot(self):
-        return self._vars.parameter_by_name('xddot')
+        return self.parameters()[2]
+
+    def parameters(self):
+        return (
+                list(self._vars.parameters().values())[0],
+                list(self._vars.parameters().values())[1],
+                list(self._vars.parameters().values())[2],
+            )
 
     @abstractmethod
     def pull(self, dm: DifferentialMap):

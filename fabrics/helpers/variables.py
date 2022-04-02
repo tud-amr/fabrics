@@ -7,7 +7,9 @@ class Variables(object):
         self._state_variables = state_variables
         self._parameters = parameters
         if len(state_variables) > 0:
-            self._state_variable_name = list(state_variables.keys())[0]
+            self._state_variable_names = list(state_variables.keys())
+        if len(parameters) > 0:
+            self._parameter_names = list(parameters.keys())
 
     def state_variables(self):
         return self._state_variables
@@ -22,10 +24,10 @@ class Variables(object):
         return self._parameters[name]
 
     def position_variable(self) -> ca.SX:
-        return self.variable_by_name(self._state_variable_name)
+        return self.variable_by_name(self._state_variable_names[0])
 
     def velocity_variable(self) -> ca.SX:
-        return self.variable_by_name(self._state_variable_name + "dot")
+        return self.variable_by_name(self._state_variable_names[1])
 
     def verify(self):
         for key in self._state_variables:
