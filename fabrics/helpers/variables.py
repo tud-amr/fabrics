@@ -17,6 +17,9 @@ class Variables(object):
     def parameters(self):
         return self._parameters
 
+    def set_parameters(self, parameters):
+        self._parameters = parameters
+
     def variable_by_name(self, name: str) -> ca.SX:
         return self._state_variables[name]
 

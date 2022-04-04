@@ -54,12 +54,8 @@ class DifferentialMap:
         return self._vars.velocity_variable()
 
 class ParameterizedDifferentialMap(DifferentialMap):
-    def __init__(self, phi: ca.SX, params, **kwargs):
+    def __init__(self, phi: ca.SX, **kwargs):
         super().__init__(phi, **kwargs)
-        self._params = params
-
-    def params(self):
-        return self._params
 
 
 class RelativeDifferentialMap(DifferentialMap):
