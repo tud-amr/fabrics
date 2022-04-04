@@ -47,7 +47,7 @@ class FabricPlanner:
         self._debugVars = []
         self._params = []
 
-    def var(self):
+    def var(self) -> Variables:
         try:
             return joinVariables(self._eg._vars, self._eg_f._vars)
         except:

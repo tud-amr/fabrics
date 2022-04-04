@@ -1,9 +1,10 @@
 import casadi as ca
 
+from fabrics.helpers.variables import Variables
+
 class Leaf(object):
-    def __init__(self, q: ca.SX, qdot: ca.SX):
-        self._q = q
-        self._qdot = qdot
+    def __init__(self, var: Variables):
+        self._var_q = var
         self._p = {}
         self._dm = None
         self._lag = None

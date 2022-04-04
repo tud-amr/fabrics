@@ -1,5 +1,6 @@
 import gym
 import planarenvs.pointRobot
+from planarenvs.pointRobot.envs.acc import PointRobotAccEnv
 import time
 import casadi as ca
 import numpy as np
@@ -16,16 +17,21 @@ from fabrics.planner.default_leaves import defaultAttractor
 from fabrics.leaves.attractor import Attractor, ParameterizedAttractor
 from fabrics.leaves.obstacle_leaf import ObstacleLeaf
 
+from fabrics.helpers.variables import Variables
+
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 from MotionPlanningGoal.dynamicSubGoal import DynamicSubGoal
 
 from planarenvs.sensors.GoalSensor import GoalSensor
 
+# TODO: Currently, the goal sensor is restricted to observations up to the
+# limits. Therefore, the robot cannot reach the actual goal which exceeds this
+# limit <04-04-22, mspahn> #
 
 def pointMass(n_steps=5000, render=True):
     planner = DefaultFabricPlanner(2)
-    q, qdot = planner.var()
+    var_q = planner.var()
     # collision avoidance
     staticObstDict = {
         "dim": 2,
@@ -37,14 +43,15 @@ def pointMass(n_steps=5000, render=True):
     ]
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=2.0)
-    fks = [q]
+    var_x = Variables(state_variables={'x': x, 'xdot': xdot})
+    lag_col = CollisionLagrangian(var_x)
+    geo_col = CollisionGeometry(var_x, exp=2.0)
+    fks = [var_q.position_variable()]
     for fk in fks:
         for obst in obsts:
-            dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
-            obstacleLeaf = ObstacleLeaf(q, qdot)
-            obstacleLeaf.set_map(q, obst.position(), obst.radius())
+            dm_col = CollisionMap(var_q, fk, obst.position(), obst.radius())
+            obstacleLeaf = ObstacleLeaf(var_q)
+            obstacleLeaf.set_map(var_q.position_variable(), obst.position(), obst.radius())
             obstacleLeaf.set_params(exp=1.0, lam=1.00)
             obstacleLeaf.concretize()
             planner.add_leaf(obstacleLeaf)
@@ -61,14 +68,15 @@ def pointMass(n_steps=5000, render=True):
         "type": "analyticSubGoal",
     }
     goal = DynamicSubGoal(name="goal", contentDict=goalDict)
-    attractor = ParameterizedAttractor(q, qdot)
+    # TODO: Potentially, you have to either pass the reference variable or return it. <04-04-22, mspahn> #
+    attractor = ParameterizedAttractor(var_q)
     #attractor.set_goal(goal.position(), q)
-    attractor.set_goal(ca.SX.sym("x_goal", 2), q)
+    attractor.set_goal(ca.SX.sym("x_goal", 2), fks[0])
     attractor.set_params(k_psi=5.0)
     attractor.concretize()
     planner.add_leaf(attractor)
     # execution energy
-    exLag = ExecutionLagrangian(q, qdot)
+    exLag = ExecutionLagrangian(var_q)
     exLag.concretize()
     planner.setExecutionEnergy(exLag)
     # Speed control
@@ -78,22 +86,28 @@ def pointMass(n_steps=5000, render=True):
     # running the simulation
     x0 = np.array([4.3, -1.0])
     xdot0 = np.array([-1.0, 0.0])
-    env = gym.make("point-robot-acc-v0", dt=0.01, render=render)
+    env: PointRobotAccEnv = gym.make("point-robot-acc-v0", dt=0.01, render=render)
     ob = env.reset(pos=x0, vel=xdot0)
     sensor = GoalSensor(nbGoals=1)
     env.addSensor(sensor)
     env.addGoal(goal)
     env.addObstacle(obsts[0])
+    env.resetLimits(pos={'low':np.array([-1, -2]), 'high':np.array([20, 2])})
     print("Starting episode")
     q = np.zeros((n_steps, 2))
     t = 0.0
     solverTime = np.zeros(n_steps)
     goalPosition = np.array(goal.position())
     for i in range(n_steps):
-        action = planner.computeAction(ob["x"], ob["xdot"], goalPosition)
+        action = planner.computeAction(
+                q=ob["x"],
+                qdot=ob["xdot"],
+                x_goal=goalPosition
+            )
         ob, reward, done, info = env.step(action)
         ob, _, _, _ = env.step(action)
         goalPosition = ob["GoalPosition"][0]
+        print(f"goalPosition : {goalPosition}")
     return {}
 
 

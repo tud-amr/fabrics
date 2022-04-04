@@ -10,6 +10,8 @@ from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagra
 from fabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
 from fabrics.planner.default_leaves import defaultAttractor
 
+from fabrics.helpers.variables import Variables
+
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 
@@ -25,25 +27,27 @@ def nlink(n=3, n_steps=5000, render=True):
         SphereObstacle(name="obst2", contentDict=obst2Dict),
     ]
     planner = DefaultFabricPlanner(n)
-    q, qdot = planner.var()
+    var_q = planner.var()
     planarArmFk = PlanarArmFk(n)
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=3, lam=1)
+    var_x = Variables(state_variables={'x': x, 'xdot': xdot})
+    lag_col = CollisionLagrangian(var_x)
+    geo_col = CollisionGeometry(var_x, exp=3, lam=1)
+    q = var_q.position_variable()
     for i in range(1, n+1):
         fk = planarArmFk.fk(q, i, positionOnly=True)
         for obst in obsts:
-            dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
+            dm_col = CollisionMap(var_q, fk, obst.position(), obst.radius())
             planner.addGeometry(dm_col, lag_col, geo_col)
     # joint limit avoidance
-    lag_lim = CollisionLagrangian(x, xdot)
-    geo_lim = LimitGeometry(x, xdot, lam=4.0, exp=2)
+    lag_lim = CollisionLagrangian(var_x)
+    geo_lim = LimitGeometry(var_x, lam=4.0, exp=2)
     for i in range(n):
-        dm_lim_upper = UpperLimitMap(q, qdot, 1.0 * np.pi, i)
+        dm_lim_upper = UpperLimitMap(var_q, 1.0 * np.pi, i)
         planner.addGeometry(dm_lim_upper, lag_lim, geo_lim)
-        dm_lim_lower = LowerLimitMap(q, qdot, -1.0 * np.pi, i)
+        dm_lim_lower = LowerLimitMap(var_q, -1.0 * np.pi, i)
         planner.addGeometry(dm_lim_lower, lag_lim, geo_lim)
     # forcing term
     goalDict = {
@@ -59,15 +63,15 @@ def nlink(n=3, n_steps=5000, render=True):
     }
     goal = StaticSubGoal(name='goal', contentDict=goalDict)
     fk_ee = planarArmFk.fk(q, n, positionOnly=True)
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultAttractor(q, qdot, goal.position(), fk_ee)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=2)
+    dm_psi, lag_psi, geo_psi, var_psi = defaultAttractor(var_q, goal.position(), fk_ee)
+    geo_psi = GoalGeometry(var_psi, k_psi=2)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # execution energy
-    exLag = ExecutionLagrangian(q, qdot)
+    exLag = ExecutionLagrangian(var_q)
     planner.setExecutionEnergy(exLag)
     # Speed control
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, r_b=0.2)
+    planner.setDefaultSpeedControl(var_psi.position_variable(), dm_psi, exLag, ex_factor, r_b=0.2)
     planner.concretize()
     # setup environment
     # running the simulation
@@ -80,7 +84,7 @@ def nlink(n=3, n_steps=5000, render=True):
         env.addObstacle(obst)
     env.addGoal(goal)
     for i in range(n_steps):
-        action = planner.computeAction(ob['x'], ob['xdot'])
+        action = planner.computeAction(q=ob['x'], qdot=ob['xdot'])
         # env.render()
         ob, reward, done, info = env.step(action)
     return {}

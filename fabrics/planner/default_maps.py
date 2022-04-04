@@ -31,7 +31,7 @@ class GoalMap(DifferentialMap):
         super().__init__(phi, var=var_q)
 
 class ParameterizedGoalMap(ParameterizedDifferentialMap):
-    def __init__(self, q, qdot, fk, goal):
-        phi = fk - goal
-        super().__init__(phi, goal, q=q, qdot=qdot)
+    def __init__(self, var, fk):
+        phi = fk - list(var.parameters().values())[0]
+        super().__init__(phi, var=var)
 
