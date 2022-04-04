@@ -12,6 +12,8 @@ from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagra
 from fabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
 from fabrics.planner.default_leaves import defaultAttractor
 
+from fabrics.helpers.variables import Variables
+
 import urdfenvs.panda_reacher
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
@@ -27,17 +29,18 @@ def pandaFabric(n_steps=1000, render=True):
         SphereObstacle(name="obst1", contentDict=obst1Dict),
     ]
     planner = DefaultFabricPlanner(n)
-    q, qdot = planner.var()
+    var_q = planner.var()
     pandaFk = PandaFk()
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=3, lam=1)
+    var_x = Variables(state_variables={'x': x, 'xdot': xdot})
+    lag_col = CollisionLagrangian(var_x)
+    geo_col = CollisionGeometry(var_x, exp=3, lam=1)
     for i in range(1, n+1):
-        fk = pandaFk.fk(q, i, positionOnly=True)
+        fk = pandaFk.fk(var_q.position_variable(), i, positionOnly=True)
         for obst in obsts:
-            dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
+            dm_col = CollisionMap(var_q, fk, obst.position(), obst.radius())
             planner.addGeometry(dm_col, lag_col, geo_col)
     goalDict = {
         "m": 3,
@@ -51,16 +54,16 @@ def pandaFabric(n_steps=1000, render=True):
         "type": "staticSubGoal",
     }
     goal = StaticSubGoal(name='goal', contentDict=goalDict)
-    fk_ee = pandaFk.fk(q, n, positionOnly=True)
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultAttractor(q, qdot, goal.position(), fk_ee)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=10)
+    fk_ee = pandaFk.fk(var_q.position_variable(), n, positionOnly=True)
+    dm_psi, lag_psi, geo_psi, var_psi = defaultAttractor(var_q, goal.position(), fk_ee)
+    geo_psi = GoalGeometry(var_psi, k_psi=10)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # execution energy
-    exLag = ExecutionLagrangian(q, qdot)
+    exLag = ExecutionLagrangian(var_q)
     planner.setExecutionEnergy(exLag)
     # speed control 
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, r_b=0.2)
+    planner.setDefaultSpeedControl(var_psi.position_variable(), dm_psi, exLag, ex_factor, r_b=0.2)
     planner.concretize()
     ## running the simulation
     env = gym.make('panda-reacher-acc-v0', dt=0.01, render=render, gripper=False)
@@ -70,7 +73,7 @@ def pandaFabric(n_steps=1000, render=True):
     env.add_goal(goal)
     ob = env.reset(pos=q0)
     for i in range(n_steps):
-        action = planner.computeAction(ob['x'], ob['xdot'])
+        action = planner.computeAction(q=ob['x'], qdot=ob['xdot'])
         ob, reward, done, info = env.step(action)
     env.close()
     return {}
