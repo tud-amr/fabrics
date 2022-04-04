@@ -1,5 +1,5 @@
 import gym
-import planarenvs.groundRobots
+import planarenvs.ground_robots
 import time
 import casadi as ca
 import numpy as np
@@ -85,8 +85,8 @@ def pointMass(n_steps=5000):
     env = gym.make("ground-robot-acc-v0", dt=0.010, render=True)
     ob = env.reset(pos=np.array([-5.0, 0.0, 0.0]), vel=np.array([1.0, 0.0]))
     for obst in obsts:
-        env.addObstacle(obst)
-    env.addGoal(goal)
+        env.add_obstacle(obst)
+    env.add_goal(goal)
     print("Starting episode")
     for i in range(n_steps):
         if i % 1000 == 0:

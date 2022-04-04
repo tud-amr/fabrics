@@ -1,5 +1,5 @@
-from pandaAgent import pandaFabric
+from dualArmAgent import dualArmFabric
 
-def test_pandaFabric():
-    res = pandaFabric(n_steps=10, render=False)
+def test_dualArmFabric():
+    res = dualArmFabric(n_steps=10, render=False)
     assert isinstance(res, dict)

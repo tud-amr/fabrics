@@ -1,5 +1,5 @@
 import gym
-import planarenvs.nLinkReacher
+import planarenvs.n_link_reacher
 import time
 import casadi as ca
 import numpy as np
@@ -77,8 +77,8 @@ def nlink(n=3, n_steps=5000, render=True):
     q0dot = np.array([0.1, 0.4, 0.1, 0.0, 0.0])
     ob = env.reset(pos=q0, vel=q0dot)
     for obst in obsts:
-        env.addObstacle(obst)
-    env.addGoal(goal)
+        env.add_obstacle(obst)
+    env.add_goal(goal)
     for i in range(n_steps):
         action = planner.computeAction(ob['x'], ob['xdot'])
         # env.render()
