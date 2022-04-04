@@ -57,8 +57,9 @@ https://arxiv.org/abs/2008.02399
 https://arxiv.org/abs/2010.14745
 https://arxiv.org/abs/2010.15676
 https://arxiv.org/abs/1801.02854
-# video
+# videos
 https://www.youtube.com/watch?v=aM9Ha2IawEo
+https://www.youtube.com/watch?v=awiF6JjDEbo
 
 
 
