@@ -14,6 +14,9 @@ class Variables(object):
     def state_variables(self):
         return self._state_variables
 
+    def add_state_variable(self, name, value):
+        self._state_variables[name] = value
+
     def parameters(self):
         return self._parameters
 

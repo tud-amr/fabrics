@@ -9,3 +9,5 @@ dist
 build
 fabrics.egg-info/
 setup.py
+.vim/
+tags

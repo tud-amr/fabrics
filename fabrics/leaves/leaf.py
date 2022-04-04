@@ -1,5 +1,3 @@
-import casadi as ca
-
 from fabrics.helpers.variables import Variables
 
 class Leaf(object):
@@ -11,7 +9,7 @@ class Leaf(object):
         self._geo = None
 
     def set_params(self, **kwargs):
-        for key in self._p.keys():
+        for key in self._p:
             if key in kwargs:
                 self._p[key] = kwargs.get(key)
 
