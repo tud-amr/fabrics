@@ -37,7 +37,6 @@ class FabricPlanner:
         self._n = lag.x().size()[0]
         self._forcing = False
         self._targetVelocity = np.zeros(self._eg.x().size()[0])
-        self._testdeuth
         self._executionEnergy = False
         self._speedControl = False
         self._constantSpeedControl = False
