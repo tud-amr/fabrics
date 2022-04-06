@@ -11,6 +11,8 @@ from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagra
 from fabrics.planner.default_maps import CollisionMap, UpperLimitMap, LowerLimitMap
 from fabrics.planner.default_leaves import defaultAttractor
 
+from fabrics.helpers.variables import Variables
+
 import urdfenvs.dual_arm
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
@@ -26,17 +28,18 @@ def dualArmFabric(n_steps=1000, render=True):
         SphereObstacle(name="obst1", contentDict=obst1Dict),
     ]
     planner = DefaultFabricPlanner(n)
-    q, qdot = planner.var()
+    var_q = planner.var()
     fk = DualArmFk()
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, exp=3, lam=1)
+    var_x = Variables(state_variables={'x': x, 'xdot': xdot})
+    lag_col = CollisionLagrangian(var_x)
+    geo_col = CollisionGeometry(var_x, exp=3, lam=1)
     for i in range(1, n+1):
-        fk_i = fk.fk(q, i, positionOnly=True)
+        fk_i = fk.fk(var_q.position_variable(), i, positionOnly=True)
         for obst in obsts:
-            dm_col = CollisionMap(q, qdot, fk_i, obst.position(), obst.radius())
+            dm_col = CollisionMap(var_q, fk_i, obst.position(), obst.radius())
             #planner.addGeometry(dm_col, lag_col, geo_col)
     goalDict1 = {
         "m": 3,
@@ -50,9 +53,9 @@ def dualArmFabric(n_steps=1000, render=True):
         "type": "staticSubGoal",
     }
     goal1 = StaticSubGoal(name='goal', contentDict=goalDict1)
-    fk_ee = fk.fk(q, goal1.childLink(), positionOnly=True)
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultAttractor(q, qdot, goal1.position(), fk_ee)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=10)
+    fk_ee = fk.fk(var_q.position_variable(), goal1.childLink(), positionOnly=True)
+    dm_psi, lag_psi, geo_psi, var_psi = defaultAttractor(var_q, goal1.position(), fk_ee)
+    geo_psi = GoalGeometry(var_psi, k_psi=10)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     goalDict2 = {
         "m": 3,
@@ -66,16 +69,16 @@ def dualArmFabric(n_steps=1000, render=True):
         "type": "staticSubGoal",
     }
     goal2 = StaticSubGoal(name='goal', contentDict=goalDict2)
-    fk_ee = fk.fk(q, goal2.childLink(), positionOnly=True)
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultAttractor(q, qdot, goal2.position(), fk_ee)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=10)
+    fk_ee = fk.fk(var_q.position_variable(), goal2.childLink(), positionOnly=True)
+    dm_psi, lag_psi, geo_psi, var_psi = defaultAttractor(var_q, goal2.position(), fk_ee)
+    geo_psi = GoalGeometry(var_psi, k_psi=10)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # execution energy
-    exLag = ExecutionLagrangian(q, qdot)
+    exLag = ExecutionLagrangian(var_q)
     planner.setExecutionEnergy(exLag)
     # speed control 
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, r_b=0.2)
+    planner.setDefaultSpeedControl(var_psi.position_variable(), dm_psi, exLag, ex_factor, r_b=0.2)
     planner.concretize()
     ## running the simulation
     env = gym.make('dual-arm-acc-v0', dt=0.01, render=render)
@@ -85,7 +88,7 @@ def dualArmFabric(n_steps=1000, render=True):
     env.add_goal(goal2)
     ob = env.reset()
     for i in range(n_steps):
-        action = planner.computeAction(ob['x'], ob['xdot'])
+        action = planner.computeAction(q=ob['x'], qdot=ob['xdot'])
         ob, reward, done, info = env.step(action)
     return {}
 
