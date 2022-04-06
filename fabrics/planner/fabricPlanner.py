@@ -9,7 +9,14 @@ from fabrics.diffGeometry.energized_geometry import WeightedGeometry
 from fabrics.diffGeometry.speedControl import Damper
 from fabrics.helpers.functions import joinVariables, joinRefTrajs
 
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
+from fabrics.helpers.variables import Variables
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+
+from fabrics.leaves.leaf import Leaf
+from fabrics.leaves.attractor import Attractor
+from fabrics.leaves.obstacle_leaf import ObstacleLeaf
+
 
 
 class FabricPlannerException(Exception):
@@ -37,8 +44,9 @@ class FabricPlanner:
         self._refTrajs = []
         self._debug = debug
         self._debugVars = []
+        self._params = []
 
-    def var(self):
+    def var(self) -> Variables:
         try:
             return joinVariables(self._eg._vars, self._eg_f._vars)
         except:
@@ -60,6 +68,12 @@ class FabricPlanner:
         self._eg += eg_pulled
         self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
 
+    def add_leaf(self, leaf: Leaf) -> None:
+        if isinstance(leaf, Attractor):
+            self.addForcingGeometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+        if isinstance(leaf, ObstacleLeaf):
+            self.addGeometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+
     def addForcingGeometry(
         self, dm: DifferentialMap, le: Lagrangian, g: Geometry, goalVelocity=None
     ):
@@ -74,7 +88,8 @@ class FabricPlanner:
         self._refTrajs = self._eg_f._refTrajs
         # TODO: The following should be identitical <19-08-21, mspahn> #
         # self._eg_f += WeightedGeometry(g=g.pull(dm), le=le.pull(dm))
-        self._vars = joinVariables(self._vars, self._eg_f._vars)
+        self._vars = self._vars + self._eg_f._vars
+        self._params.append(dm.params())
         if goalVelocity is not None:
             self._targetVelocity += ca.mtimes(ca.transpose(dm._J), goalVelocity)
         self._eg_f.concretize()
@@ -98,7 +113,7 @@ class FabricPlanner:
         composed_geometry = Geometry(s=self._eg)
         self._eg_ex = WeightedGeometry(g=composed_geometry, le=lex)
         self._eg_ex.concretize()
-        self._vars = joinVariables(self._vars, self._eg_ex._vars)
+        self._vars = self._vars + self._eg_ex._vars
         if self._forcing:
             forced_geometry = Geometry(s=self._eg_f)
             self._eg_f_ex = WeightedGeometry(g=forced_geometry, le=lex)
@@ -132,18 +147,23 @@ class FabricPlanner:
         totalVar = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             totalVar += refTraj._vars
-        self._funs = ca.Function("planner", totalVar, [xddot])
+        """
+        for param in self._params:
+            totalVar += [param]
+        """
+        # self._funs = ca.Function("planner", totalVar, [xddot])
+        self._funs = CasadiFunctionWrapper(
+            "funs", totalVar.asDict(), {"xddot": xddot}
+        )
         if self._debug:
             # Put all variables you want to debug in here
             self._debugFuns = ca.Function("planner_debug", totalVar,
                 self._debugVars
             )
 
-    def computeAction(self, *args):
-        for arg in args:
-            assert isinstance(arg, np.ndarray)
-        funs_val = self._funs(*args)
-        action = np.array(funs_val)[:, 0]
+    def computeAction(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        action = evaluations['xddot']
         # avoid to small actions
         if np.linalg.norm(action) < eps:
             action = np.zeros(self._n)
@@ -206,6 +226,7 @@ class DefaultFabricPlanner(FabricPlanner):
     def __init__(self, n: int, **kwargs):
         q = ca.SX.sym("q", n)
         qdot = ca.SX.sym("qdot", n)
+        var_q = Variables(state_variables={'q': q, 'qdot': qdot})
         p = {"m_base": 0.5, 'debug': False}
         for key in p.keys():
             if key in kwargs:
@@ -213,6 +234,6 @@ class DefaultFabricPlanner(FabricPlanner):
         # base geometry
         l_base = 0.5 * p["m_base"] * ca.dot(qdot, qdot)
         h_base = ca.SX(np.zeros(n))
-        baseGeo = Geometry(h=h_base, x=q, xdot=qdot)
-        baseLag = Lagrangian(l_base, x=q, xdot=qdot)
+        baseGeo = Geometry(h=h_base, var=var_q)
+        baseLag = Lagrangian(l_base, var=var_q)
         super().__init__(baseGeo, baseLag, debug=p['debug'])

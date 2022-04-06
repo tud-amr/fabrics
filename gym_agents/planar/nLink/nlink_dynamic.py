@@ -17,6 +17,8 @@ from fabrics.planner.default_leaves import defaultDynamicAttractor
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
+from fabrics.helpers.variables import Variables
+
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 from MotionPlanningGoal.dynamicSubGoal import DynamicSubGoal
@@ -48,46 +50,57 @@ def nlinkDynamicGoal(n=3, n_steps=5000, render=True):
     }
     goal = DynamicSubGoal(name='goal', contentDict=goalDict)
     planner = DefaultFabricPlanner(n, m_base=1.0)
-    q, qdot = planner.var()
+    var_q = planner.var()
     planarArmFk = PlanarArmFk(n)
     # collision avoidance
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    lag_col = CollisionLagrangian(x, xdot)
-    geo_col = CollisionGeometry(x, xdot, lam=20, exp=2)
-    refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, traj=obstTraj)
+    var_x = Variables(state_variables={'x': x, 'xdot': xdot})
+    lag_col = CollisionLagrangian(var_x)
+    geo_col = CollisionGeometry(var_x, lam=20, exp=2)
+    x_obst = ca.SX.sym("x_obst", 2)
+    xdot_obst = ca.SX.sym("xdot_obst", 2)
+    xddot_obst = ca.SX.sym("xddot_obst", 2)
+    var_obst = Variables(parameters={'x_obst': x_obst, 'xdot_obst': xdot_obst, 'xddot_obst': xddot_obst})
+    refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, var=var_obst, traj=obstTraj)
     refTraj.concretize()
     for obst in obsts:
         x_col = ca.SX.sym("x_col", 2)
         xdot_col = ca.SX.sym("xdot_col", 2)
+        var_col = Variables(state_variables={'x_col': x_col, 'xdot_col': xdot_col})
         x_rel = ca.SX.sym("x_rel", 2)
         xdot_rel = ca.SX.sym("xdot_rel", 2)
+        var_rel = Variables(state_variables={'x_rel': x_rel, 'xdot_rel': xdot_rel})
         for i in range(1, n+1):
-            fk = planarArmFk.fk(q, i, positionOnly=True)
+            fk = planarArmFk.fk(var_q.position_variable(), i, positionOnly=True)
             if isinstance(obst, DynamicSphereObstacle):
                 phi_n = ca.norm_2(x_rel)/ obst.radius() - 1
-                dm_n = DifferentialMap(phi_n, q=x_rel, qdot=xdot_rel)
-                dm_rel = RelativeDifferentialMap(q=x_col, qdot=xdot_col, refTraj=refTraj)
-                dm_col = DifferentialMap(fk, q=q, qdot=qdot)
+                dm_n = DifferentialMap(phi_n, var=var_rel)
+                dm_rel = RelativeDifferentialMap(var=var_col, refTraj=refTraj)
+                dm_col = DifferentialMap(fk, var=var_q)
                 planner.addGeometry(dm_col, lag_col.pull(dm_n).pull(dm_rel), geo_col.pull(dm_n).pull(dm_rel))
             elif isinstance(obst, SphereObstacle):
-                dm_col = CollisionMap(q, qdot, fk, obst.position(), obst.radius())
+                dm_col = CollisionMap(var_q, fk, obst.position(), obst.radius())
                 planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing term
-    goalSymbolicTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, traj=goalTraj)
+    x_goal = ca.SX.sym("x_goal", 2)
+    xdot_goal = ca.SX.sym("xdot_goal", 2)
+    xddot_goal = ca.SX.sym("xddot_goal", 2)
+    var_goal = Variables(parameters={'x_goal': x_goal, 'xdot_goal': xdot_goal, 'xddot_goal': xddot_goal})
+    goalSymbolicTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, var=var_goal, traj=goalTraj)
     goalSymbolicTraj.concretize()
-    fk_ee = planarArmFk.fk(q, n, positionOnly=True)
-    dm_psi, lag_psi, geo_psi, x_psi, xdot_psi = defaultDynamicAttractor(
-        q, qdot, fk_ee, goalSymbolicTraj, k_psi=10.0
+    fk_ee = planarArmFk.fk(var_q.position_variable(), n, positionOnly=True)
+    dm_psi, lag_psi, geo_psi, var_psi = defaultDynamicAttractor(
+        var_q, fk_ee, goalSymbolicTraj, k_psi=10.0
     )
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi, goalVelocity=goalSymbolicTraj.xdot())
     # execution energy
-    exLag = ExecutionLagrangian(q, qdot)
+    exLag = ExecutionLagrangian(var_q)
     exLag.concretize()
     planner.setExecutionEnergy(exLag)
     # Speed control
     ex_factor = 1.0
-    planner.setDefaultSpeedControl(x_psi, dm_psi, exLag, ex_factor, b=[0.05, 8.0])
+    planner.setDefaultSpeedControl(var_psi.position_variable(), dm_psi, exLag, ex_factor, b=[0.05, 8.0])
     planner.concretize()
     dynamicFabrics = False
     ob = env.reset()
@@ -107,9 +120,9 @@ def nlinkDynamicGoal(n=3, n_steps=5000, render=True):
         qdot_t = ob['xdot']
         t0 = time.perf_counter()
         action = planner.computeAction(
-            q_t, qdot_t,
-            q_p_t, qdot_p_t, qddot_p_t,
-            q_g_t, qdot_g_t, qddot_g_t
+            q=q_t, qdot=qdot_t,
+            x_obst=q_p_t, xdot_obst=qdot_p_t, xddot_obst=qddot_p_t,
+            x_goal=q_g_t, xdot_goal=qdot_g_t, xddot_goal=qddot_g_t
         )
         t1 = time.perf_counter()
         print(f"computational time in ms: {(t1 - t0)*1000}")

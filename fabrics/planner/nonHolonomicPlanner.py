@@ -8,8 +8,9 @@ from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
 from fabrics.diffGeometry.speedControl import Damper
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 
 class NonHolonomicPlanner(FabricPlanner):
@@ -24,7 +25,7 @@ class NonHolonomicPlanner(FabricPlanner):
         self._f_extra = f_extra
 
     def vars(self):
-        return self._vars[0], self._vars[1], self._qdot
+        return self._vars, self._qdot
 
     def concretize(self):
         self._eg.concretize()
@@ -82,8 +83,11 @@ class NonHolonomicPlanner(FabricPlanner):
         totalVar = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             totalVar += refTraj._vars
-        totalVar.append(self._qdot)
-        self._funs = ca.Function("planner", totalVar, [xddot])
+        totalVar.add_state_variable('qudot', self._qdot)
+        # self._funs = ca.Function("planner", totalVar, [xddot])
+        self._funs = CasadiFunctionWrapper(
+            "funs", totalVar.asDict(), {"xddot": xddot}
+        )
         if self._debug:
             # Put all variables you want to debug in here
             self._debugFuns = ca.Function("planner_debug", totalVar,

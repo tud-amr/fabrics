@@ -3,8 +3,11 @@ import numpy as np
 from copy import deepcopy
 
 from fabrics.diffGeometry.diffMap import DifferentialMap
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables, checkCompatability
+
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+from fabrics.helpers.variables import Variables
 
 
 class Spec:
@@ -20,15 +23,14 @@ class Spec:
             assert isinstance(h, ca.SX)
             self._h = h
         if 'x' in kwargs:
-            self._vars = [kwargs.get('x'), kwargs.get('xdot')]
+            self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
         elif 'var' in kwargs:
             self._vars = kwargs.get('var')
         self._refTrajs = []
         if 'refTrajs' in kwargs:
             self._refTrajs = kwargs.get('refTrajs')
         self._xdot_d = np.zeros(self.x().size()[0])
-        for var in self._vars:
-            assert isinstance(var, ca.SX)
+        self._vars.verify()
         assert isinstance(M, ca.SX)
         self._M = M
 
@@ -53,33 +55,33 @@ class Spec:
         return ca.pinv(self._M + np.identity(self.x().size()[0]) * eps)
 
     def x(self):
-        return self._vars[0]
+        return self._vars.position_variable()
 
     def xdot(self):
-        return self._vars[1]
+        return self._vars.velocity_variable()
 
     def concretize(self):
         self._xddot = -self.h()
         var = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             var += refTraj._vars
-        self._funs = ca.Function(
-            "M", var, [self.M(), self.f(), self._xddot]
+        self._funs = CasadiFunctionWrapper(
+            "funs", var.asDict(), {"M": self.M(), "f": self.f(), "xddot": self._xddot}
         )
 
-    def evaluate(self, *args):
-        for arg in args:
-            assert isinstance(arg, np.ndarray)
-        funs = self._funs(*args)
-        M_eval = np.array(funs[0])
-        f_eval = np.array(funs[1])[:, 0]
-        xddot_eval = np.array(funs[2])[:, 0]
+    def evaluate(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        M_eval = evaluations["M"]
+        if len(M_eval.shape) == 1:
+            M_eval = np.array([M_eval])
+        f_eval = evaluations["f"]
+        xddot_eval = evaluations["xddot"]
         return [M_eval, f_eval, xddot_eval]
 
     def __add__(self, b):
         assert isinstance(b, Spec)
         checkCompatability(self, b)
-        all_vars = joinVariables(self._vars, b._vars)
+        all_vars = self._vars + b._vars
         if hasattr(self, '_h') and hasattr(b, '_h') and 1 == 2:
             return Spec(self.M() + b.M(), h=self.h() + b.h(), var=all_vars)
         else:
@@ -92,13 +94,15 @@ class Spec:
         f_1 = ca.mtimes(Jt, ca.mtimes(self.M(), dm.Jdotqdot()))
         f_2 = ca.mtimes(Jt, self.f())
         f_pulled = f_1 + f_2
-        M_pulled_subst_x = ca.substitute(M_pulled, self._vars[0], dm._phi)
+        x = self._vars.position_variable()
+        xdot = self._vars.velocity_variable()
+        M_pulled_subst_x = ca.substitute(M_pulled, x, dm._phi)
         M_pulled_subst_x_xdot = ca.substitute(
-            M_pulled_subst_x, self._vars[1], dm.phidot()
+            M_pulled_subst_x, xdot, dm.phidot()
         )
-        f_pulled_subst_x = ca.substitute(f_pulled, self._vars[0], dm._phi)
+        f_pulled_subst_x = ca.substitute(f_pulled, x, dm._phi)
         f_pulled_subst_x_xdot = ca.substitute(
-            f_pulled_subst_x, self._vars[1], dm.phidot()
+            f_pulled_subst_x, xdot, dm.phidot()
         )
         var = dm._vars
         if hasattr(dm, '_refTraj'):

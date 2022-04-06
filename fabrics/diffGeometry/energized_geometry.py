@@ -7,9 +7,10 @@ from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.casadi_helpers import outerProduct
-from fabrics.diffGeometry.variables import eps
 
+from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinRefTrajs
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 class EnergizedGeometry(Spec):
     # Should not be used as it is not compliant with summation
@@ -65,19 +66,22 @@ class WeightedGeometry(Spec):
         var = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             var += refTraj._vars
+        """
         self._funs = ca.Function(
             "M", var, [self.M(), self.f(), self._xddot, self._alpha]
         )
+        """
+        self._funs = CasadiFunctionWrapper(
+                "funs", var.asDict(), {"M": self.M(), 'f': self.f(), 'xddot': self._xddot, 'alpha': self._alpha}
+        )
 
-    def evaluate(self, *args):
-        for arg in args:
-            assert isinstance(arg, np.ndarray)
-        funs = self._funs(*args)
-        M_eval = np.array(funs[0])
-        f_eval = np.array(funs[1])[:, 0]
-        xddot_eval = np.array(funs[2])[:, 0]
-        alpha_eval = float(funs[3])
-        return [M_eval, f_eval, xddot_eval, alpha_eval]
+    def evaluate(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        M = evaluations['M']
+        f = evaluations['f']
+        xddot = evaluations['xddot']
+        alpha = evaluations['alpha']
+        return [M, f, xddot, alpha]
 
     def pull(self, dm: DifferentialMap):
         spec = super().pull(dm)

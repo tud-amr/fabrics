@@ -3,6 +3,7 @@ import casadi as ca
 import numpy as np
 from fabrics.diffGeometry.spec import Spec
 from fabrics.helpers.exceptions import SpecException
+from fabrics.helpers.variables import Variables
 
 
 @pytest.fixture
@@ -58,8 +59,10 @@ def var_spec():
     x2dot = ca.SX.sym("x2dot", 2)
     M1 = ca.SX(np.identity(2))
     f1 = -0.5 / (x ** 2)
-    s1 = Spec(M1, f=f1, var=[x, xdot, x1, x1dot])
-    s2 = Spec(M1, f=f1, var=[x, xdot, x2, x2dot])
+    var1 = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x1': x1, 'x1dot': x1dot})
+    var2 = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x2': x2, 'x2dot': x2dot})
+    s1 = Spec(M1, f=f1, var=var1)
+    s2 = Spec(M1, f=f1, var=var2)
     return s1, s2
 
 
@@ -67,7 +70,7 @@ def test_simple_spec(simple_spec):
     simple_spec[0].concretize()
     x = np.array([1.0, 0.5])
     xdot = np.array([1.0, 0.0])
-    M, f, _ = simple_spec[0].evaluate(x, xdot)
+    M, f, _ = simple_spec[0].evaluate(x=x, xdot=xdot)
     assert isinstance(M, np.ndarray)
     assert isinstance(f, np.ndarray)
     assert M[0, 0] == 1.0
@@ -83,7 +86,7 @@ def test_add_specs(simple_spec):
     s.concretize()
     x = np.array([1.0, 0.5])
     xdot = np.array([1.0, 0.0])
-    M, f, _ = s.evaluate(x, xdot)
+    M, f, _ = s.evaluate(xdot=xdot, x=x)
     assert M[0, 0] == 1.5
     assert M[0, 1] == 0.0
     assert M[1, 1] == 1.5
@@ -118,4 +121,4 @@ def test_join_variables(var_spec):
     s1, s2 = var_spec
     s_joint = s1 + s2
     var = s_joint._vars
-    assert len(var) == 6
+    assert var.len() == 6
