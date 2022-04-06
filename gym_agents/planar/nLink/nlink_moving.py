@@ -1,5 +1,5 @@
 import gym
-import planarenvs.nLinkReacher
+import planarenvs.n_link_reacher
 import casadi as ca
 import numpy as np
 import time
@@ -119,8 +119,8 @@ def nlinkDynamicObst(n=3, n_steps=5000, render=True):
     dynamicFabrics = True
     ob = env.reset(pos=np.array([1.0, -0.2]))
     for obst in obsts:
-        env.addObstacle(obst)
-    env.addGoal(goal)
+        env.add_obstacle(obst)
+    env.add_goal(goal)
     print("Starting episode")
     for i in range(n_steps):
         if i % 1000 == 0:

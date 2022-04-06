@@ -1,5 +1,5 @@
 import gym
-import planarenvs.pointRobot
+import planarenvs.point_robot
 import time
 import casadi as ca
 import numpy as np
@@ -104,7 +104,7 @@ def pointMassDynamic(n_steps=5000):
     env = gym.make('point-robot-acc-v0', dt=0.01, render=True)
     ob = env.reset(pos=np.array([4, 4]))
     for obst in obsts:
-        env.addObstacle(obst)
+        env.add_obstacle(obst)
         env.resetLimits(pos={'low': np.array([-10, -7]), 'high': np.array([10, 7])})
     solverTime = np.zeros(n_steps)
     for i in range(n_steps):

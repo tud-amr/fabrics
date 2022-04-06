@@ -1,6 +1,6 @@
 import gym
-import planarenvs.pointRobot
-from planarenvs.pointRobot.envs.acc import PointRobotAccEnv
+import planarenvs.point_robot
+from planarenvs.point_robot.envs.acc import PointRobotAccEnv
 import time
 import casadi as ca
 import numpy as np
@@ -90,8 +90,8 @@ def pointMass(n_steps=5000, render=True):
     ob = env.reset(pos=x0, vel=xdot0)
     sensor = GoalSensor(nbGoals=1)
     env.addSensor(sensor)
-    env.addGoal(goal)
-    env.addObstacle(obsts[0])
+    env.add_goal(goal)
+    env.add_obstacle(obsts[0])
     env.resetLimits(pos={'low':np.array([-1, -2]), 'high':np.array([20, 2])})
     print("Starting episode")
     q = np.zeros((n_steps, 2))

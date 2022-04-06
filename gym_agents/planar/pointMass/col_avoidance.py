@@ -1,5 +1,5 @@
 import gym
-import planarenvs.pointRobot
+import planarenvs.point_robot
 import casadi as ca
 import numpy as np
 
@@ -48,7 +48,7 @@ def pointMassAvoidance(n_steps=1200, render=True):
     # running the simulation
     env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
     ob = env.reset(pos=x0, vel=xdot0)
-    env.addObstacle(obst)
+    env.add_obstacle(obst)
     print("Starting episode")
     for i in range(n_steps):
         if i % 100 == 0:

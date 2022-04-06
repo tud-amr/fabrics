@@ -1,5 +1,5 @@
 import gym
-import planarenvs.pointRobot
+import planarenvs.point_robot
 import time
 import casadi as ca
 import numpy as np
@@ -55,7 +55,7 @@ def pointMass(n_steps=5000, render=True):
     env = gym.make('point-robot-acc-v0', dt=0.01, render=render)
     ob = env.reset(pos=x0, vel=xdot0)
     for obst in obsts:
-        env.addObstacle(obst)
+        env.add_obstacle(obst)
     print("Starting episode")
     for _ in range(n_steps):
         action = planner.computeAction(q=ob['x'], qdot=ob['xdot'])

@@ -1,5 +1,5 @@
 import gym
-import planarenvs.pointRobot
+import planarenvs.point_robot
 import time
 import casadi as ca
 import numpy as np
@@ -103,8 +103,8 @@ def pointMassDynamicAnnoying(n_steps=5000, render=True):
     xdot0 = np.array([-1.0, -0.0])
     ob = env.reset(pos=x0, vel=xdot0)
     for obst in obsts:
-        env.addObstacle(obst)
-    env.addGoal(goal)
+        env.add_obstacle(obst)
+    env.add_goal(goal)
     print("Starting episode")
     for i in range(n_steps):
         if i % 1000 == 0:
