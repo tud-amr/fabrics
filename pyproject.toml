@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.2.6"
+version = "0.2.7"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
 [tool.poetry.dependencies]
-python = "^3.6,<3.11"
+python = "^3.6.2,<3.11"
 pytest = "^6.2.5"
 casadi = "^3.5.1"
 numpy = "^1.5.1"
@@ -19,6 +19,7 @@ planarenvs = {git = "https://git@github.com/maxspahn/gym_envs_planar.git", rev =
 urdfenvs = {git = "https://git@github.com/maxspahn/gym_envs_urdf.git", rev = "master", optional = true}
 
 [tool.poetry.dev-dependencies]
+pylint = "^2.13.4"
 
 [tool.poetry.extras]
 agents = ["gym", "planarenvs", "urdfenvs"]

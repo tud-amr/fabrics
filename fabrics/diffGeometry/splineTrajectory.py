@@ -4,7 +4,7 @@ import numpy as np
 from geomdl import BSpline
 from geomdl import utilities
 
-from fabrics.diffGeometry.variables import eps
+from fabrics.helpers.constants import eps
 from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.diffGeometry.symbolicTrajectory import SymbolicTrajectory
 

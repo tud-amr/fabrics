@@ -47,13 +47,13 @@ def test_simple_lagrangian(simple_lagrangian):
     f_man = -0.125 * xdot ** 2 / (x ** 2)
     M_man = 0.25 / x
     l_man = 0.5 * 0.25 / x * xdot ** 2
-    M, f, l = simple_lagrangian.evaluate(x, xdot)
+    M, f, l = simple_lagrangian.evaluate(x=x, xdot=xdot)
     assert isinstance(M, np.ndarray)
     assert isinstance(f, np.ndarray)
-    assert isinstance(l, float)
+    assert isinstance(l, np.ndarray)
     assert l == pytest.approx(l_man)
     assert f == pytest.approx(f_man)
-    assert M[0, 0] == pytest.approx(M_man[0])
+    assert M[0] == pytest.approx(M_man[0])
 
 
 def test_simple_finsler_struct(simple_finsler_structure):
@@ -64,15 +64,15 @@ def test_simple_finsler_struct(simple_finsler_structure):
     lg_man = (0.25 / x) * xdot
     l_man = 0.5 * lg_man ** 2
     f_man = -2 * 0.25 ** 2 / (x ** 3) * xdot ** 2 * (1 - 1 / 2)
-    M, f, l, lg = simple_finsler_structure.evaluate(x, xdot)
+    M, f, l, lg = simple_finsler_structure.evaluate(x=x, xdot=xdot)
     assert isinstance(M, np.ndarray)
     assert isinstance(f, np.ndarray)
-    assert isinstance(lg, float)
-    assert isinstance(l, float)
+    assert isinstance(lg, np.ndarray)
+    assert isinstance(l, np.ndarray)
     assert lg == pytest.approx(lg_man[0])
     assert l == pytest.approx(l_man[0])
     assert f == pytest.approx(f_man)
-    assert M[0, 0] == pytest.approx(M_man[0])
+    assert M[0] == pytest.approx(M_man[0])
 
 def test_pull_lagrangian(two_dimensional_lagrangian):
     lg, dm = two_dimensional_lagrangian
@@ -82,11 +82,11 @@ def test_pull_lagrangian(two_dimensional_lagrangian):
     lg_pulled.concretize()
     q = np.array([1.0, -0.23])
     qdot = np.array([0.2, 0.6])
-    x, J, Jdot = dm.forward(q, qdot)
+    x, J, Jdot = dm.forward(q=q, qdot=qdot)
     Jt = np.transpose(J)
     xdot = np.dot(J, qdot)
-    M, f, l = lg.evaluate(x, xdot)
-    M_p, f_p, l_p = lg_pulled.evaluate(q, qdot)
+    M, f, l = lg.evaluate(x=x, xdot=xdot)
+    M_p, f_p, l_p = lg_pulled.evaluate(q=q, qdot=qdot)
     M_p_test = np.dot(Jt, np.dot(M, J))
     f_p_test = np.dot(Jt, f) + np.dot(Jt, np.dot(M, np.dot(Jdot, qdot)))
     assert l == pytest.approx(l_p)

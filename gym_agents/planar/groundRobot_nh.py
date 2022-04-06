@@ -18,12 +18,14 @@ from fabrics.planner.default_energies import (
     ExecutionLagrangian,
 )
 
+from fabrics.helpers.variables import Variables
+
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
 
 
-def pointMass(n_steps=5000):
+def ground_robot(n_steps=5000):
     # setting up the problem
     nx = 3
     nu = 2
@@ -34,20 +36,22 @@ def pointMass(n_steps=5000):
         SphereObstacle(name="staticObst2", contentDict=staticObstDict2),
     ]
     planner = DefaultNonHolonomicPlanner(nx, m_base=1.0)
-    x, xdot, qdot = planner.vars()
-    x_ee = x[0:2] + 0.8 *  ca.vertcat(ca.cos(x[2]), ca.sin(x[2]))
+    var_q, qudot = planner.vars()
+    q = var_q.position_variable()
+    x_ee = q[0:2] + 0.8 *  ca.vertcat(ca.cos(q[2]), ca.sin(q[2]))
     # collision avoidance
     l_front = 0.800
-    x_f = x[0:2] + ca.vertcat(l_front * ca.cos(x[2]), l_front * ca.sin(x[2]))
+    x_f = q[0:2] + ca.vertcat(l_front * ca.cos(q[2]), l_front * ca.sin(q[2]))
     x_col = ca.SX.sym("x_col", 1)
     xdot_col = ca.SX.sym("xdot_col", 1)
-    lag_col = CollisionLagrangian(x_col, xdot_col)
-    geo_col = CollisionGeometry(x_col, xdot_col)
+    var_col = Variables(state_variables={'x_col': x_col, 'xdot_col': xdot_col})
+    lag_col = CollisionLagrangian(var_col)
+    geo_col = CollisionGeometry(var_col, lam=0.1)
     fks = [x_ee, x_f]
     r_body = 0.1
     for obst in obsts:
         for fk in fks:
-            dm_col = CollisionMap(x, xdot, fk, obst.position(), obst.radius() + r_body)
+            dm_col = CollisionMap(var_q, fk, obst.position(), obst.radius() + r_body)
             planner.addGeometry(dm_col, lag_col, geo_col)
     # forcing
     goalDict = {
@@ -63,21 +67,17 @@ def pointMass(n_steps=5000):
     }
     goal = StaticSubGoal(name='goal', contentDict=goalDict)
     fk_ee = x_ee[0:2]
-    x_psi = ca.SX.sym("x_psi", 2)
-    dm_psi, lag_psi, _, x_psi, xdot_psi = defaultAttractor(x, xdot, goal.position(), fk_ee)
-    geo_psi = GoalGeometry(x_psi, xdot_psi, k_psi=5)
+    dm_psi, lag_psi, _, var_psi = defaultAttractor(var_q, goal.position(), fk_ee)
+    geo_psi = GoalGeometry(var_psi, k_psi=5)
     planner.addForcingGeometry(dm_psi, lag_psi, geo_psi)
     # finalize
-    exLag = ExecutionLagrangian(x, xdot)
-    x_ex = x
-    xdot_ex = xdot
-    exLag = ExecutionLagrangian(x_ex, xdot_ex)
+    exLag = ExecutionLagrangian(var_q)
     planner.setExecutionEnergy(exLag)
     exLag.concretize()
     # Speed control
     ex_factor = 1.0
     planner.setDefaultSpeedControl(
-        x_psi, dm_psi, exLag, ex_factor,
+        var_psi.position_variable(), dm_psi, exLag, ex_factor,
         #r_b=0.5, b=[0.2, 15.0]
     )
     planner.concretize()
@@ -85,8 +85,8 @@ def pointMass(n_steps=5000):
     env = gym.make("ground-robot-acc-v0", dt=0.010, render=True)
     ob = env.reset(pos=np.array([-5.0, 0.0, 0.0]), vel=np.array([1.0, 0.0]))
     for obst in obsts:
-        env.addObstacle(obst)
-    env.addGoal(goal)
+        env.add_obstacle(obst)
+    env.add_goal(goal)
     print("Starting episode")
     for i in range(n_steps):
         if i % 1000 == 0:
@@ -95,7 +95,7 @@ def pointMass(n_steps=5000):
         xdot = ob['xdot']
         qdot = ob['vel']
         t0 = time.perf_counter()
-        action = planner.computeAction(x, xdot, qdot)
+        action = planner.computeAction(x=x, xdot=xdot, qudot=qdot)
         t1 = time.perf_counter()
         print(f"computation time in ms: {(t1 - t0)*1000}")
         ob, reward, done, info = env.step(action)
@@ -103,4 +103,4 @@ def pointMass(n_steps=5000):
 
 if __name__ == "__main__":
     n_steps = 70000
-    pointMass(n_steps=n_steps)
+    ground_robot(n_steps=n_steps)

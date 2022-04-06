@@ -36,7 +36,9 @@ def joinRefTrajs(refTrajs1, refTrajs2):
     for item in refTrajs:
         already_exists = False
         for u_item in unique_items:
-            if u_item == item or ca.is_equal(u_item._vars[0], item._vars[0]):
+            parameter_list_1 = list(u_item._vars.parameters().values())
+            parameter_list_2 = list(item._vars.parameters().values())
+            if u_item == item or ca.is_equal(parameter_list_1[0], parameter_list_2[0]):
                 already_exists = True
                 break
         if not already_exists:
