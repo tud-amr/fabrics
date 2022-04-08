@@ -81,6 +81,14 @@ optional = true
 python-versions = ">=3.6"
 
 [[package]]
+name = "dataclasses"
+version = "0.8"
+description = "A backport of the dataclasses module for Python 3.6"
+category = "main"
+optional = false
+python-versions = ">=3.6, <3.7"
+
+[[package]]
 name = "decorator"
 version = "4.4.2"
 description = "Decorators for Humans"
@@ -754,8 +762,8 @@ tutorials = ["scipy", "matplotlib"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.6.2,<3.11"
-content-hash = "277e3ebcaaa87008881f3db652904f1b7938c295d7ea2fcf16ebf9f79a9d7bba"
+python-versions = "^3.6.2,<3.7"
+content-hash = "757eb6e17c0fd25a4b3f7aa3c16144e6d9d0c005cf1c4bafefa8fcbc0b85152e"
 
 [metadata.files]
 astroid = [
@@ -870,6 +878,10 @@ coverage = [
 cycler = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
+]
+dataclasses = [
+    {file = "dataclasses-0.8-py3-none-any.whl", hash = "sha256:0201d89fa866f68c8ebd9d08ee6ff50c0b255f8ec63a71c16fda7af82bb887bf"},
+    {file = "dataclasses-0.8.tar.gz", hash = "sha256:8479067f342acf957dc82ec415d355ab5edb7e7646b90dc6e2fd1d96ad084c97"},
 ]
 decorator = [
     {file = "decorator-4.4.2-py2.py3-none-any.whl", hash = "sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760"},

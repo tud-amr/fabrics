@@ -20,6 +20,9 @@ class Variables(object):
     def parameters(self):
         return self._parameters
 
+    def add_parameter(self, name: str, value: ca.SX) -> None:
+        self._parameters[name] = value
+
     def set_parameters(self, parameters):
         self._parameters = parameters
 
