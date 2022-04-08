@@ -116,7 +116,7 @@ pytest-coverage = "^0.0"
 urdf_parser_py = ">=0.0.3"
 
 [package.extras]
-env = ["urdfenvs", "motion-planning-scenes"]
+env = ["urdfenvs @ git+https://git@github.com/maxspahn/gym_envs_urdf.git@master", "motion-planning-scenes @ git+https://git@github.com/maxspahn/motion_planning_scenes.git@main"]
 
 [package.source]
 type = "git"
@@ -420,7 +420,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "pybullet"
-version = "3.2.1"
+version = "3.2.2"
 description = "Official Python Interface for the Bullet Physics SDK specialized for Robotics Simulation and Reinforcement Learning"
 category = "main"
 optional = true
@@ -628,7 +628,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "trimesh"
-version = "3.10.5"
+version = "3.10.7"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "main"
 optional = true
@@ -638,9 +638,9 @@ python-versions = "*"
 numpy = "*"
 
 [package.extras]
-all = ["shapely", "pillow", "jsonschema", "xxhash", "triangle", "requests", "rtree", "glooey", "mapbox-earcut", "meshio", "svg.path", "psutil", "chardet", "pycollada", "scipy", "lxml", "msgpack", "xatlas", "scikit-image", "setuptools", "python-fcl", "sympy", "pyglet", "colorlog", "networkx"]
-easy = ["scipy", "lxml", "shapely", "pillow", "msgpack", "jsonschema", "xxhash", "requests", "rtree", "setuptools", "colorlog", "sympy", "svg.path", "pyglet", "chardet", "pycollada", "networkx"]
-test = ["ezdxf", "pytest", "pyinstrument", "pytest-cov", "coveralls"]
+all = ["scikit-image", "sympy", "xatlas", "shapely", "xxhash", "networkx", "requests", "mapbox-earcut", "psutil", "meshio", "pillow", "svg.path", "python-fcl", "setuptools", "triangle", "msgpack", "scipy", "lxml", "pycollada", "colorlog", "pyglet", "jsonschema", "chardet", "glooey", "rtree"]
+easy = ["msgpack", "sympy", "shapely", "scipy", "networkx", "xxhash", "requests", "lxml", "pycollada", "colorlog", "chardet", "pyglet", "jsonschema", "pillow", "svg.path", "setuptools", "rtree"]
+test = ["pytest-cov", "ezdxf", "coveralls", "pyinstrument", "pytest"]
 
 [[package]]
 name = "typed-ast"
@@ -1183,13 +1183,14 @@ py = [
     {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
 ]
 pybullet = [
-    {file = "pybullet-3.2.1-cp27-cp27m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:a7558b63c754ee13e5937d348a6a1e496bc317983b0229a0351f896bd5678ed7"},
-    {file = "pybullet-3.2.1-cp27-cp27mu-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:ed73517895eee6b238e5bc140040edab9fd6883b49fce2fed03f8fe87877e36d"},
-    {file = "pybullet-3.2.1-cp35-cp35m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:86ea0d85d538ffdbdc4684708fc81bff3371b14b5ad2207e67d653b5083879d2"},
-    {file = "pybullet-3.2.1-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:10f0b947eeea4d42f324a727be701bef1cfebf3cb532332a9c7549cf34b76475"},
-    {file = "pybullet-3.2.1-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:8c3cfff5f2c3797891ccfdfe5893945be9545c44596034f7240a2c766b1f4d73"},
-    {file = "pybullet-3.2.1-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:ef8101bcac2f618b4b9fdd926394d5611b0c7c8df8217f98b728da254b597cb6"},
-    {file = "pybullet-3.2.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:6196110885debf7528f03ab9aecd5f61d5de4654a39c8cbea3ce496220ea6e4f"},
+    {file = "pybullet-3.2.2-cp27-cp27m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:9f6f01c8826110312694a30a1af59644792a923826cee182cffebdb1beafd89c"},
+    {file = "pybullet-3.2.2-cp27-cp27mu-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:28479038a42f3e3207d345202ac956181ccd9f2e0be0831fe52e311b9fc326a7"},
+    {file = "pybullet-3.2.2-cp35-cp35m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:e99139a177695a57df8f754363e974065d1673e497834cdbd22c8ee1789d692b"},
+    {file = "pybullet-3.2.2-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:63f4f09d14d0d0bd5e1bbf6c245986ad704578e77013463b7b66255d4b4adc70"},
+    {file = "pybullet-3.2.2-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:c774195ce42a22e71ee0c62519c9419a1f45faaa1a5d87f2ebf1fbeeead0f4f1"},
+    {file = "pybullet-3.2.2-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:3b9c651fd0cc518b6215d038e2ba71550a3302634e6b82ed36e8ed12ecfdca5a"},
+    {file = "pybullet-3.2.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:3b07233c3d613bf7efff540a106b5f61c23ca4fa671a199af5052692968f8daf"},
+    {file = "pybullet-3.2.2.tar.gz", hash = "sha256:46dab6459d828e04b661bb80e014bcfb13c9f1ba40c022e5eb1132efcfe0b8e0"},
 ]
 pycollada = [
     {file = "pycollada-0.6.tar.gz", hash = "sha256:fcd6f38fd981e350f9ec754d9671834017accd600e967d6d299a6cfdae5ba4f4"},
@@ -1310,8 +1311,8 @@ tomli = [
     {file = "tomli-1.2.3.tar.gz", hash = "sha256:05b6166bff487dc068d322585c7ea4ef78deed501cc124060e0f238e89a9231f"},
 ]
 trimesh = [
-    {file = "trimesh-3.10.5-py3-none-any.whl", hash = "sha256:2760855a1af2b50cb6dc109452bfbeff42a4dc25b548c939f4e893815c8526f9"},
-    {file = "trimesh-3.10.5.tar.gz", hash = "sha256:1ad7714ad756b62a1181ffd8dbf6eba3260496a209d91c4fde8b6044ec377a92"},
+    {file = "trimesh-3.10.7-py3-none-any.whl", hash = "sha256:fae7270e6ee8bb9a97bd0aca042d8e2eeaf5814acd51f9d5326e2e8ccfdb0961"},
+    {file = "trimesh-3.10.7.tar.gz", hash = "sha256:398a2bf83409924431f02e44d2999e19aca68981322a4b8a04ba75da392b852f"},
 ]
 typed-ast = [
     {file = "typed_ast-1.5.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:183b183b7771a508395d2cbffd6db67d6ad52958a5fdc99f450d954003900266"},
