@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from fabrics.helpers.variables import Variables
 
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
@@ -19,6 +19,7 @@ from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 from fabrics.leaves.leaf import Leaf
 from fabrics.leaves.attractor import Attractor, ParameterizedAttractor
 from fabrics.leaves.obstacle_leaf import ObstacleLeaf
+from fabrics.planner.default_energies import ExecutionLagrangian
 
 from fabrics.leaves.generics.attractor import GenericAttractor
 #from fabrics.leaves.generics.geoemtry import GenericGeometry
@@ -104,7 +105,7 @@ class ParameterizedFabricPlanner(object):
         self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
 
     def add_leaf(self, leaf: Leaf) -> None:
-        if isinstance(leaf, Attractor):
+        if isinstance(leaf, GenericAttractor):
             self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
         if isinstance(leaf, ObstacleLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
@@ -115,14 +116,16 @@ class ParameterizedFabricPlanner(object):
         lagrangian: Lagrangian,
         geometry: Geometry,
     ) -> None:
-        assert isinstance(forward_map, DifferentialMap)
+        assert isinstance(forward_map, ParameterizedDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
         self._forced_geometry = deepcopy(self._geometry)
         self._forced_geometry += WeightedGeometry(
-            g=forcing_geometry, le=lagrangian
+            g=geometry, le=lagrangian
         ).pull(forward_map)
-        self._variables = self._variables + self._forcing_geometry._vars
+        self._forced_variables = geometry._vars
+        self._forced_forward_map = forward_map
+        self._variables = self._variables + self._forced_geometry._vars
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
         assert isinstance(execution_lagrangian, Lagrangian)
@@ -132,21 +135,24 @@ class ParameterizedFabricPlanner(object):
             g=composed_geometry, le=execution_lagrangian
         )
         self._execution_geometry.concretize()
-        forced_geometry = Geometry(s=self._eg_f)
+        forced_geometry = Geometry(s=self._forced_geometry)
         self._forced_speed_controlled_geometry = WeightedGeometry(
             g=forced_geometry, le=execution_lagrangian
         )
         self._forced_speed_controlled_geometry.concretize()
 
-    def set_speed_control(self, ex_factor, **kwargs):
+    def set_speed_control(self):
+        self._geometry.concretize()
+        self._forced_geometry.concretize()
         alpha_b = self.config.damper["alpha_b"]
         alpha_eta = self.config.damper["alpha_eta"]
         alpha_shift = self.config.damper["alpha_shift"]
         radius_shift = self.config.damper["radius_shift"]
         beta_distant = self.config.damper["beta_distant"]
         beta_close = self.config.damper["beta_close"]
-        x_psi = self._forcing_variables.position_variable()
-        dm_psi = self._forcing_forward_map
+        ex_factor = self.config.ex_factor
+        x_psi = self._forced_variables.position_variable()
+        dm_psi = self._forced_forward_map
         exLag = self._execution_lagrangian
         ex_factor = self.config.ex_factor
         s_beta = 0.5 * (ca.tanh(-alpha_b * (ca.norm_2(x_psi) - radius_shift)) + 1)
@@ -159,12 +165,19 @@ class ParameterizedFabricPlanner(object):
 
     """ DEFAULT COMPOSITION """
     def set_components(self, fks, fk_goal):
+        # Adds default attractor
         goal_dimension = fk_goal.size()[0]
         self._variables.add_parameter('x_goal', ca.SX.sym('x_goal', goal_dimension))
         attractor = GenericAttractor(self._variables, fk_goal)
         attractor.set_potential(self.config.attractor_potential)
         attractor.set_metric(self.config.attractor_metric)
         self.add_leaf(attractor)
+        # Adds default execution energy
+        execution_energy = ExecutionLagrangian(self._variables)
+        self.set_execution_energy(execution_energy)
+        # Sets speed control
+        self.set_speed_control()
+
 
     def concretize(self):
         a_ex = (
@@ -172,15 +185,15 @@ class ParameterizedFabricPlanner(object):
             + (1 - self._eta) * self._forced_geometry._alpha
         )
         beta_subst = self._beta.substitute(-a_ex, -self._geometry._alpha)
-        xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * self._eg.xdot()
+        xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * self._geometry.xdot()
         self._funs = CasadiFunctionWrapper(
-            "funs", self._vars.asDict(), {"xddot": xddot}
+            "funs", self.variables.asDict(), {"xddot": xddot}
         )
 
 
     """ RUNTIME METHODS """
 
-    def compute_action(**kwargs):
+    def compute_action(self, **kwargs):
         """
         Computes action based on the states passed.
 

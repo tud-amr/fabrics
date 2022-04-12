@@ -28,3 +28,6 @@ class GenericAttractor(Leaf):
         M_psi = eval(attractor_metric)
         lagrangian_psi = ca.dot(xdot_goal, ca.mtimes(M_psi, xdot_goal))
         self._lag = Lagrangian(lagrangian_psi, var=self._var_psi)
+
+    def map(self):
+        return self._forward_map

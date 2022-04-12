@@ -12,7 +12,7 @@ def test_attractor_generation():
     var_q = Variables(
         state_variables={"q": q, "qdot": qdot}, parameters={"x_goal": x_goal}
     )
-    attractor = GenericAttractor(var_q, q)
+    GenericAttractor(var_q, q)
 
 
 @pytest.fixture
@@ -34,5 +34,5 @@ def test_set_potential(generic_attractor: GenericAttractor):
 
 
 def test_set_metric(generic_attractor: GenericAttractor):
-    metric_expression = "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x_psi))**2) + 0.3) * ca.SX(np.identity(x_psi.size()[0]))"
+    metric_expression = "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x_goal))**2) + 0.3) * ca.SX(np.identity(x_goal.size()[0]))"
     generic_attractor.set_metric(metric_expression)
