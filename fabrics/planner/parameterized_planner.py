@@ -35,7 +35,7 @@ class FabricPlannerConfig:
         "-0.5 * / (x_self ** 2) * (-0.5 * (ca.sign(xdot_self) - 1) * xdot_self ** 2"
     )
     attractor_potential: str = (
-        "1.0 * (ca.norm_2(x_goal) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x_goal))))"
+        "5.0 * (ca.norm_2(x_goal) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x_goal))))"
     )
     attractor_metric: str = (
         "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x_goal))**2) + 0.3) * ca.SX(np.identity(x_goal.size()[0]))"
@@ -49,7 +49,7 @@ class FabricPlannerConfig:
                 "alpha_shift": 0.5,
                 "beta_distant": 0.01,
                 "beta_close": 6.5,
-                "radius_shift": 0.2,
+                "radius_shift": 0.02,
             }
         )
     )
