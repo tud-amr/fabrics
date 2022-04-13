@@ -15,7 +15,7 @@ class CasadiFunctionWrapper(object):
         self.create_function()
 
     def create_function(self):
-        self._input_keys = tuple(self._inputs.keys())
+        self._input_keys = sorted(tuple(self._inputs.keys()))
         self._list_expressions = [self._expressions[i] for i in sorted(self._expressions.keys())]
         input_expressions = [self._inputs[i] for i in self._input_keys]
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)

@@ -23,7 +23,8 @@ def test_compute_action(planner: ParameterizedFabricPlanner):
     q = np.zeros(2)
     qdot = np.zeros(2)
     x_goal = np.array([1.0, -1.0])
-    qddot = planner.compute_action(q=q, qdot=qdot, x_goal=x_goal)
+    x_obst = np.array([1.0, 0.2])
+    qddot = planner.compute_action(q=q, qdot=qdot, x_goal=x_goal, x_obst_0=x_obst)
     assert isinstance(qddot, np.ndarray)
     assert qddot.size == 2
     assert qddot.shape == (2,)

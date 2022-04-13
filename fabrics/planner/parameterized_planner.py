@@ -22,14 +22,19 @@ from fabrics.leaves.obstacle_leaf import ObstacleLeaf
 from fabrics.planner.default_energies import ExecutionLagrangian
 
 from fabrics.leaves.generics.attractor import GenericAttractor
-#from fabrics.leaves.generics.geoemtry import GenericGeometry
+from fabrics.leaves.generics.geometry import GenericGeometry
 
 
 @dataclass
 class FabricPlannerConfig:
     base_inertia: float = 0.2
+    #s = -0.5 * (ca.sign(xdot) - 1)
+    #h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
     collision_geometry: str = (
-        "-0.5 * / (x_obst ** 2) * (-0.5 * (ca.sign(xdot_obst) - 1) * xdot_obst ** 2"
+        "-2 / (x_geometry ** 2) * (-0.5 * (ca.sign(xdot_geometry) - 1)) * xdot_geometry ** 2"
+    )
+    collision_finsler: str = (
+        "2.0/(x_geometry**1) * xdot_geometry**2"
     )
     self_collision_geometry: str = (
         "-0.5 * / (x_self ** 2) * (-0.5 * (ca.sign(xdot_self) - 1) * xdot_self ** 2"
@@ -102,12 +107,13 @@ class ParameterizedFabricPlanner(object):
         assert isinstance(weighted_geometry, WeightedGeometry)
         pulled_geometry = weighted_geometry.pull(forward_map)
         self._geometry += pulled_geometry
-        self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
+        #self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
+        self._variables = self._variables + pulled_geometry._vars
 
     def add_leaf(self, leaf: Leaf) -> None:
         if isinstance(leaf, GenericAttractor):
             self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
-        if isinstance(leaf, ObstacleLeaf):
+        if isinstance(leaf, GenericGeometry):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
 
     def add_forcing_geometry(
@@ -135,11 +141,14 @@ class ParameterizedFabricPlanner(object):
             g=composed_geometry, le=execution_lagrangian
         )
         self._execution_geometry.concretize()
-        forced_geometry = Geometry(s=self._forced_geometry)
-        self._forced_speed_controlled_geometry = WeightedGeometry(
-            g=forced_geometry, le=execution_lagrangian
-        )
-        self._forced_speed_controlled_geometry.concretize()
+        try:
+            forced_geometry = Geometry(s=self._forced_geometry)
+            self._forced_speed_controlled_geometry = WeightedGeometry(
+                g=forced_geometry, le=execution_lagrangian
+            )
+            self._forced_speed_controlled_geometry.concretize()
+        except AttributeError:
+            print("No damping")
 
     def set_speed_control(self):
         self._geometry.concretize()
@@ -164,28 +173,43 @@ class ParameterizedFabricPlanner(object):
         self._eta = 0.5 * (ca.tanh(-alpha_eta * (exLag._l - l_ex_d) - alpha_shift) + 1)
 
     """ DEFAULT COMPOSITION """
-    def set_components(self, fks, fk_goal):
-        # Adds default attractor
-        goal_dimension = fk_goal.size()[0]
-        self._variables.add_parameter('x_goal', ca.SX.sym('x_goal', goal_dimension))
-        attractor = GenericAttractor(self._variables, fk_goal)
-        attractor.set_potential(self.config.attractor_potential)
-        attractor.set_metric(self.config.attractor_metric)
-        self.add_leaf(attractor)
-        # Adds default execution energy
-        execution_energy = ExecutionLagrangian(self._variables)
-        self.set_execution_energy(execution_energy)
-        # Sets speed control
-        self.set_speed_control()
+    def set_components(self, fks, fk_goal, number_obstacles = 1, goal = True):
+        # Adds default obstacle
+        obst_dimension = fks[0].size()[0]
+        for i in range(number_obstacles):
+            obstacle_variable_name = f"x_obst_{i}"
+            self._variables.add_parameter(obstacle_variable_name, ca.SX.sym(obstacle_variable_name, obst_dimension))
+            geometry = GenericGeometry(self._variables, fks[0])
+            geometry.set_geometry(self.config.collision_geometry)
+            geometry.set_finsler_structure(self.config.collision_finsler)
+            self.add_leaf(geometry)
+        if goal:
+            # Adds default attractor
+            goal_dimension = fk_goal.size()[0]
+            self._variables.add_parameter('x_goal', ca.SX.sym('x_goal', goal_dimension))
+            attractor = GenericAttractor(self._variables, fk_goal)
+            attractor.set_potential(self.config.attractor_potential)
+            attractor.set_metric(self.config.attractor_metric)
+            self.add_leaf(attractor)
+            # Adds default execution energy
+            execution_energy = ExecutionLagrangian(self._variables)
+            self.set_execution_energy(execution_energy)
+            # Sets speed control
+            self.set_speed_control()
 
 
     def concretize(self):
-        a_ex = (
-            self._eta * self._geometry._alpha
-            + (1 - self._eta) * self._forced_geometry._alpha
-        )
-        beta_subst = self._beta.substitute(-a_ex, -self._geometry._alpha)
-        xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * self._geometry.xdot()
+        try:
+            a_ex = (
+                self._eta * self._geometry._alpha
+                + (1 - self._eta) * self._forced_geometry._alpha
+            )
+            beta_subst = self._beta.substitute(-a_ex, -self._geometry._alpha)
+            xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * self._geometry.xdot()
+        except AttributeError:
+            print("No forcing term, using pure geoemtry")
+            self._geometry.concretize()
+            xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
         self._funs = CasadiFunctionWrapper(
             "funs", self.variables.asDict(), {"xddot": xddot}
         )

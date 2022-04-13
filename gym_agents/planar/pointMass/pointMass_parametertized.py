@@ -4,6 +4,7 @@ from planarenvs.point_robot.envs.acc import PointRobotAccEnv
 from planarenvs.sensors.goal_sensor import GoalSensor
 
 from MotionPlanningGoal.staticSubGoal import StaticSubGoal
+from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
 
 
@@ -38,8 +39,21 @@ def point_mass(n_steps=5000, render=True):
     fks = [planner.variables.position_variable()]
     fk = planner.variables.position_variable()
     # The planner hides all the logic behind the function set_components.
-    planner.set_components(fks, fk)
+    planner.set_components(fks, fk, number_obstacles = 2)
     planner.concretize()
+    # Definition of the obstacle.
+    staticObstDict = {
+        "dim": 2,
+        "type": "sphere",
+        "geometry": {"position": [-2.0, 3.0], "radius": 1.0},
+    }
+    obst1 = SphereObstacle(name="staticObst", contentDict=staticObstDict)
+    staticObstDict = {
+        "dim": 2,
+        "type": "sphere",
+        "geometry": {"position": [0.0, -1.0], "radius": 1.0},
+    }
+    obst2 = SphereObstacle(name="staticObst", contentDict=staticObstDict)
     # Definition of the goal.
     goal_dict = {
         "m": 2,
@@ -48,7 +62,7 @@ def point_mass(n_steps=5000, render=True):
         "indices": [0, 1],
         "parent_link": 0,
         "child_link": 1,
-        "desired_position": [2.0, 1.0],
+        "desired_position": [-4.0, 1.0],
         "epsilon": 0.2,
         "type": "staticSubGoal",
     }
@@ -63,12 +77,19 @@ def point_mass(n_steps=5000, render=True):
     sensor = GoalSensor(nb_goals=1)
     env.add_sensor(sensor)
     env.add_goal(goal)
+    env.add_obstacle(obst1)
+    env.add_obstacle(obst2)
     # Start the simulation
     print("Starting simulation")
     goal_position = np.array(goal.position())
+    obst1_position = np.array(obst1.position())
+    obst2_position = np.array(obst2.position())
     for _ in range(n_steps):
         action = planner.compute_action(
-            q=ob["x"], qdot=ob["xdot"], x_goal=goal_position
+            q=ob["x"], qdot=ob["xdot"],
+            x_goal = goal_position,
+            x_obst_0 = obst2_position,
+            x_obst_1 = obst1_position,
         )
         ob, *_ = env.step(action)
         goal_position = ob["GoalPosition"][0]
