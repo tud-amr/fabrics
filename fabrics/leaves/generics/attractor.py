@@ -9,7 +9,8 @@ from fabrics.helpers.variables import Variables
 
 class GenericAttractor(Leaf):
     def __init__(self, root_variables: Variables, fk_goal: ca.SX, attractor_name: str):
-        super().__init__(root_variables, f"{attractor_name}_leaf", fk_goal, dim=2)
+        goal_dimension = fk_goal.size()[0]
+        super().__init__(root_variables, f"{attractor_name}_leaf", fk_goal, dim=goal_dimension)
         self.set_forward_map(attractor_name)
 
     def set_forward_map(self, goal_name):
