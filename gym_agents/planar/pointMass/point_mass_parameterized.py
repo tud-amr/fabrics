@@ -20,7 +20,7 @@ def point_mass_parameterized(n_steps=5000, render=True):
     """ Optional reconfiguration of the planner """
     """
     base_inertia = 0.1
-    attractor_potential = "1 * ca.norm_2(x_goal)**2"
+    attractor_potential = "1 * ca.norm_2(x)**2"
     damper = {
         "alpha_b": 0.5,
         "alpha_eta": 0.5,

@@ -18,8 +18,8 @@ from fabrics.helpers.variables import Variables
 
 @pytest.fixture
 def parameterized_planner_1d():
-    geometry_expression = "0.5 / (x_geometry ** 2) * xdot_geometry"
-    collision_finsler = "0.5 / (x_geometry ** 2) * xdot_geometry**2"
+    geometry_expression = "0.5 / (x ** 2) * xdot"
+    collision_finsler = "0.5 / (x ** 2) * xdot**2"
 
     planner = ParameterizedFabricPlanner(
         1,
@@ -35,8 +35,8 @@ def parameterized_planner_1d():
 
 @pytest.fixture
 def parameterized_planner_2d():
-    geometry_expression = "0.5 / (x_geometry ** 2) * xdot_geometry"
-    collision_finsler = "0.5 / (x_geometry ** 2) * xdot_geometry**2"
+    geometry_expression = "0.5 / (x ** 2) * xdot"
+    collision_finsler = "0.5 / (x ** 2) * xdot**2"
 
     planner_2d = ParameterizedFabricPlanner(
         2,

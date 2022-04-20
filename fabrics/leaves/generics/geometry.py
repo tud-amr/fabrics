@@ -7,45 +7,57 @@ from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.leaves.leaf import Leaf
 from fabrics.helpers.variables import Variables
 
-class GenericGeometry(Leaf):
-    def __init__(self, root_variables: Variables, fk: ca.SX):
-        super().__init__(root_variables)
-        self._fk = fk
-        x = ca.SX.sym("x_geometry", 1)
-        xdot = ca.SX.sym("xdot_geometry", 1)
-        self._var_geometry = Variables(
-                state_variables={"x": x, "xdot": xdot},
-        )
+class GenericGeometryLeaf(Leaf):
 
     def set_geometry(self, geometry: str) -> None:
-        x_geometry = self._var_geometry.position_variable()
-        xdot_geometry = self._var_geometry.velocity_variable()
+        """
+        Sets the geometry from a string.
+
+        Params
+        ---------
+        geometry: str
+            String that holds the geometry. The variables must be x, xdot.
+        """
+        x = self._leaf_variables.position_variable()
+        xdot = self._leaf_variables.velocity_variable()
         h_geometry = eval(geometry)
-        self._geo = Geometry(h=h_geometry, var=self._var_geometry)
+        self._geo = Geometry(h=h_geometry, var=self._leaf_variables)
 
-    def set_finsler_structure(self, finsler_structe: str) -> None:
-        x_geometry = self._var_geometry.position_variable()
-        xdot_geometry = self._var_geometry.velocity_variable()
-        lagrangian_geometry = eval(finsler_structe)
-        self._lag = Lagrangian(lagrangian_geometry, var=self._var_geometry)
+    def set_finsler_structure(self, finsler_structure: str) -> None:
+        """
+        Sets the Finsler structure from a string.
+
+        Params
+        ---------
+        finsler_structure: str
+            String that holds the Finsler structure. The variables must be x, xdot.
+        """
+        x = self._leaf_variables.position_variable()
+        xdot = self._leaf_variables.velocity_variable()
+        lagrangian_geometry = eval(finsler_structure)
+        self._lag = Lagrangian(lagrangian_geometry, var=self._leaf_variables)
 
 
-class ObstacleGeometry(GenericGeometry):
-    def __init__(self, root_variables: Variables, fk: ca.SX, obstacle_name: str):
-        super().__init__(root_variables, fk)
+class ObstacleLeaf(GenericGeometryLeaf):
+    def __init__(self, parent_variables: Variables, forward_kinematics: ca.SX, obstacle_name: str):
+        super().__init__(parent_variables, f"{obstacle_name}_leaf", forward_kinematics)
+        self.set_forward_map(obstacle_name)
+
+    def set_forward_map(self, obstacle_name):
         radius_name = f"radius_{obstacle_name}"
         reference_name = f"x_{obstacle_name}"
         radius_body_name = f"radius_body"
-        if radius_name in self._var_q.parameters():
-            radius_variable = self._var_q.parameters()[radius_name]
+        obstacle_dimension = self._forward_kinematics.size()[0]
+        if radius_name in self._parent_variables.parameters():
+            radius_variable = self._parent_variables.parameters()[radius_name]
         else:
             radius_variable = ca.SX.sym(radius_name, 1)
-        if reference_name in self._var_q.parameters():
-            reference_variable = self._var_q.parameters()[reference_name]
+        if reference_name in self._parent_variables.parameters():
+            reference_variable = self._parent_variables.parameters()[reference_name]
         else:
-            reference_variable = ca.SX.sym(reference_name, fk.size()[0])
-        if radius_body_name in self._var_q.parameters():
-            radius_body_variable = self._var_q.parameters()[radius_body_name]
+            reference_variable = ca.SX.sym(reference_name, obstacle_dimension)
+        if radius_body_name in self._parent_variables.parameters():
+            radius_body_variable = self._parent_variables.parameters()[radius_body_name]
         else:
             radius_body_variable = ca.SX.sym(radius_body_name, 1)
         geo_parameters = {
@@ -53,9 +65,9 @@ class ObstacleGeometry(GenericGeometry):
                 radius_name: radius_variable, 
                 radius_body_name: radius_body_variable
         }
-        self._var_q.add_parameters(geo_parameters)
+        self._parent_variables.add_parameters(geo_parameters)
         self._forward_map = ParameterizedObstacleMap(
-                self._var_q, self._fk, reference_variable, radius_variable, radius_body_variable
+                self._parent_variables, self._forward_kinematics, reference_variable, radius_variable, radius_body_variable
         )
 
     def map(self):

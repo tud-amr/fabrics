@@ -2,7 +2,7 @@ import casadi as ca
 import pytest
 
 from fabrics.helpers.variables import Variables
-from fabrics.leaves.generics.geometry import GenericGeometry
+from fabrics.leaves.generics.geometry import GenericGeometryLeaf
 
 
 def test_attractor_generation():
@@ -11,7 +11,7 @@ def test_attractor_generation():
     var_q = Variables(
         state_variables={"q": q, "qdot": qdot}
     )
-    GenericGeometry(var_q, q)
+    GenericGeometryLeaf(var_q, "simple_leaf", q)
 
 
 @pytest.fixture
@@ -21,17 +21,17 @@ def generic_geometry():
     var_q = Variables(
         state_variables={"q": q, "qdot": qdot}
     )
-    return GenericGeometry(var_q, q)
+    return GenericGeometryLeaf(var_q, q, "simple_leaf")
 
 
-def test_set_geometry(generic_geometry: GenericGeometry):
+def test_set_geometry(generic_geometry: GenericGeometryLeaf):
     geometry_expression = (
-        "ca.norm_2(x_geometry) + 0.1 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x_geometry)))"
+        "ca.norm_2(x) + 0.1 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x)))"
     )
     generic_geometry.set_geometry(geometry_expression)
 
 
-def test_set_metric(generic_geometry: GenericGeometry):
-    finsler_expression = "ca.norm_2(xdot_geometry)**2 * 1/ca.norm_2(x_geometry)"
+def test_set_metric(generic_geometry: GenericGeometryLeaf):
+    finsler_expression = "ca.norm_2(xdot)**2 * 1/ca.norm_2(x)"
     generic_geometry.set_finsler_structure(finsler_expression)
 

@@ -18,9 +18,10 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 
 def n_link_parameterized(n_steps=5000, n=3, render=True):
-    """ Optional reconfiguration of the planner
+    """ Optional reconfiguration of the planner """
+    """
     base_inertia = 0.3
-    attractor_potential = "ca.norm_2(x_goal)**4"
+    attractor_potential = "ca.norm_2(x)**4"
     damper = {
         "alpha_b": 0.5,
         "alpha_eta": 0.5,
@@ -30,7 +31,7 @@ def n_link_parameterized(n_steps=5000, n=3, render=True):
         "radius_shift": 0.1,
     }
     planner = ParameterizedFabricPlanner(
-        2,
+        n,
         base_inertia=base_inertia,
         attractor_potential=attractor_potential,
         damper=damper,

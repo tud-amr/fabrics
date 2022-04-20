@@ -22,8 +22,8 @@ from fabrics.leaves.obstacle_leaf import ObstacleLeaf
 from fabrics.planner.default_energies import ExecutionLagrangian
 
 from fabrics.leaves.generics.attractor import GenericAttractor
-from fabrics.leaves.generics.geometry import GenericGeometry
-from fabrics.leaves.generics.geometry import ObstacleGeometry
+from fabrics.leaves.generics.geometry import GenericGeometryLeaf
+from fabrics.leaves.generics.geometry import ObstacleLeaf
 
 
 @dataclass
@@ -32,19 +32,19 @@ class FabricPlannerConfig:
     #s = -0.5 * (ca.sign(xdot) - 1)
     #h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
     collision_geometry: str = (
-        "-2 / (x_geometry ** 2) * (-0.5 * (ca.sign(xdot_geometry) - 1)) * xdot_geometry ** 2"
+        "-2 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
     collision_finsler: str = (
-        "2.0/(x_geometry**1) * xdot_geometry**2"
+        "2.0/(x**1) * xdot**2"
     )
     self_collision_geometry: str = (
-        "-0.5 * / (x_self ** 2) * (-0.5 * (ca.sign(xdot_self) - 1) * xdot_self ** 2"
+        "-0.5 * / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
     )
     attractor_potential: str = (
-        "5.0 * (ca.norm_2(x_goal) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x_goal))))"
+        "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
     )
     attractor_metric: str = (
-        "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x_goal))**2) + 0.3) * ca.SX(np.identity(x_goal.size()[0]))"
+        "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x))**2) + 0.3) * ca.SX(np.identity(x.size()[0]))"
     )
     ex_factor: float = 1.0
     damper: Dict[str, float] = field(
@@ -114,7 +114,7 @@ class ParameterizedFabricPlanner(object):
     def add_leaf(self, leaf: Leaf) -> None:
         if isinstance(leaf, GenericAttractor):
             self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
-        if isinstance(leaf, GenericGeometry):
+        if isinstance(leaf, GenericGeometryLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
 
     def add_forcing_geometry(
@@ -180,7 +180,7 @@ class ParameterizedFabricPlanner(object):
         for i in range(number_obstacles):
             obstacle_name = f"obst_{i}"
             for fk in fks:
-                geometry = ObstacleGeometry(self._variables, fk, obstacle_name)
+                geometry = ObstacleLeaf(self._variables, fk, obstacle_name)
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
@@ -188,7 +188,7 @@ class ParameterizedFabricPlanner(object):
             # Adds default attractor
             goal_dimension = fk_goal.size()[0]
             self._variables.add_parameter('x_goal', ca.SX.sym('x_goal', goal_dimension))
-            attractor = GenericAttractor(self._variables, fk_goal)
+            attractor = GenericAttractor(self._variables, fk_goal, "goal")
             attractor.set_potential(self.config.attractor_potential)
             attractor.set_metric(self.config.attractor_metric)
             self.add_leaf(attractor)
