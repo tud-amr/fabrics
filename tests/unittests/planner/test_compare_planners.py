@@ -78,10 +78,10 @@ def planner_non_parameterized_1d():
 def planner_non_parameterized_2d():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
-    var_q = Variables(state_variables={"q": q, "qdot": qdot}, parameters={})
+    var_q = Variables(state_variables={"q": q, "qdot": qdot})
     x = ca.SX.sym("x", 1)
     xdot = ca.SX.sym("xdot", 1)
-    var_x = Variables(state_variables={"x": x, "xdot": xdot}, parameters={})
+    var_x = Variables(state_variables={"x": x, "xdot": xdot})
     l = 0.5 * ca.dot(qdot, qdot)
     l_base = Lagrangian(l, var=var_q)
     geo_base = Geometry(h=ca.SX(np.zeros(2)), var=var_q)
@@ -101,26 +101,31 @@ def planner_non_parameterized_2d():
 def test_simple_task(planner_non_parameterized_1d, parameterized_planner_1d):
     planner = planner_non_parameterized_1d
     planner_parameterized = parameterized_planner_1d
+    print(planner_parameterized._variables)
     q_0 = np.array([1.0])
     for _ in range(10):
         q = -1 + 2 * np.random.random(1)
         qdot = -1 + 2 * np.random.random(1)
         qddot = planner.computeAction(q=q, qdot=qdot)
         qddot_parameterized = planner_parameterized.compute_action(
-            q=q, qdot=qdot, x_obst_0=q_0
+            q=q, qdot=qdot, x_obst_0=q_0,
+            radius_obst_0=np.array([0.5]),
+            radius_body=np.array([0.5])
         )
         assert qddot[0] == pytest.approx(qddot_parameterized[0])
 
 def test_simple_task_2d(planner_non_parameterized_2d, parameterized_planner_2d):
     planner = planner_non_parameterized_2d
     planner_parameterized = parameterized_planner_2d
+    print(planner_parameterized._variables)
     q_0 = np.array([1.0, 0.0])
     for _ in range(10):
         q = -1 + 2 * np.random.random(2)
         qdot = -1 + 2 * np.random.random(2)
         qddot = planner.computeAction(q=q, qdot=qdot)
         qddot_parameterized = planner_parameterized.compute_action(
-            q=q, qdot=qdot, x_obst_0=q_0
+            q=q, qdot=qdot, x_obst_0=q_0,
+            radius_obst_0=np.array([0.5]), radius_body=np.array([0.5])
         )
         assert qddot[0] == pytest.approx(qddot_parameterized[0])
         assert qddot[1] == pytest.approx(qddot_parameterized[1])

@@ -23,6 +23,7 @@ from fabrics.planner.default_energies import ExecutionLagrangian
 
 from fabrics.leaves.generics.attractor import GenericAttractor
 from fabrics.leaves.generics.geometry import GenericGeometry
+from fabrics.leaves.generics.geometry import ObstacleGeometry
 
 
 @dataclass
@@ -177,12 +178,12 @@ class ParameterizedFabricPlanner(object):
         # Adds default obstacle
         obst_dimension = fks[0].size()[0]
         for i in range(number_obstacles):
-            obstacle_variable_name = f"x_obst_{i}"
-            self._variables.add_parameter(obstacle_variable_name, ca.SX.sym(obstacle_variable_name, obst_dimension))
-            geometry = GenericGeometry(self._variables, fks[0])
-            geometry.set_geometry(self.config.collision_geometry)
-            geometry.set_finsler_structure(self.config.collision_finsler)
-            self.add_leaf(geometry)
+            obstacle_name = f"obst_{i}"
+            for fk in fks:
+                geometry = ObstacleGeometry(self._variables, fk, obstacle_name)
+                geometry.set_geometry(self.config.collision_geometry)
+                geometry.set_finsler_structure(self.config.collision_finsler)
+                self.add_leaf(geometry)
         if goal:
             # Adds default attractor
             goal_dimension = fk_goal.size()[0]
@@ -231,5 +232,9 @@ class ParameterizedFabricPlanner(object):
             action = np.zeros(self._n)
         """
         return action
+
+    def __del__(self):
+        del(self._variables)
+        print("PLANNER DELETED")
 
 

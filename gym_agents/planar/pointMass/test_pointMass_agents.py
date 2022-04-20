@@ -3,6 +3,7 @@ from col_avoidance_moving import pointMassDynamicAvoidance
 from pointMass import pointMass
 from pointMass_dynamic import pointMassDynamicGoal
 from pointMass_moving import pointMassDynamicAnnoying
+from point_mass_parameterized import point_mass_parameterized
 
 
 def test_pointMassAvoidance():
@@ -27,4 +28,8 @@ def test_pointMassSimple():
 
 def test_pontMassDynamicgoal():
     res = pointMassDynamicAnnoying(n_steps=10, render=False)
+    assert isinstance(res, dict)
+
+def test_pointMassParametrized():
+    res = point_mass_parameterized(n_steps=10, render=False)
     assert isinstance(res, dict)

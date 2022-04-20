@@ -8,9 +8,8 @@ from fabrics.leaves.generics.geometry import GenericGeometry
 def test_attractor_generation():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
-    x_geometry = ca.SX.sym("x_geo", 2)
     var_q = Variables(
-        state_variables={"q": q, "qdot": qdot}, parameters={"geometry_parameter": x_geometry}
+        state_variables={"q": q, "qdot": qdot}
     )
     GenericGeometry(var_q, q)
 
@@ -19,9 +18,8 @@ def test_attractor_generation():
 def generic_geometry():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
-    x_geometry = ca.SX.sym("x_geo", 2)
     var_q = Variables(
-        state_variables={"q": q, "qdot": qdot}, parameters={"geometry_parameter": x_geometry}
+        state_variables={"q": q, "qdot": qdot}
     )
     return GenericGeometry(var_q, q)
 

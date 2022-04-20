@@ -16,10 +16,11 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 # limit <04-04-22, mspahn> #
 
 
-def point_mass(n_steps=5000, render=True):
-    """ Optional reconfiguration of the planner
-    base_inertia = 0.3
-    attractor_potential = "ca.norm_2(x_goal)**4"
+def point_mass_parameterized(n_steps=5000, render=True):
+    """ Optional reconfiguration of the planner """
+    """
+    base_inertia = 0.1
+    attractor_potential = "1 * ca.norm_2(x_goal)**2"
     damper = {
         "alpha_b": 0.5,
         "alpha_eta": 0.5,
@@ -45,13 +46,13 @@ def point_mass(n_steps=5000, render=True):
     staticObstDict = {
         "dim": 2,
         "type": "sphere",
-        "geometry": {"position": [-2.0, 3.0], "radius": 1.0},
+        "geometry": {"position": [-0.0, 3.0], "radius": 0.6},
     }
     obst1 = SphereObstacle(name="staticObst", contentDict=staticObstDict)
     staticObstDict = {
         "dim": 2,
         "type": "sphere",
-        "geometry": {"position": [0.0, -1.0], "radius": 1.0},
+        "geometry": {"position": [0.0, -1.0], "radius": 0.4},
     }
     obst2 = SphereObstacle(name="staticObst", contentDict=staticObstDict)
     # Definition of the goal.
@@ -88,8 +89,11 @@ def point_mass(n_steps=5000, render=True):
         action = planner.compute_action(
             q=ob["x"], qdot=ob["xdot"],
             x_goal = goal_position,
-            x_obst_0 = obst2_position,
-            x_obst_1 = obst1_position,
+            x_obst_0 = obst1_position,
+            x_obst_1 = obst2_position,
+            radius_obst_0 = np.array([obst1.radius()]),
+            radius_obst_1 = np.array([obst2.radius()]),
+            radius_body = np.array([0.1])
         )
         ob, *_ = env.step(action)
         goal_position = ob["GoalPosition"][0]
@@ -97,4 +101,4 @@ def point_mass(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = point_mass(n_steps=5000)
+    res = point_mass_parameterized(n_steps=5000)
