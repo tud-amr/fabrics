@@ -1,4 +1,5 @@
 import casadi as ca
+import numpy as np
 
 from fabrics.planner.default_maps import ParameterizedGoalMap
 from fabrics.diffGeometry.geometry import Geometry
