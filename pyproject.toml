@@ -5,7 +5,7 @@ description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
 [tool.poetry.dependencies]
-python = "^3.6.2,<3.7"
+python = "^3.6.2,<3.10"
 casadi = "^3.5.1"
 numpy = "^1.5.1"
 geomdl = "^5.3.1"
@@ -16,7 +16,7 @@ matplotlib = {version = "^3.3.1", optional = true}
 forwardkinematics = {git = "https://git@github.com/maxspahn/forwardKinematics.git", rev = "main"}
 planarenvs = {git = "https://git@github.com/maxspahn/gym_envs_planar.git", rev = "master", optional = true}
 urdfenvs = {git = "https://git@github.com/maxspahn/gym_envs_urdf.git", rev = "master", optional = true}
-dataclasses = "^0.8"
+dataclasses = { version = "^0.8", python = "<3.7" }
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.4"
