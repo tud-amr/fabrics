@@ -1,14 +1,17 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.planner.default_maps import ParameterizedGeometryMap, ParameterizedObstacleMap
+from fabrics.planner.default_maps import (
+    ParameterizedGeometryMap,
+    ParameterizedObstacleMap,
+)
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.leaves.leaf import Leaf
 from fabrics.helpers.variables import Variables
 
-class GenericGeometryLeaf(Leaf):
 
+class GenericGeometryLeaf(Leaf):
     def set_geometry(self, geometry: str) -> None:
         """
         Sets the geometry from a string.
@@ -39,8 +42,24 @@ class GenericGeometryLeaf(Leaf):
 
 
 class ObstacleLeaf(GenericGeometryLeaf):
-    def __init__(self, parent_variables: Variables, forward_kinematics: ca.SX, obstacle_name: str):
-        super().__init__(parent_variables, f"{obstacle_name}_leaf", forward_kinematics)
+    """
+    The ObstacleLeaf is a geometry leaf for spherical obstacles.
+
+    The obstacles are parameterized by the obstacles radius, its position and
+    the radius of the englobing sphere for the corresponding link.
+    Moreover, the symbolic expression for the forward expression is passed to
+    the constructor.
+    """
+
+    def __init__(
+        self,
+        parent_variables: Variables,
+        forward_kinematics: ca.SX,
+        obstacle_name: str,
+    ):
+        super().__init__(
+            parent_variables, f"{obstacle_name}_leaf", forward_kinematics
+        )
         self.set_forward_map(obstacle_name)
 
     def set_forward_map(self, obstacle_name):
@@ -53,21 +72,29 @@ class ObstacleLeaf(GenericGeometryLeaf):
         else:
             radius_variable = ca.SX.sym(radius_name, 1)
         if reference_name in self._parent_variables.parameters():
-            reference_variable = self._parent_variables.parameters()[reference_name]
+            reference_variable = self._parent_variables.parameters()[
+                reference_name
+            ]
         else:
             reference_variable = ca.SX.sym(reference_name, obstacle_dimension)
         if radius_body_name in self._parent_variables.parameters():
-            radius_body_variable = self._parent_variables.parameters()[radius_body_name]
+            radius_body_variable = self._parent_variables.parameters()[
+                radius_body_name
+            ]
         else:
             radius_body_variable = ca.SX.sym(radius_body_name, 1)
         geo_parameters = {
-                reference_name: reference_variable,
-                radius_name: radius_variable, 
-                radius_body_name: radius_body_variable
+            reference_name: reference_variable,
+            radius_name: radius_variable,
+            radius_body_name: radius_body_variable,
         }
         self._parent_variables.add_parameters(geo_parameters)
         self._forward_map = ParameterizedObstacleMap(
-                self._parent_variables, self._forward_kinematics, reference_variable, radius_variable, radius_body_variable
+            self._parent_variables,
+            self._forward_kinematics,
+            reference_variable,
+            radius_variable,
+            radius_body_variable,
         )
 
     def map(self):
