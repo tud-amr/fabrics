@@ -7,7 +7,7 @@ from fabrics.planner.default_maps import (
 )
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.leaves.leaf import Leaf
+from fabrics.components.leaves.leaf import Leaf
 from fabrics.helpers.variables import Variables
 
 

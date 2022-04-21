@@ -11,19 +11,14 @@ from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
 from fabrics.diffGeometry.speedControl import Damper
-from fabrics.helpers.functions import joinRefTrajs
 
-from fabrics.helpers.variables import Variables
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
-from fabrics.leaves.leaf import Leaf
-from fabrics.leaves.attractor import Attractor, ParameterizedAttractor
-from fabrics.leaves.obstacle_leaf import ObstacleLeaf
-from fabrics.planner.default_energies import ExecutionLagrangian
-
-from fabrics.leaves.generics.attractor import GenericAttractor
-from fabrics.leaves.generics.geometry import GenericGeometryLeaf
-from fabrics.leaves.generics.geometry import ObstacleLeaf
+from fabrics.components.energies.execution_energies import ExecutionLagrangian
+from fabrics.components.leaves.leaf import Leaf
+from fabrics.components.leaves.attractor import GenericAttractor
+from fabrics.components.leaves.geometry import GenericGeometryLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf
 
 
 @dataclass
