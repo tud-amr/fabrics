@@ -4,9 +4,9 @@ import casadi as ca
 import numpy as np
 
 from fabrics.planner.fabricPlanner import DefaultFabricPlanner
-from fabrics.planner.default_geometries import CollisionGeometry
-from fabrics.planner.default_energies import CollisionLagrangian, ExecutionLagrangian
-from fabrics.planner.default_maps import CollisionMap
+from fabrics.defaults.default_geometries import CollisionGeometry
+from fabrics.defaults.default_energies import CollisionLagrangian, ExecutionLagrangian
+from fabrics.defaults.default_maps import CollisionMap
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory

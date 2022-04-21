@@ -1,7 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.planner.default_maps import ParameterizedGoalMap
+from fabrics.components.maps.parameterized_maps import ParameterizedGoalMap
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.components.leaves.leaf import Leaf

@@ -1,8 +1,7 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.planner.default_maps import (
-    ParameterizedGeometryMap,
+from fabrics.components.maps.parameterized_maps import (
     ParameterizedObstacleMap,
 )
 from fabrics.diffGeometry.geometry import Geometry

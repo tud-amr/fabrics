@@ -2,7 +2,7 @@ import casadi as ca
 import pytest
 
 from fabrics.helpers.variables import Variables
-from fabrics.leaves.generics.geometry import GenericGeometryLeaf
+from fabrics.components.leaves.geometry import GenericGeometryLeaf
 
 
 def test_attractor_generation():

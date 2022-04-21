@@ -1,8 +1,8 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.planner.default_geometries import CollisionGeometry
-from fabrics.planner.default_energies import CollisionLagrangian
+from fabrics.defaults.default_geometries import CollisionGeometry
+from fabrics.defaults.default_energies import CollisionLagrangian
 
 from fabrics.diffGeometry.diffMap import DifferentialMap
 

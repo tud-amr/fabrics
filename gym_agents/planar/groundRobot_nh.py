@@ -10,10 +10,10 @@ from fabrics.planner.nonHolonomicPlanner import (
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.planner.default_leaves import defaultAttractor
-from fabrics.planner.default_geometries import CollisionGeometry, GoalGeometry
-from fabrics.planner.default_maps import CollisionMap
-from fabrics.planner.default_energies import (
+from fabrics.defaults.default_leaves import defaultAttractor
+from fabrics.defaults.default_geometries import CollisionGeometry, GoalGeometry
+from fabrics.defaults.default_maps import CollisionMap
+from fabrics.defaults.default_energies import (
     CollisionLagrangian,
     ExecutionLagrangian,
 )
