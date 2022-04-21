@@ -3,7 +3,11 @@ from copy import deepcopy
 
 
 class Variables(object):
-    def __init__(self, state_variables={}, parameters={}):
+    def __init__(self, state_variables=None, parameters=None):
+        if state_variables is None:
+            state_variables = {}
+        if parameters is None:
+            parameters = {}
         self._state_variables = state_variables
         self._parameters = parameters
         if len(state_variables) > 0:
@@ -19,6 +23,12 @@ class Variables(object):
 
     def parameters(self):
         return self._parameters
+
+    def add_parameter(self, name: str, value: ca.SX) -> None:
+        self._parameters[name] = value
+
+    def add_parameters(self, parameter_dict: dict) -> None:
+        self._parameters.update(parameter_dict)
 
     def set_parameters(self, parameters):
         self._parameters = parameters
@@ -85,6 +95,9 @@ class Variables(object):
         return len(self._parameters.values()) + len(
             self._state_variables.values()
         )
+
+    def __repr__(self):
+        return self.__str__();
 
     def __str__(self):
         return (

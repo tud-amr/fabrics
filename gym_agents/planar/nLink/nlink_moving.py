@@ -5,17 +5,17 @@ import numpy as np
 import time
 
 from fabrics.planner.fabricPlanner import DefaultFabricPlanner
-from fabrics.planner.default_geometries import CollisionGeometry, LimitGeometry
-from fabrics.planner.default_energies import (
+from fabrics.defaults.default_geometries import CollisionGeometry, LimitGeometry
+from fabrics.defaults.default_energies import (
     CollisionLagrangian,
     ExecutionLagrangian,
 )
-from fabrics.planner.default_maps import (
+from fabrics.defaults.default_maps import (
     CollisionMap,
     UpperLimitMap,
     LowerLimitMap
 )
-from fabrics.planner.default_leaves import defaultAttractor
+from fabrics.defaults.default_leaves import defaultAttractor
 from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 

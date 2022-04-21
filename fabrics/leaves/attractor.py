@@ -1,9 +1,9 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.planner.default_geometries import GoalGeometry
-from fabrics.planner.default_energies import GoalLagrangian
-from fabrics.planner.default_maps import GoalMap, ParameterizedGoalMap
+from fabrics.defaults.default_geometries import GoalGeometry
+from fabrics.defaults.default_energies import GoalLagrangian
+from fabrics.defaults.default_maps import GoalMap, ParameterizedGoalMap
 
 from fabrics.leaves.leaf import Leaf
 

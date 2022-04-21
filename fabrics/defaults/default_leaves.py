@@ -1,9 +1,9 @@
 import casadi as ca
 import numpy as np
 
-from fabrics.planner.default_geometries import GoalGeometry
-from fabrics.planner.default_energies import GoalLagrangian
-from fabrics.planner.default_maps import GoalMap
+from fabrics.defaults.default_geometries import GoalGeometry
+from fabrics.defaults.default_energies import GoalLagrangian
+from fabrics.defaults.default_maps import GoalMap
 
 from fabrics.diffGeometry.diffMap import RelativeDifferentialMap, DifferentialMap
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
