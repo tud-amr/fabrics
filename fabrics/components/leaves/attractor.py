@@ -30,6 +30,7 @@ class GenericAttractor(Leaf):
 
     def set_forward_map(self, goal_name):
         reference_name = f"x_{goal_name}"
+        weight_name = f"weight_{goal_name}"
         goal_dimension = self._forward_kinematics.size()[0]
         if reference_name in self._parent_variables.parameters():
             reference_variable = self._parent_variables.parameters()[
@@ -37,9 +38,17 @@ class GenericAttractor(Leaf):
             ]
         else:
             reference_variable = ca.SX.sym(reference_name, goal_dimension)
+        if weight_name in self._parent_variables.parameters():
+            weight_variable = self._parent_variables.parameters()[
+                weight_name
+            ]
+        else:
+            weight_variable = ca.SX.sym(weight_name, 1)
         geo_parameters = {
             reference_name: reference_variable,
+            weight_name: weight_variable
         }
+        self._weight = weight_variable
         self._parent_variables.add_parameters(geo_parameters)
         self._forward_map = ParameterizedGoalMap(
             self._parent_variables, self._forward_kinematics, reference_variable
@@ -48,7 +57,7 @@ class GenericAttractor(Leaf):
     def set_potential(self, potential: str) -> None:
         x = self._leaf_variables.position_variable()
         xdot = self._leaf_variables.velocity_variable()
-        psi = eval(potential)
+        psi = self._weight * eval(potential)
         h_psi = ca.gradient(psi, x)
         self._geo = Geometry(h=h_psi, var=self._leaf_variables)
 

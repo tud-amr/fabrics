@@ -20,6 +20,9 @@ from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.geometry import GenericGeometryLeaf
 from fabrics.components.leaves.geometry import ObstacleLeaf
 
+from MotionPlanningGoal.goalComposition import GoalComposition
+
+from forwardkinematics.fksCommon.fk_creator import FkCreator
 
 @dataclass
 class FabricPlannerConfig:
@@ -57,8 +60,10 @@ class FabricPlannerConfig:
 
 
 class ParameterizedFabricPlanner(object):
-    def __init__(self, dof: int, **kwargs):
+    def __init__(self, dof: int, robot_type: str, **kwargs):
         self._dof = dof
+        self._robot_type = robot_type
+        self._forward_kinematics = FkCreator(robot_type).fk()
         self._config = FabricPlannerConfig(**kwargs)
         self.initialize_joint_variables()
         self.set_base_geometry()
@@ -106,9 +111,9 @@ class ParameterizedFabricPlanner(object):
         #self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
         self._variables = self._variables + pulled_geometry._vars
 
-    def add_leaf(self, leaf: Leaf) -> None:
+    def add_leaf(self, leaf: Leaf, prime_leaf: bool= False) -> None:
         if isinstance(leaf, GenericAttractor):
-            self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+            self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry(), prime_leaf)
         if isinstance(leaf, GenericGeometryLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
 
@@ -117,15 +122,18 @@ class ParameterizedFabricPlanner(object):
         forward_map: DifferentialMap,
         lagrangian: Lagrangian,
         geometry: Geometry,
+        prime_forcing_leaf: bool,
     ) -> None:
         assert isinstance(forward_map, ParameterizedDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
-        self._forced_geometry = deepcopy(self._geometry)
+        if not hasattr(self, '_forced_geometry'):
+            self._forced_geometry = deepcopy(self._geometry)
         self._forced_geometry += WeightedGeometry(
             g=geometry, le=lagrangian
         ).pull(forward_map)
-        self._forced_variables = geometry._vars
+        if prime_forcing_leaf:
+            self._forced_variables = geometry._vars
         self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
 
@@ -169,9 +177,8 @@ class ParameterizedFabricPlanner(object):
         self._eta = 0.5 * (ca.tanh(-alpha_eta * (exLag._l - l_ex_d) - alpha_shift) + 1)
 
     """ DEFAULT COMPOSITION """
-    def set_components(self, fks, fk_goal, number_obstacles = 1, goal = True):
+    def set_components(self, fks: list, goal: GoalComposition = None, number_obstacles: int = 1):
         # Adds default obstacle
-        obst_dimension = fks[0].size()[0]
         for i in range(number_obstacles):
             obstacle_name = f"obst_{i}"
             for fk in fks:
@@ -180,13 +187,17 @@ class ParameterizedFabricPlanner(object):
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
         if goal:
+            for j, sub_goal in enumerate(goal.subGoals()):
             # Adds default attractor
-            goal_dimension = fk_goal.size()[0]
-            self._variables.add_parameter('x_goal', ca.SX.sym('x_goal', goal_dimension))
-            attractor = GenericAttractor(self._variables, fk_goal, "goal")
-            attractor.set_potential(self.config.attractor_potential)
-            attractor.set_metric(self.config.attractor_metric)
-            self.add_leaf(attractor)
+                goal_dimension = sub_goal.m()
+                self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
+                fk_child = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.childLink(), positionOnly=True)
+                fk_parent = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.parentLink(), positionOnly=True)
+                fk_sub_goal = fk_child - fk_parent
+                attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
+                attractor.set_potential(self.config.attractor_potential)
+                attractor.set_metric(self.config.attractor_metric)
+                self.add_leaf(attractor, prime_leaf=sub_goal.isPrimeGoal())
             # Adds default execution energy
             execution_energy = ExecutionLagrangian(self._variables)
             self.set_execution_energy(execution_energy)
@@ -228,8 +239,10 @@ class ParameterizedFabricPlanner(object):
         """
         return action
 
+    """
     def __del__(self):
         del(self._variables)
         print("PLANNER DELETED")
+    """
 
 
