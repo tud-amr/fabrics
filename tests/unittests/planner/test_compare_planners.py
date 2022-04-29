@@ -8,45 +8,81 @@ from fabrics.diffGeometry.diffMap import (
 )
 from fabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
-from fabrics.diffGeometry.analyticSymbolicTrajectory import (
-    AnalyticSymbolicTrajectory,
-)
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 from fabrics.helpers.variables import Variables
 
+from MotionPlanningGoal.goalComposition import GoalComposition
 
 @pytest.fixture
-def parameterized_planner_1d():
+def goal_1d():
+    goal_dict = {
+        "subgoal0": {
+            "m": 1,
+            "w": 1.0,
+            "prime": True,
+            "indices": [0],
+            "parent_link": 0,
+            "child_link": 2,
+            "desired_position": [-4.0],
+            "epsilon": 0.15,
+            "type": "staticSubGoal",
+        }
+    }
+    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    return goal
+
+@pytest.fixture
+def goal_2d():
+    goal_dict = {
+        "subgoal0": {
+            "m": 2,
+            "w": 1.0,
+            "prime": True,
+            "indices": [0, 1],
+            "parent_link": 0,
+            "child_link": 2,
+            "desired_position": [-4.0, 1.0],
+            "epsilon": 0.15,
+            "type": "staticSubGoal",
+        }
+    }
+    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    return goal
+
+@pytest.fixture
+def parameterized_planner_1d(goal_1d):
     geometry_expression = "0.5 / (x ** 2) * xdot"
     collision_finsler = "0.5 / (x ** 2) * xdot**2"
 
     planner = ParameterizedFabricPlanner(
         1,
+        'pointRobot',
         collision_geometry=geometry_expression,
         collision_finsler=collision_finsler,
         base_inertia=1.0,
     )
     fks = [planner.variables.position_variable()]
     fk = planner.variables.position_variable()
-    planner.set_components(fks, fk, goal=False)
+    planner.set_components(fks)
     planner.concretize()
     return planner
 
 @pytest.fixture
-def parameterized_planner_2d():
+def parameterized_planner_2d(goal_2d):
     geometry_expression = "0.5 / (x ** 2) * xdot"
     collision_finsler = "0.5 / (x ** 2) * xdot**2"
 
     planner_2d = ParameterizedFabricPlanner(
         2,
+        'pointRobot',
         collision_geometry=geometry_expression,
         collision_finsler=collision_finsler,
         base_inertia=1.0,
     )
     fks = [planner_2d.variables.position_variable()]
     fk = planner_2d.variables.position_variable()
-    planner_2d.set_components(fks, fk, goal=False)
+    planner_2d.set_components(fks)
     planner_2d.concretize()
     return planner_2d
 

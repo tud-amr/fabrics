@@ -1,7 +1,7 @@
 import gym
 import planarenvs.point_robot  # pylint: disable=unused-import
 
-from MotionPlanningGoal.staticSubGoal import StaticSubGoal
+from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
 import numpy as np
@@ -36,17 +36,19 @@ def initalize_environment(render=True):
     obst2 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
-        "m": 2,
-        "w": 1.0,
-        "prime": True,
-        "indices": [0, 1],
-        "parent_link": 0,
-        "child_link": 2,
-        "desired_position": [-4.0, 1.0],
-        "epsilon": 0.15,
-        "type": "staticSubGoal",
+        "subgoal0": {
+            "m": 2,
+            "w": 1.0,
+            "prime": True,
+            "indices": [0, 1],
+            "parent_link": 0,
+            "child_link": 2,
+            "desired_position": [-4.0, 1.0],
+            "epsilon": 0.15,
+            "type": "staticSubGoal",
+        }
     }
-    goal = StaticSubGoal(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", contentDict=goal_dict)
     obstacles = (obst1, obst2)
     env.add_goal(goal)
     env.add_obstacle(obst1)
@@ -54,7 +56,7 @@ def initalize_environment(render=True):
     return (env, obstacles, goal, initial_observation)
 
 
-def set_planner():
+def set_planner(goal: GoalComposition):
     """
     Initializes the fabric planner for the point robot.
 
@@ -66,6 +68,7 @@ def set_planner():
 
     """
     degrees_of_freedom = 2
+    robot_type = 'pointRobot'
 
     ## Optional reconfiguration of the planner
     # base_inertia = 0.03
@@ -80,21 +83,19 @@ def set_planner():
     # }
     # planner = ParameterizedFabricPlanner(
     #     degrees_of_freedom,
+    #     robot_type,
     #     base_inertia=base_inertia,
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
-    planner = ParameterizedFabricPlanner(degrees_of_freedom)
+    planner = ParameterizedFabricPlanner(degrees_of_freedom, robot_type)
     q = planner.variables.position_variable()
-    forward_kinematics = []
-    forward_kinematics_end_effector = q
-    forward_kinematics.append(forward_kinematics_end_effector)
+    forward_kinematics = [q]
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         forward_kinematics,
-        forward_kinematics_end_effector,
+        goal,
         number_obstacles=2,
-        goal=True,
     )
     planner.concretize()
     return planner
@@ -107,18 +108,20 @@ def run_point_robot_example(n_steps=5000, render=True):
     ob = initial_observation
     obst1 = obstacles[0]
     obst2 = obstacles[1]
-    planner = set_planner()
+    planner = set_planner(goal)
 
     # Start the simulation
     print("Starting simulation")
-    goal_position = np.array(goal.position())
+    sub_goal_0_position = np.array(goal.subGoals()[0].position())
+    sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
     for _ in range(n_steps):
         action = planner.compute_action(
             q=ob["x"],
             qdot=ob["xdot"],
-            x_goal=goal_position,
+            x_goal_0=sub_goal_0_position,
+            weight_goal_0=sub_goal_0_weight,
             x_obst_0=obst2_position,
             x_obst_1=obst1_position,
             radius_obst_0=np.array([obst1.radius()]),
