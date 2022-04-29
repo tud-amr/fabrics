@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.2.7"
+version = "0.2.8"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
 [tool.poetry.dependencies]
 python = "^3.6.2,<3.10"
-casadi = "^3.5.1"
+casadi = "3.5.6.pre2"
 numpy = "^1.5.1"
 geomdl = "^5.3.1"
 motion_planning_scenes = {git = "https://git@github.com/maxspahn/motion_planning_scenes.git", rev = "main"}
