@@ -24,7 +24,17 @@ class CasadiFunctionWrapper(object):
         for key in kwargs:
             assert isinstance(kwargs[key], np.ndarray)
         try:
-            input_arrays = [kwargs[i] for i in self._input_keys]
+            temp_dic = {}
+            for i in kwargs:
+                if i == "x_obst":
+                    for j in range(len(kwargs[i])):
+                       temp_dic[f"x_obst_{j}"] = kwargs[i][j]
+                if i == "radius_obst":
+                    for j in range(len(kwargs[i])):
+                       temp_dic[f"radius_obst_{j}"] = kwargs[i][j]
+                temp_dic[i]=kwargs[i]
+
+            input_arrays = [temp_dic[i] for i in self._input_keys]
         except KeyError as e:
             msg = f"Key {e} is not contained in the inputs\n"
             msg += f"Possible keys are {self._input_keys}\n"
