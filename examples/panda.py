@@ -22,7 +22,7 @@ def initalize_environment(render=True):
     static_obst_dict = {
         "dim": 3,
         "type": "sphere",
-        "geometry": {"position": [0.3, -0.5, 0.3], "radius": 0.1},
+        "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
     }
     obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     static_obst_dict = {
@@ -35,12 +35,23 @@ def initalize_environment(render=True):
     goal_dict = {
         "subgoal0": {
             "m": 3,
-            "w": 10.0,
+            "w": 1.0,
             "prime": True,
             "indices": [0, 1, 2],
             "parent_link": 0,
             "child_link": 7,
-            "desired_position": [0.0, -0.8, 0.2],
+            "desired_position": [0.1, -0.6, 0.4],
+            "epsilon": 0.05,
+            "type": "staticSubGoal",
+        },
+        "subgoal1": {
+            "m": 2,
+            "w": 30.0,
+            "prime": False,
+            "indices": [1, 2],
+            "parent_link": 6,
+            "child_link": 7,
+            "desired_position": [0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         }
@@ -120,6 +131,8 @@ def run_panda_example(n_steps=5000, render=True):
     print("Starting simulation")
     sub_goal_0_position = np.array(goal.subGoals()[0].position())
     sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_1_position = np.array(goal.subGoals()[1].position())
+    sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
     for _ in range(n_steps):
@@ -128,6 +141,8 @@ def run_panda_example(n_steps=5000, render=True):
             qdot=ob["xdot"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
+            x_goal_1=sub_goal_1_position,
+            weight_goal_1=sub_goal_1_weight,
             x_obst_0=obst2_position,
             x_obst_1=obst1_position,
             radius_obst_0=np.array([obst1.radius()]),

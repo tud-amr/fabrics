@@ -134,7 +134,7 @@ class ParameterizedFabricPlanner(object):
         ).pull(forward_map)
         if prime_forcing_leaf:
             self._forced_variables = geometry._vars
-        self._forced_forward_map = forward_map
+            self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
@@ -193,7 +193,7 @@ class ParameterizedFabricPlanner(object):
                 self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
                 fk_child = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.childLink(), positionOnly=True)
                 fk_parent = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.parentLink(), positionOnly=True)
-                fk_sub_goal = fk_child - fk_parent
+                fk_sub_goal = fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
                 attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
                 attractor.set_potential(self.config.attractor_potential)
                 attractor.set_metric(self.config.attractor_metric)

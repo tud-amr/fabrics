@@ -24,7 +24,7 @@ def initalize_environment(degrees_of_freedom=3, render=True):
     static_obst_dict = {
         "dim": 2,
         "type": "sphere",
-        "geometry": {"position": [0.5, -0.5], "radius": 0.2},
+        "geometry": {"position": [0.9, -0.5], "radius": 0.2},
     }
     obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     static_obst_dict = {
@@ -48,7 +48,7 @@ def initalize_environment(degrees_of_freedom=3, render=True):
         },
         "subgoal1": {
             "m": 1,
-            "w": 15.0,
+            "w": 5.0,
             "prime": False,
             "indices": [1],
             "parent_link": 2,
