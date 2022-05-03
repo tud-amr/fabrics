@@ -30,7 +30,7 @@ class CasadiFunctionWrapper(object):
                     obstacle_dictionary[f'x_obst_{j}'] = x_obst_j
                 argument_dictionary.update(obstacle_dictionary)
             if key == 'radius_obst' or key == 'radius_obsts':
-                radius_dictionary
+                radius_dictionary = {}
                 for j, radius_obst_j in enumerate(kwargs[key]):
                     radius_dictionary[f'radius_obst_{j}'] = radius_obst_j
                 argument_dictionary.update(radius_dictionary)
