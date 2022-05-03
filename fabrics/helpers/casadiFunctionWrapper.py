@@ -21,20 +21,23 @@ class CasadiFunctionWrapper(object):
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)
 
     def evaluate(self, **kwargs):
+        argument_dictionary = {}
         for key in kwargs:
-            assert isinstance(kwargs[key], np.ndarray)
+            assert isinstance(kwargs[key], np.ndarray) or isinstance(kwargs[key], list)
+            if key == 'x_obst' or key == 'x_obsts':
+                obstacle_dictionary = {}
+                for j, x_obst_j in enumerate(kwargs[key]):
+                    obstacle_dictionary[f'x_obst_{j}'] = x_obst_j
+                argument_dictionary.update(obstacle_dictionary)
+            if key == 'radius_obst' or key == 'radius_obsts':
+                radius_dictionary
+                for j, radius_obst_j in enumerate(kwargs[key]):
+                    radius_dictionary[f'radius_obst_{j}'] = radius_obst_j
+                argument_dictionary.update(radius_dictionary)
+            else:
+                argument_dictionary[key] = kwargs[key]
         try:
-            temp_dic = {}
-            for i in kwargs:
-                if i == "x_obst":
-                    for j in range(len(kwargs[i])):
-                       temp_dic[f"x_obst_{j}"] = kwargs[i][j]
-                if i == "radius_obst":
-                    for j in range(len(kwargs[i])):
-                       temp_dic[f"radius_obst_{j}"] = kwargs[i][j]
-                temp_dic[i]=kwargs[i]
-
-            input_arrays = [temp_dic[i] for i in self._input_keys]
+            input_arrays = [argument_dictionary[i] for i in self._input_keys]
         except KeyError as e:
             msg = f"Key {e} is not contained in the inputs\n"
             msg += f"Possible keys are {self._input_keys}\n"
