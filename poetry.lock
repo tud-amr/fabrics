@@ -278,7 +278,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.11"
+version = "0.1.13"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -296,7 +296,7 @@ PyYAML = "^6.0"
 type = "git"
 url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
 reference = "main"
-resolved_reference = "cba9f7a9450c86e9b14e6a32ce7f31bdc3f278df"
+resolved_reference = "86976ff345e2898090752953530d2d18e562f6b0"
 
 [[package]]
 name = "networkx"
@@ -351,7 +351,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "planarenvs"
-version = "0.1.4"
+version = "0.1.6"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
@@ -374,7 +374,7 @@ scenes = ["motion-planning-scenes @ git+https://git@github.com/maxspahn/motion_p
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_planar.git"
 reference = "master"
-resolved_reference = "02d4fe766b12c5b38c0050cbcac5d260bf44002f"
+resolved_reference = "a891f8d4a26afde50efec470f6ae5dc3f59a704d"
 
 [[package]]
 name = "platformdirs"
