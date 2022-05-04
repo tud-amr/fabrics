@@ -24,6 +24,23 @@ from MotionPlanningGoal.goalComposition import GoalComposition
 
 from forwardkinematics.fksCommon.fk_creator import FkCreator
 
+from pyquaternion import Quaternion
+
+class InvalidRotationAnglesError(Exception):
+    pass
+
+def compute_rotation_matrix(angles) -> np.ndarray:
+    if isinstance(angles, float):
+        angle = angles
+        return np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]])
+    elif isinstance(angles, list) and len(angles) == 4:
+        quaternion = Quaternion(angles)
+        return quaternion.rotation_matrix
+    else:
+        raise(InvalidRotationAnglesError)
+
+
+
 @dataclass
 class FabricPlannerConfig:
     base_inertia: float = 0.2
@@ -191,12 +208,14 @@ class ParameterizedFabricPlanner(object):
             # Adds default attractor
                 goal_dimension = sub_goal.m()
                 self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
-                angle = sub_goal.angle()
-                R = np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]])
                 fk_child = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.childLink(), positionOnly=True)
                 fk_parent = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.parentLink(), positionOnly=True)
-                fk_child = ca.mtimes(R, fk_child)
-                fk_parent = ca.mtimes(R, fk_parent)
+                # rotation
+                angles = sub_goal.angle()
+                if angles:
+                    R = compute_rotation_matrix(angles)
+                    fk_child = ca.mtimes(R, fk_child)
+                    fk_parent = ca.mtimes(R, fk_parent)
                 fk_sub_goal = fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
                 attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
                 attractor.set_potential(self.config.attractor_potential)
