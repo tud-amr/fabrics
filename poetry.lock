@@ -109,7 +109,7 @@ pylint = "^2.13.4"
 urdf_parser_py = ">=0.0.3"
 
 [package.extras]
-env = ["urdfenvs @ git+https://git@github.com/maxspahn/gym_envs_urdf.git@master", "motion-planning-scenes @ git+https://git@github.com/maxspahn/motion_planning_scenes.git@main"]
+env = ["urdfenvs", "motion-planning-scenes"]
 
 [package.source]
 type = "git"
@@ -278,7 +278,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.11"
+version = "0.1.16"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -289,6 +289,7 @@ develop = false
 casadi = "3.5.6.pre2"
 geomdl = "^5.3.1"
 numpy = "^1.19.0"
+pyquaternion = "^0.9.9"
 pytest = "^6.2.5"
 PyYAML = "^6.0"
 
@@ -296,7 +297,7 @@ PyYAML = "^6.0"
 type = "git"
 url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
 reference = "main"
-resolved_reference = "cba9f7a9450c86e9b14e6a32ce7f31bdc3f278df"
+resolved_reference = "52a4de5c17e05082a1ae4b8b42ac64547b54c387"
 
 [[package]]
 name = "networkx"
@@ -351,7 +352,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "planarenvs"
-version = "0.1.4"
+version = "0.1.6"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
@@ -368,13 +369,13 @@ pylint = "^2.13.3"
 scipy = "^1.5"
 
 [package.extras]
-scenes = ["motion-planning-scenes @ git+https://git@github.com/maxspahn/motion_planning_scenes.git@main"]
+scenes = ["motion-planning-scenes"]
 
 [package.source]
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_planar.git"
 reference = "master"
-resolved_reference = "02d4fe766b12c5b38c0050cbcac5d260bf44002f"
+resolved_reference = "a891f8d4a26afde50efec470f6ae5dc3f59a704d"
 
 [[package]]
 name = "platformdirs"
@@ -481,6 +482,21 @@ python-versions = ">=3.6"
 
 [package.extras]
 diagrams = ["jinja2", "railroad-diagrams"]
+
+[[package]]
+name = "pyquaternion"
+version = "0.9.9"
+description = "A fully featured, pythonic library for representing and using quaternions."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+dev = ["mkdocs"]
+test = ["nose"]
 
 [[package]]
 name = "pyrender"
@@ -711,7 +727,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2,<3.10"
-content-hash = "578ff868d895272b8d2f7617d99a29d73138cfd26aa4b632db6474910596a978"
+content-hash = "2eac2831b62ae332c49567861a8a0b7aedb70116be3db5ea602178de2e959041"
 
 [metadata.files]
 astroid = [
@@ -1097,6 +1113,11 @@ pyopengl = [
 pyparsing = [
     {file = "pyparsing-3.0.7-py3-none-any.whl", hash = "sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484"},
     {file = "pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
+]
+pyquaternion = [
+    {file = "pyquaternion-0.9.9-py2-none-any.whl", hash = "sha256:d0eb69219ca99bfcbc25c1e2c4f82e58c61dce3e907e929f13c5f3615e4b6518"},
+    {file = "pyquaternion-0.9.9-py3-none-any.whl", hash = "sha256:e65f6e3f7b1fdf1a9e23f82434334a1ae84f14223eee835190cd2e841f8172ec"},
+    {file = "pyquaternion-0.9.9.tar.gz", hash = "sha256:b1f61af219cb2fe966b5fb79a192124f2e63a3f7a777ac3cadf2957b1a81bea8"},
 ]
 pyrender = [
     {file = "pyrender-0.1.45-py3-none-any.whl", hash = "sha256:5cf751d1f21fba4640e830cef3a0b5a95ed0f05677bf92c6b8330056b4023aeb"},

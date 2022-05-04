@@ -18,7 +18,7 @@ def initalize_environment(render=True):
     env = gym.make(
         "point-robot-acc-v0", dt=0.05, render=render
     )
-    q0 = np.array([4.3, -1.0])
+    q0 = np.array([4.3, 1.0])
     qdot0 = np.array([-1.0, 0.0])
     initial_observation = env.reset(pos=q0, vel=qdot0)
     # Definition of the obstacle.
@@ -37,13 +37,13 @@ def initalize_environment(render=True):
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 2,
+            "m": 1,
             "w": 1.0,
             "prime": True,
-            "indices": [0, 1],
+            "indices": [0],
             "parent_link": 0,
             "child_link": 2,
-            "desired_position": [-4.0, 1.0],
+            "desired_position": "-4.0, x",
             "epsilon": 0.15,
             "type": "staticSubGoal",
         }
@@ -112,7 +112,9 @@ def run_point_robot_example(n_steps=5000, render=True):
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
+    x = 1
+    sub_goal_0_position = np.array([eval(goal.subGoals()[0].position())[0]])
+    #sub_goal_0_position = np.array(goal.subGoals()[0].position())
     sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())

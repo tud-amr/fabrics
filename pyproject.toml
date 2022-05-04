@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.2.12"
+version = "0.2.13"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
@@ -17,6 +17,7 @@ forwardkinematics = {git = "https://git@github.com/maxspahn/forwardKinematics.gi
 planarenvs = {git = "https://git@github.com/maxspahn/gym_envs_planar.git", rev = "master", optional = true}
 urdfenvs = {git = "https://git@github.com/maxspahn/gym_envs_urdf.git", rev = "master", optional = true}
 dataclasses = { version = "^0.8", python = "<3.7" }
+pyquaternion = "^0.9.9"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.4"
