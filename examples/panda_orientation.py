@@ -46,7 +46,7 @@ def initalize_environment(render=True):
         },
         "subgoal1": {
             "m": 2,
-            "w": 20.0,
+            "w": 200.0,
             "prime": False,
             "indices": [0, 1],
             "parent_link": 6,
@@ -136,11 +136,14 @@ def run_panda_orientation_example(n_steps=5000, render=True):
     sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
+    sub_goal_0_angles = np.identity(3)
+    sub_goal_1_angles = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0]])
     for _ in range(n_steps):
         action = planner.compute_action(
             q=ob["x"],
             qdot=ob["xdot"],
             x_goal_0=sub_goal_0_position,
+            angle_goal_1=sub_goal_1_angles,
             weight_goal_0=sub_goal_0_weight,
             x_goal_1=sub_goal_1_position,
             weight_goal_1=sub_goal_1_weight,
