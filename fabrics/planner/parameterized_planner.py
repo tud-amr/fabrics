@@ -36,6 +36,8 @@ def compute_rotation_matrix(angles) -> np.ndarray:
     elif isinstance(angles, list) and len(angles) == 4:
         quaternion = Quaternion(angles)
         return quaternion.rotation_matrix
+    elif isinstance(angles, ca.SX):
+        return angles
     else:
         raise(InvalidRotationAnglesError)
 
@@ -210,9 +212,15 @@ class ParameterizedFabricPlanner(object):
                 self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
                 fk_child = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.childLink(), positionOnly=True)
                 fk_parent = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.parentLink(), positionOnly=True)
-                # rotation
                 angles = sub_goal.angle()
-                if angles:
+                if angles and isinstance(angles, list) and len(angles) == 4:
+                    angles = ca.SX.sym(f"angle_goal_{j}", 3, 3)
+                    self._variables.add_parameter(f'angle_goal_{j}', angles)
+                    # rotation
+                    R = compute_rotation_matrix(angles)
+                    fk_child = ca.mtimes(R, fk_child)
+                    fk_parent = ca.mtimes(R, fk_parent)
+                elif angles:
                     R = compute_rotation_matrix(angles)
                     fk_child = ca.mtimes(R, fk_child)
                     fk_parent = ca.mtimes(R, fk_parent)
