@@ -156,6 +156,9 @@ def run_panda_ring_example(n_steps=5000, render=True):
         obstacle_positions.append(obst.position())
         obstacle_radii.append(np.array(obst.radius()))
 
+    # if serialized_file exists and is loaded
+    # pass loaded data [planner._funs, planner._input_keys] to serialized_compute_action
+    # otherwise use the compute_action() from ParameterizedFabricPlanner
     if os.path.isfile(serialized_file) and isload:
         for _ in range(n_steps):
             action = planner.serialized_compute_action(
