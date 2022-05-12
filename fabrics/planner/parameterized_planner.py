@@ -23,6 +23,7 @@ from fabrics.components.leaves.geometry import ObstacleLeaf
 from MotionPlanningGoal.goalComposition import GoalComposition
 
 from forwardkinematics.fksCommon.fk_creator import FkCreator
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from pyquaternion import Quaternion
 
@@ -76,14 +77,17 @@ class FabricPlannerConfig:
             }
         )
     )
+    urdf: str = None
 
 
 class ParameterizedFabricPlanner(object):
     def __init__(self, dof: int, robot_type: str, **kwargs):
         self._dof = dof
-        self._robot_type = robot_type
-        self._forward_kinematics = FkCreator(robot_type).fk()
         self._config = FabricPlannerConfig(**kwargs)
+        if self._config.urdf:
+            self._forward_kinematics = GenericURDFFk(self._config.urdf, rootLink='world')
+        else:
+            self._forward_kinematics = FkCreator(robot_type).fk()
         self.initialize_joint_variables()
         self.set_base_geometry()
 
@@ -210,8 +214,30 @@ class ParameterizedFabricPlanner(object):
             # Adds default attractor
                 goal_dimension = sub_goal.m()
                 self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
-                fk_child = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.childLink(), positionOnly=True)
-                fk_parent = self._forward_kinematics.fk(self._variables.position_variable(), sub_goal.parentLink(), positionOnly=True)
+                if self._config.urdf:
+                    fk_child = self._forward_kinematics.fk(
+                        self._variables.position_variable(),
+                        "panda_link0",
+                        sub_goal.childLink(),
+                        positionOnly=True
+                    )
+                    fk_parent = self._forward_kinematics.fk(
+                        self._variables.position_variable(),
+                        "panda_link0",
+                        sub_goal.parentLink(),
+                        positionOnly=True
+                    )
+                else:
+                    fk_child = self._forward_kinematics.fk(
+                        self._variables.position_variable(),
+                        sub_goal.childLink(),
+                        positionOnly=True
+                    )
+                    fk_parent = self._forward_kinematics.fk(
+                        self._variables.position_variable(),
+                        sub_goal.parentLink(),
+                        positionOnly=True
+                    )
                 angles = sub_goal.angle()
                 if angles and isinstance(angles, list) and len(angles) == 4:
                     angles = ca.SX.sym(f"angle_goal_{j}", 3, 3)

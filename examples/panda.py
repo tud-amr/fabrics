@@ -38,8 +38,8 @@ def initalize_environment(render=True):
             "w": 1.0,
             "prime": True,
             "indices": [0, 1, 2],
-            "parent_link": 0,
-            "child_link": 7,
+            "parent_link": "panda_link0",
+            "child_link": "panda_hand",
             "desired_position": [0.1, -0.6, 0.4],
             "epsilon": 0.05,
             "type": "staticSubGoal",
@@ -49,8 +49,8 @@ def initalize_environment(render=True):
             "w": 30.0,
             "prime": False,
             "indices": [1, 2],
-            "parent_link": 6,
-            "child_link": 7,
+            "parent_link": "panda_link7",
+            "child_link": "panda_hand",
             "desired_position": [0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
@@ -102,7 +102,9 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
-    planner = ParameterizedFabricPlanner(degrees_of_freedom, robot_type)
+    with open("panda.urdf", "r") as file:
+        urdf = file.read()
+    planner = ParameterizedFabricPlanner(degrees_of_freedom, 'panda', urdf=urdf)
     q = planner.variables.position_variable()
     panda_fk = PandaFk()
     forward_kinematics = []
