@@ -14,8 +14,11 @@ import pickle
 
 
 # serialized file name
-serialized_file = "serialized_10"
+# 10 denotes 10 spheres
+serialized_file = "serialized_10.pkl"
 
+# boolean to determine if the serialized file has been loaded
+isload = False
 
 def initalize_environment(render=True, obstacle_resolution = 8):
     """
@@ -107,8 +110,17 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         collision_finsler = collision_finsler,
     )
 
+    # if the serialized file exists, load data and set isload to true
+    if os.path.isfile(serialized_file):
+        print(f"Initializing planner from {serialized_file}")
+        with open(serialized_file, 'rb') as f:
+            planner._funs = ca.Function().deserialize(pickle.load(f))
+            planner._input_keys = pickle.load(f)
+        global isload
+        isload = True
     # if the serialized file does not exist, create one
-    if not os.path.isfile(serialized_file):
+    else:
+        print(f"Serializing planner function and input_keys to {serialized_file}")
         q = planner.variables.position_variable()
         panda_fk = PandaFk()
         forward_kinematics = []
@@ -121,11 +133,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
             number_obstacles=obstacle_resolution,
         )
         planner.concretize_serialized(serialized_file)
-    else:
-        with open(serialized_file, 'rb') as f:
-            planner._funs = ca.Function().deserialize(pickle.load(f))
-            planner._input_keys = pickle.load(f)
-
     return planner
 
 
@@ -149,62 +156,38 @@ def run_panda_ring_example(n_steps=5000, render=True):
         obstacle_positions.append(obst.position())
         obstacle_radii.append(np.array(obst.radius()))
 
-    for _ in range(n_steps):
-        action = planner.compute_action(
-            q=ob["x"],
-            qdot=ob["xdot"],
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_goal_1=sub_goal_1_position,
-            weight_goal_1=sub_goal_1_weight,
-            x_obsts = obstacle_positions,
-            radius_obsts = obstacle_radii,
-            radius_body=np.array([0.02]),
-        )
-        ob, *_ = env.step(action)
+    if os.path.isfile(serialized_file) and isload:
+        for _ in range(n_steps):
+            action = planner.serialized_compute_action(
+                planner._funs,
+                planner._input_keys,
+                q=ob["x"],
+                qdot=ob["xdot"],
+                x_goal_0=sub_goal_0_position,
+                weight_goal_0=sub_goal_0_weight,
+                x_goal_1=sub_goal_1_position,
+                weight_goal_1=sub_goal_1_weight,
+                x_obsts = obstacle_positions,
+                radius_obsts = obstacle_radii,
+                radius_body=np.array([0.02]),
+            )
+            ob, *_ = env.step(action)
+    else:
+        for _ in range(n_steps):
+            action = planner.compute_action(
+                q=ob["x"],
+                qdot=ob["xdot"],
+                x_goal_0=sub_goal_0_position,
+                weight_goal_0=sub_goal_0_weight,
+                x_goal_1=sub_goal_1_position,
+                weight_goal_1=sub_goal_1_weight,
+                x_obsts = obstacle_positions,
+                radius_obsts = obstacle_radii,
+                radius_body=np.array([0.02]),
+            )
+            ob, *_ = env.step(action)
     return {}
 
-
-def run_panda_ring_serialized(n_steps=5000, render=True):
-    obstacle_resolution_ring = 10
-    (env, obstacles, goal, initial_observation) = initalize_environment(
-        render=render, obstacle_resolution=obstacle_resolution_ring
-    )
-    ob = initial_observation
-    planner = set_planner(goal, obstacle_resolution= obstacle_resolution_ring)
-
-    # Start the simulation
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
-    sub_goal_1_position = np.array(goal.subGoals()[1].position())
-    sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
-    obstacle_positions = []
-    obstacle_radii = []
-    for obst in obstacles:
-        obstacle_positions.append(obst.position())
-        obstacle_radii.append(np.array(obst.radius()))
-
-    for _ in range(n_steps):
-        action = planner.serialized_compute_action(
-            planner._funs,
-            planner._input_keys,
-            q=ob["x"],
-            qdot=ob["xdot"],
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_goal_1=sub_goal_1_position,
-            weight_goal_1=sub_goal_1_weight,
-            x_obsts = obstacle_positions,
-            radius_obsts = obstacle_radii,
-            radius_body=np.array([0.02]),
-        )
-        ob, *_ = env.step(action)
-    return {}
 
 if __name__ == "__main__":
-    # if the serialized file does not exist, run the default example to create the file
-    if not os.path.isfile(serialized_file):
-        res = run_panda_ring_example(n_steps=5000)
-    else:
-        res = run_panda_ring_serialized(n_steps=5000)
+    res = run_panda_ring_example(n_steps=5000)
