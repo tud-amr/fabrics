@@ -312,7 +312,7 @@ PyYAML = "^6.0"
 type = "git"
 url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
 reference = "main"
-resolved_reference = "52a4de5c17e05082a1ae4b8b42ac64547b54c387"
+resolved_reference = "acc6584b8440fce28f50cbdbc8e4e1373189c126"
 
 [[package]]
 name = "networkx"
@@ -452,7 +452,7 @@ validation = ["lxml"]
 
 [[package]]
 name = "pyglet"
-version = "1.5.23"
+version = "1.5.24"
 description = "Cross-platform windowing and multimedia library"
 category = "main"
 optional = true
@@ -1199,8 +1199,8 @@ pycollada = [
     {file = "pycollada-0.6.tar.gz", hash = "sha256:fcd6f38fd981e350f9ec754d9671834017accd600e967d6d299a6cfdae5ba4f4"},
 ]
 pyglet = [
-    {file = "pyglet-1.5.23-py3-none-any.whl", hash = "sha256:086317c022612bf0aa28f32134a8cbe3d11de96787f5412d38d9c6abb6cfc771"},
-    {file = "pyglet-1.5.23.zip", hash = "sha256:dee920203cf306159c503babb62f38787268708977f5c945d28337594b797c46"},
+    {file = "pyglet-1.5.24-py3-none-any.whl", hash = "sha256:1268a604b2268419cad94e95e42711553463f602c101f2bd48eb6eacaf9c306c"},
+    {file = "pyglet-1.5.24.zip", hash = "sha256:5b4a4d5e5ad54946e31492eac67f7292e51a6577244641a277180f90a0192a8e"},
 ]
 pylint = [
     {file = "pylint-2.13.8-py3-none-any.whl", hash = "sha256:f87e863a0b08f64b5230e7e779bcb75276346995737b2c0dc2793070487b1ff6"},

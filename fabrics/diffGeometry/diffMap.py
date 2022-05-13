@@ -57,6 +57,34 @@ class ParameterizedDifferentialMap(DifferentialMap):
     def __init__(self, phi: ca.SX, **kwargs):
         super().__init__(phi, **kwargs)
 
+class DynamicParameterizedDifferentialMap(DifferentialMap):
+    def __init__(self, phi: ca.SX, phi_dot: ca.SX, Jdotqdot: ca.SX, **kwargs):
+        super().__init__(phi, **kwargs)
+        self._phi_dot = phi_dot
+        self._Jdotqdot = Jdotqdot
+
+    def phidot(self):
+        return self._phi_dot
+
+    def Jdotqdot(self):
+        return self._Jdotqdot
+
+    def concretize(self):
+        self._funs = CasadiFunctionWrapper(
+                "funs", self._vars.asDict(),
+                {
+                    "x_rel": self._phi,
+                    "xdot_rel": self._phi_dot
+                }
+        )
+
+    def forward(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        x = evaluations['x_rel']
+        xdot = evaluations['xdot_rel']
+        return x, xdot
+
+
 
 class RelativeDifferentialMap(DifferentialMap):
     def __init__(self, **kwargs):
@@ -83,7 +111,7 @@ class RelativeDifferentialMap(DifferentialMap):
     def concretize(self):
         var = self._vars + self._refTraj._vars
         self._funs = CasadiFunctionWrapper(
-                "funs", var.asDict(), 
+                "funs", var.asDict(),
                 {
                     "phi": self._phi,
                     "J": self._J,

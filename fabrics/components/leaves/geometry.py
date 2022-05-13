@@ -20,8 +20,8 @@ class GenericGeometryLeaf(Leaf):
         geometry: str
             String that holds the geometry. The variables must be x, xdot.
         """
-        x = self._leaf_variables.position_variable()
-        xdot = self._leaf_variables.velocity_variable()
+        x = self._x
+        xdot = self._xdot
         h_geometry = eval(geometry)
         self._geo = Geometry(h=h_geometry, var=self._leaf_variables)
 
@@ -34,8 +34,8 @@ class GenericGeometryLeaf(Leaf):
         finsler_structure: str
             String that holds the Finsler structure. The variables must be x, xdot.
         """
-        x = self._leaf_variables.position_variable()
-        xdot = self._leaf_variables.velocity_variable()
+        x = self._x
+        xdot = self._xdot
         lagrangian_geometry = eval(finsler_structure)
         self._lag = Lagrangian(lagrangian_geometry, var=self._leaf_variables)
 
