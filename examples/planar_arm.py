@@ -37,7 +37,7 @@ def initalize_environment(degrees_of_freedom=3, render=True):
     goal_dict = {
         "subgoal0": {
             "m": 2,
-            "w": 2.0,
+            "w": 1.0,
             "prime": True,
             "indices": [0, 1],
             "parent_link": 0,
@@ -48,7 +48,7 @@ def initalize_environment(degrees_of_freedom=3, render=True):
         },
         "subgoal1": {
             "m": 1,
-            "w": 5.0,
+            "w": 3.0,
             "prime": False,
             "indices": [1],
             "parent_link": 2,
