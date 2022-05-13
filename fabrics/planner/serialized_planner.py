@@ -51,6 +51,7 @@ class SerializedFabricPlanner(ParameterizedFabricPlanner):
     def __init__(self, dof: int, robot_type: str, **kwargs):
         ParameterizedFabricPlanner.__init__(self, dof, robot_type, **kwargs)
         # super(ParameterizedFabricPlanner, self).__init__()
+        # this is only used in evaluate() and only the key is used there
         self._expressions = {"xddot": 0}
 
     def concretize_serialized(self, file_name: str):
