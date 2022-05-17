@@ -282,6 +282,13 @@ class ParameterizedFabricPlanner(object):
         )
 
     def serialize(self, file_name: str):
+        """
+        Serializes the fabric planner.
+
+        The file can be loaded using the serialized_planner.
+        Essentially, only the casadiFunctionWrapper is serialized using
+        pickle.
+        """
         self.concretize()
         self._funs.serialize(file_name)
  

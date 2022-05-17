@@ -142,6 +142,9 @@ def run_panda_ring_example(n_steps=5000, render=True):
     ob = initial_observation
     planner = set_planner(goal, obstacle_resolution= obstacle_resolution_ring)
 
+    # Serializing the planner is optional
+    # planner.serialize('serialized_10.pkl')
+
     # Start the simulation
     print("Starting simulation")
     sub_goal_0_position = np.array(goal.subGoals()[0].position())

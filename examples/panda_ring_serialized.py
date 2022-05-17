@@ -105,10 +105,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     attractor_potential = "10 * ca.norm_2(x)**2"
     collision_finsler = "2.0/(x ** 2) * xdot ** 2"
     planner = SerializedFabricPlanner(
-        degrees_of_freedom,
-        robot_type,
         serialized_file,
-        collision_finsler = collision_finsler,
     )
 
     if not planner._isload:
@@ -155,7 +152,7 @@ def run_panda_ring_example(n_steps=5000, render=True):
     # otherwise use the compute_action() from ParameterizedFabricPlanner
     if os.path.isfile(serialized_file) and planner._isload:
         for _ in range(n_steps):
-            action = planner.serialized_compute_action(
+            action = planner.compute_action(
                 q=ob["x"],
                 qdot=ob["xdot"],
                 x_goal_0=sub_goal_0_position,
