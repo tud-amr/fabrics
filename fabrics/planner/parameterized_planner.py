@@ -27,6 +27,9 @@ from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from pyquaternion import Quaternion
 
+import pickle
+
+
 class InvalidRotationAnglesError(Exception):
     pass
 
@@ -278,7 +281,10 @@ class ParameterizedFabricPlanner(object):
             "funs", self.variables.asDict(), {"xddot": xddot}
         )
 
-
+    def serialize(self, file_name: str):
+        self.concretize()
+        self._funs.serialize(file_name)
+ 
     """ RUNTIME METHODS """
 
     def compute_action(self, **kwargs):

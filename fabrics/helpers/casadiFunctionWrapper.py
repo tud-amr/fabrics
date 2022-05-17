@@ -20,6 +20,11 @@ class CasadiFunctionWrapper(object):
         input_expressions = [self._inputs[i] for i in self._input_keys]
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)
 
+    def serialize(self):
+        with open(file_name, 'wb') as f:
+            pickle.dump(self._function.serialize(), f)
+            pickle.dump(self._input_keys, f)
+
     def evaluate(self, **kwargs):
         argument_dictionary = {}
         for key in kwargs:

@@ -107,19 +107,11 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     planner = SerializedFabricPlanner(
         degrees_of_freedom,
         robot_type,
+        serialized_file,
         collision_finsler = collision_finsler,
     )
 
-    # if the serialized file exists, load data and set isload to true
-    if os.path.isfile(serialized_file):
-        print(f"Initializing planner from {serialized_file}")
-        with open(serialized_file, 'rb') as f:
-            planner._funs = ca.Function().deserialize(pickle.load(f))
-            planner._input_keys = pickle.load(f)
-        global isload
-        isload = True
-    # if the serialized file does not exist, create one
-    else:
+    if not planner._isload:
         print(f"Serializing planner function and input_keys to {serialized_file}")
         q = planner.variables.position_variable()
         panda_fk = PandaFk()
@@ -132,7 +124,9 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
             goal,
             number_obstacles=obstacle_resolution,
         )
-        planner.concretize_serialized(serialized_file)
+        # concertize here
+        planner.serialize(serialized_file)
+
     return planner
 
 
@@ -159,11 +153,9 @@ def run_panda_ring_example(n_steps=5000, render=True):
     # if serialized_file exists and is loaded
     # pass loaded data [planner._funs, planner._input_keys] to serialized_compute_action
     # otherwise use the compute_action() from ParameterizedFabricPlanner
-    if os.path.isfile(serialized_file) and isload:
+    if os.path.isfile(serialized_file) and planner._isload:
         for _ in range(n_steps):
             action = planner.serialized_compute_action(
-                planner._funs,
-                planner._input_keys,
                 q=ob["x"],
                 qdot=ob["xdot"],
                 x_goal_0=sub_goal_0_position,
