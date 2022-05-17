@@ -127,7 +127,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     return planner
 
 
-def run_panda_ring_example(n_steps=5000, render=True):
+def run_panda_ring_serialized_example(n_steps=5000, render=True):
     obstacle_resolution_ring = 10
     (env, obstacles, goal, initial_observation) = initalize_environment(
         render=render, obstacle_resolution=obstacle_resolution_ring
@@ -182,4 +182,4 @@ def run_panda_ring_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_ring_example(n_steps=5000)
+    res = run_panda_ring_serialized_example(n_steps=5000)
