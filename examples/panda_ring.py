@@ -46,7 +46,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
     goal_dict = {
         "subgoal0": {
             "m": 3,
-            "w": 200.0,
+            "w": 1.0,
             "prime": True,
             "indices": [0, 1, 2],
             "parent_link": 0,
@@ -57,7 +57,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         },
         "subgoal1": {
             "m": 2,
-            "w": 5000.0,
+            "w": 10.0,
             "prime": False,
             "indices": [1, 2],
             "parent_link": 6,
@@ -113,11 +113,10 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     #     damper=damper,
     # )
     attractor_potential = "10 * ca.norm_2(x)**2"
-    collision_finsler = "2.0/(x ** 2) * xdot ** 2"
+    collision_finsler = "1.0/(x ** 8) * xdot ** 2"
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         robot_type,
-        collision_finsler = collision_finsler,
     )
     q = planner.variables.position_variable()
     panda_fk = PandaFk()
@@ -135,7 +134,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
 
 
 def run_panda_ring_example(n_steps=5000, render=True):
-    obstacle_resolution_ring = 10
+    obstacle_resolution_ring = -1
     (env, obstacles, goal, initial_observation) = initalize_environment(
         render=render, obstacle_resolution=obstacle_resolution_ring
     )
