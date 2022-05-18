@@ -47,7 +47,7 @@ def initalize_environment(render=True):
         },
         "subgoal1": {
             "m": 2,
-            "w": 30.0,
+            "w": 5.0,
             "prime": False,
             "indices": [1, 2],
             "parent_link": "panda_link7",

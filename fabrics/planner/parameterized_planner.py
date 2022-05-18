@@ -53,13 +53,13 @@ class FabricPlannerConfig:
     #s = -0.5 * (ca.sign(xdot) - 1)
     #h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
     collision_geometry: str = (
-        "-2 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+        "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
     collision_finsler: str = (
-        "2.0/(x**1) * xdot**2"
+        "0.5/(x**5) * xdot**2"
     )
     self_collision_geometry: str = (
-        "-0.5 * / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
+        "-0.5 * / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
     )
     attractor_potential: str = (
         "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
