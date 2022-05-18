@@ -49,4 +49,4 @@ def test_compute_action(planner: ParameterizedFabricPlanner, goal):
     assert isinstance(qddot, np.ndarray)
     assert qddot.size == 2
     assert qddot.shape == (2,)
-    assert qddot[0] == pytest.approx(0.752908)
+    assert qddot[0] == pytest.approx(0.494771)
