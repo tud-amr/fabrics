@@ -1,6 +1,10 @@
 import casadi as ca
 import numpy as np
-from collections import OrderedDict
+import os
+import pickle
+import _pickle as cPickle
+import bz2
+
 
 class InputMissmatchError(Exception):
     pass
@@ -19,6 +23,12 @@ class CasadiFunctionWrapper(object):
         self._list_expressions = [self._expressions[i] for i in sorted(self._expressions.keys())]
         input_expressions = [self._inputs[i] for i in self._input_keys]
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)
+
+    def serialize(self, file_name):
+        with bz2.BZ2File(file_name, 'w') as f:
+            pickle.dump(self._function.serialize(), f)
+            pickle.dump(list(self._expressions.keys()), f)
+            pickle.dump(self._input_keys, f)
 
     def evaluate(self, **kwargs):
         argument_dictionary = {}
@@ -58,5 +68,18 @@ class CasadiFunctionWrapper(object):
         return output_dict
 
 
+class CasadiFunctionWrapper_deserialized(CasadiFunctionWrapper):
+
+    def __init__(self, file_name: str):
+        if os.path.isfile(file_name):
+            print(f"Initializing casadiFunctionWrapper from {file_name}")
+            data = bz2.BZ2File(file_name, 'rb')
+            self._function = ca.Function().deserialize(cPickle.load(data))
+            expression_keys = cPickle.load(data)
+            self._input_keys = cPickle.load(data)
+            self._expressions = {}
+            for key in expression_keys:
+                self._expressions[key] = []
+            self._isload = True
 
 
