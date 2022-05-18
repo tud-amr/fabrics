@@ -1,13 +1,13 @@
 import gym
-import urdfenvs.panda_reacher  #pylint: disable=unused-import
+import sys
 import os
+import urdfenvs.panda_reacher  #pylint: disable=unused-import
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from forwardkinematics.urdfFks.pandaFk import PandaFk
 
 import numpy as np
-import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 
@@ -20,50 +20,23 @@ def initalize_environment(render=True):
     """
     env = gym.make("panda-reacher-acc-v0", dt=0.05, render=render)
     initial_observation = env.reset()
-    # Definition of the obstacle.
-    static_obst_dict = {
-        "dim": 3,
-        "type": "sphere",
-        "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
-    }
-    obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
-    static_obst_dict = {
-        "dim": 3,
-        "type": "sphere",
-        "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
-    }
-    obst2 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
             "m": 3,
-            "w": 1.0,
+            "w": 0.4,
             "prime": True,
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_hand",
-            "desired_position": [0.1, -0.6, 0.4],
-            "epsilon": 0.05,
-            "type": "staticSubGoal",
+            "trajectory": ["0.5 + 0.1 * ca.cos(0.2 * t)", "-0.6 * ca.sin(0.2 * t)", "0.4"],
+            "epsilon": 0.02,
+            "type": "analyticSubGoal",
         },
-        "subgoal1": {
-            "m": 2,
-            "w": 5.0,
-            "prime": False,
-            "indices": [1, 2],
-            "parent_link": "panda_link7",
-            "child_link": "panda_hand",
-            "desired_position": [0.0, 0.0],
-            "epsilon": 0.05,
-            "type": "staticSubGoal",
-        }
     }
     goal = GoalComposition(name="goal", contentDict=goal_dict)
-    obstacles = (obst1, obst2)
     env.add_goal(goal)
-    env.add_obstacle(obst1)
-    env.add_obstacle(obst2)
-    return (env, obstacles, goal, initial_observation)
+    return (env, goal, initial_observation)
 
 
 def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
@@ -78,13 +51,12 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
 
     Params
     ----------
-    goal: StaticSubGoal
-        The goal to the motion planning problem.
+    goal: GoalComposition
+        The goal to the motion planning problem. The goal can be composed
+        of several subgoals.
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-
-    robot_type = 'panda'
 
     ## Optional reconfiguration of the planner
     # base_inertia = 0.03
@@ -117,46 +89,46 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     planner.set_components(
         forward_kinematics,
         goal,
-        number_obstacles=2,
+        number_obstacles=0,
     )
     planner.concretize()
     return planner
 
 
-def run_panda_example(n_steps=5000, render=True):
-    (env, obstacles, goal, initial_observation) = initalize_environment(
+def run_panda_trajectory_example(n_steps=5000, render=True, dynamic_fabric: bool = True):
+    print(f"Running example with dynamic fabrics? {dynamic_fabric}")
+    (env, goal, initial_observation) = initalize_environment(
         render=render
     )
     ob = initial_observation
-    obst1 = obstacles[0]
-    obst2 = obstacles[1]
     planner = set_planner(goal)
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
     sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
-    sub_goal_1_position = np.array(goal.subGoals()[1].position())
-    sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
-    obst1_position = np.array(obst1.position())
-    obst2_position = np.array(obst2.position())
     for _ in range(n_steps):
+        sub_goal_0_position = np.array(goal.subGoals()[0].position(t=env.t()))
+        sub_goal_0_velocity = np.array(goal.subGoals()[0].velocity(t=env.t()))
+        sub_goal_0_acceleration = np.array(goal.subGoals()[0].acceleration(t=env.t()))
+        if not dynamic_fabric:
+            sub_goal_0_velocity *= 0
+            sub_goal_0_acceleration *= 0
         action = planner.compute_action(
             q=ob["x"],
             qdot=ob["xdot"],
-            x_goal_0=sub_goal_0_position,
+            x_ref_goal_0_leaf=sub_goal_0_position,
+            xdot_ref_goal_0_leaf=sub_goal_0_velocity,
+            xddot_ref_goal_0_leaf=sub_goal_0_acceleration,
             weight_goal_0=sub_goal_0_weight,
-            x_goal_1=sub_goal_1_position,
-            weight_goal_1=sub_goal_1_weight,
-            x_obst_0=obst2_position,
-            x_obst_1=obst1_position,
-            radius_obst_0=np.array([obst1.radius()]),
-            radius_obst_1=np.array([obst2.radius()]),
-            radius_body=np.array([0.02]),
         )
         ob, *_ = env.step(action)
     return {}
 
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    arguments = sys.argv
+    if len(arguments) == 1 or arguments[0] == 'dynamic_fabric':
+        dynamic_fabric = True
+    else:
+        dynamic_fabric = False
+    res = run_panda_trajectory_example(n_steps=5000, dynamic_fabric=dynamic_fabric)

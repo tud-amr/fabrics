@@ -11,10 +11,10 @@ class Leaf(object):
         dim: int = 1,
     ):
         self._parent_variables = parent_variables
-        x = ca.SX.sym(f"x_{leaf_name}", dim)
-        xdot = ca.SX.sym(f"xdot_{leaf_name}", dim)
+        self._x = ca.SX.sym(f"x_{leaf_name}", dim)
+        self._xdot = ca.SX.sym(f"xdot_{leaf_name}", dim)
         leaf_variables = Variables(
-            state_variables={f"x_{leaf_name}": x, f"xdot_{leaf_name}": xdot}
+            state_variables={f"x_{leaf_name}": self._x, f"xdot_{leaf_name}": self._xdot}
         )
         self._leaf_variables = leaf_variables
         self._forward_kinematics = forward_kinematics

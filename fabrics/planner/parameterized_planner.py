@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from fabrics.helpers.variables import Variables
 
-from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap, DynamicParameterizedDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
@@ -17,6 +17,7 @@ from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 from fabrics.components.energies.execution_energies import ExecutionLagrangian
 from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
+from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.geometry import GenericGeometryLeaf
 from fabrics.components.leaves.geometry import ObstacleLeaf
 
@@ -93,6 +94,7 @@ class ParameterizedFabricPlanner(object):
             self._forward_kinematics = FkCreator(robot_type).fk()
         self.initialize_joint_variables()
         self.set_base_geometry()
+        self._target_velocity = np.zeros(self._geometry.x().size()[0])
 
     """ INITIALIZING """
 
@@ -140,6 +142,8 @@ class ParameterizedFabricPlanner(object):
     def add_leaf(self, leaf: Leaf, prime_leaf: bool= False) -> None:
         if isinstance(leaf, GenericAttractor):
             self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry(), prime_leaf)
+        if isinstance(leaf, GenericDynamicAttractor):
+            self.add_dynamic_forcing_geometry(leaf.map(), leaf.dynamic_map(), leaf.lagrangian(), leaf.geometry(), leaf._xdot_ref, prime_leaf)
         if isinstance(leaf, GenericGeometryLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
 
@@ -162,6 +166,31 @@ class ParameterizedFabricPlanner(object):
             self._forced_variables = geometry._vars
             self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
+
+    def add_dynamic_forcing_geometry(
+        self,
+        forward_map: DifferentialMap,
+        dynamic_map: DifferentialMap,
+        lagrangian: Lagrangian,
+        geometry: Geometry,
+        target_velocity: ca.SX,
+        prime_forcing_leaf: bool,
+    ) -> None:
+        assert isinstance(forward_map, DifferentialMap)
+        assert isinstance(dynamic_map, DynamicParameterizedDifferentialMap)
+        assert isinstance(lagrangian, Lagrangian)
+        assert isinstance(geometry, Geometry)
+        assert isinstance(target_velocity, ca.SX)
+        if not hasattr(self, '_forced_geometry'):
+            self._forced_geometry = deepcopy(self._geometry)
+        self._forced_geometry += WeightedGeometry(
+            g=geometry, le=lagrangian
+        ).pull(dynamic_map).pull(forward_map)
+        if prime_forcing_leaf:
+            self._forced_variables = geometry._vars
+            self._forced_forward_map = forward_map
+        self._variables = self._variables + self._forced_geometry._vars
+        self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
         assert isinstance(execution_lagrangian, Lagrangian)
@@ -213,10 +242,9 @@ class ParameterizedFabricPlanner(object):
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
         if goal:
-            for j, sub_goal in enumerate(goal.subGoals()):
             # Adds default attractor
+            for j, sub_goal in enumerate(goal.subGoals()):
                 goal_dimension = sub_goal.m()
-                self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
                 if self._config.urdf:
                     fk_child = self._forward_kinematics.fk(
                         self._variables.position_variable(),
@@ -254,7 +282,11 @@ class ParameterizedFabricPlanner(object):
                     fk_child = ca.mtimes(R, fk_child)
                     fk_parent = ca.mtimes(R, fk_parent)
                 fk_sub_goal = fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
-                attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
+                if sub_goal.type() == 'analyticSubGoal':
+                    attractor = GenericDynamicAttractor(self._variables, fk_sub_goal, f"goal_{j}")
+                else:
+                    self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
+                    attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
                 attractor.set_potential(self.config.attractor_potential)
                 attractor.set_metric(self.config.attractor_metric)
                 self.add_leaf(attractor, prime_leaf=sub_goal.isPrimeGoal())
@@ -272,7 +304,11 @@ class ParameterizedFabricPlanner(object):
                 + (1 - self._eta) * self._forced_geometry._alpha
             )
             beta_subst = self._beta.substitute(-a_ex, -self._geometry._alpha)
-            xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * self._geometry.xdot()
+            xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * (
+                self._geometry.xdot()
+                - ca.mtimes(self._forced_geometry.Minv(), self._target_velocity)
+            )
+            #xddot = self._forced_geometry._xddot
         except AttributeError:
             print("No forcing term, using pure geoemtry")
             self._geometry.concretize()
