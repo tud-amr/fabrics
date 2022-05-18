@@ -1,7 +1,6 @@
 import casadi as ca
 from fabrics.diffGeometry.diffMap import (
     ParameterizedDifferentialMap,
-    DynamicParameterizedDifferentialMap,
 )
 from fabrics.helpers.variables import Variables
 
