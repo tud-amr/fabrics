@@ -144,7 +144,7 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
 
     # Serializing the planner is optional
     if serialize:
-        planner.serialize('serialized_10.pkl')
+        planner.serialize('serialized_10.pbz2')
 
     # Start the simulation
     print("Starting simulation")

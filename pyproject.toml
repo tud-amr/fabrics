@@ -18,6 +18,7 @@ planarenvs = {git = "https://git@github.com/maxspahn/gym_envs_planar.git", rev =
 urdfenvs = {git = "https://git@github.com/maxspahn/gym_envs_urdf.git", rev = "master", optional = true}
 dataclasses = { version = "^0.8", python = "<3.7" }
 pyquaternion = "^0.9.9"
+pickle-mixin = "^1.0.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.4"

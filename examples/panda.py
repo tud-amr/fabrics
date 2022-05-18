@@ -6,6 +6,7 @@ from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from forwardkinematics.urdfFks.pandaFk import PandaFk
 
 import numpy as np
+import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 
@@ -102,7 +103,8 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
-    with open("panda.urdf", "r") as file:
+    absolute_path = os.path.dirname(os.path.abspath(__file__))
+    with open(absolute_path + "/panda.urdf", "r") as file:
         urdf = file.read()
     planner = ParameterizedFabricPlanner(degrees_of_freedom, 'panda', urdf=urdf)
     q = planner.variables.position_variable()

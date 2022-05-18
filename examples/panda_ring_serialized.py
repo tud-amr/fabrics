@@ -95,7 +95,7 @@ def run_panda_ring_serialized_example(n_steps=5000, render=True):
     (env, obstacles, goal, initial_observation) = initalize_environment(
         render=render, obstacle_resolution=obstacle_resolution_ring
     )
-    file_name = "serialized_10.pkl"
+    file_name = "serialized_10.pbz2"
     ob = initial_observation
     planner = set_planner(file_name)
 
