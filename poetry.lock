@@ -358,6 +358,14 @@ python-versions = ">=3.6"
 pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
+name = "pickle-mixin"
+version = "1.0.2"
+description = "Makes un-pickle-able objects pick-able."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pillow"
 version = "8.4.0"
 description = "Python Imaging Library (Fork)"
@@ -779,7 +787,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2,<3.10"
-content-hash = "2eac2831b62ae332c49567861a8a0b7aedb70116be3db5ea602178de2e959041"
+content-hash = "7e7f0640ecc19c5cf6992a1909d47c523f6114c191f81312ecc12b083c4c720b"
 
 [metadata.files]
 astroid = [
@@ -1128,6 +1136,9 @@ numpy = [
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
+]
+pickle-mixin = [
+    {file = "pickle-mixin-1.0.2.tar.gz", hash = "sha256:d4983cd09939f6e402c69ba4f4200f2e6ccdfd39c020f6d1091290d78f17625c"},
 ]
 pillow = [
     {file = "Pillow-8.4.0-cp310-cp310-macosx_10_10_universal2.whl", hash = "sha256:81f8d5c81e483a9442d72d182e1fb6dcb9723f289a57e8030811bac9ea3fef8d"},

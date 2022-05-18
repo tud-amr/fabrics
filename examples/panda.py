@@ -7,6 +7,7 @@ from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from forwardkinematics.urdfFks.pandaFk import PandaFk
 
 import numpy as np
+import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 
@@ -47,7 +48,7 @@ def initalize_environment(render=True):
         },
         "subgoal1": {
             "m": 2,
-            "w": 30.0,
+            "w": 5.0,
             "prime": False,
             "indices": [1, 2],
             "parent_link": "panda_link7",

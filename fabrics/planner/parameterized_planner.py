@@ -28,6 +28,9 @@ from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from pyquaternion import Quaternion
 
+import pickle
+
+
 class InvalidRotationAnglesError(Exception):
     pass
 
@@ -51,13 +54,13 @@ class FabricPlannerConfig:
     #s = -0.5 * (ca.sign(xdot) - 1)
     #h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
     collision_geometry: str = (
-        "-2 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+        "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
     collision_finsler: str = (
-        "2.0/(x**1) * xdot**2"
+        "0.5/(x**5) * xdot**2"
     )
     self_collision_geometry: str = (
-        "-0.5 * / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
+        "-0.5 * / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
     )
     attractor_potential: str = (
         "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
@@ -314,7 +317,17 @@ class ParameterizedFabricPlanner(object):
             "funs", self.variables.asDict(), {"xddot": xddot}
         )
 
+    def serialize(self, file_name: str):
+        """
+        Serializes the fabric planner.
 
+        The file can be loaded using the serialized_planner.
+        Essentially, only the casadiFunctionWrapper is serialized using
+        pickle.
+        """
+        self.concretize()
+        self._funs.serialize(file_name)
+ 
     """ RUNTIME METHODS """
 
     def compute_action(self, **kwargs):
