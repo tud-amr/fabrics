@@ -19,7 +19,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.geometry import GenericGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 
@@ -58,6 +58,12 @@ class FabricPlannerConfig:
     )
     collision_finsler: str = (
         "0.5/(x**5) * xdot**2"
+    )
+    limit_geometry: str = (
+        "-0.01 / (x ** 8) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    )
+    limit_finsler: str = (
+        "0.01/(x**8) * xdot**2"
     )
     self_collision_geometry: str = (
         "-0.5 * / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
@@ -232,7 +238,7 @@ class ParameterizedFabricPlanner(object):
         self._eta = 0.5 * (ca.tanh(-alpha_eta * (exLag._l - l_ex_d) - alpha_shift) + 1)
 
     """ DEFAULT COMPOSITION """
-    def set_components(self, fks: list, goal: GoalComposition = None, number_obstacles: int = 1):
+    def set_components(self, fks: list, goal: GoalComposition = None, limits: list = None, number_obstacles: int = 1):
         # Adds default obstacle
         for i in range(number_obstacles):
             obstacle_name = f"obst_{i}"
@@ -241,7 +247,26 @@ class ParameterizedFabricPlanner(object):
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
+        if limits:
+            for joint_index in range(len(limits)):
+                lower_limit_geometry = LimitLeaf(self._variables, joint_index, limits[joint_index][0], 0)
+                lower_limit_geometry.set_geometry(self.config.limit_geometry)
+                lower_limit_geometry.set_finsler_structure(self.config.limit_finsler)
+                upper_limit_geometry = LimitLeaf(self._variables, joint_index, limits[joint_index][1], 1)
+                upper_limit_geometry.set_geometry(self.config.limit_geometry)
+                upper_limit_geometry.set_finsler_structure(self.config.limit_finsler)
+                self.add_leaf(lower_limit_geometry)
+                self.add_leaf(upper_limit_geometry)
+
         if goal:
+            self.set_goal_component(goal)
+            # Adds default execution energy
+            execution_energy = ExecutionLagrangian(self._variables)
+            self.set_execution_energy(execution_energy)
+            # Sets speed control
+            self.set_speed_control()
+
+    def set_goal_component(self, goal: GoalComposition):
             # Adds default attractor
             for j, sub_goal in enumerate(goal.subGoals()):
                 goal_dimension = sub_goal.m()
@@ -290,11 +315,6 @@ class ParameterizedFabricPlanner(object):
                 attractor.set_potential(self.config.attractor_potential)
                 attractor.set_metric(self.config.attractor_metric)
                 self.add_leaf(attractor, prime_leaf=sub_goal.isPrimeGoal())
-            # Adds default execution energy
-            execution_energy = ExecutionLagrangian(self._variables)
-            self.set_execution_energy(execution_energy)
-            # Sets speed control
-            self.set_speed_control()
 
 
     def concretize(self):

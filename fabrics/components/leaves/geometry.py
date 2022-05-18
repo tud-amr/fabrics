@@ -4,6 +4,7 @@ import numpy as np
 from fabrics.components.maps.parameterized_maps import (
     ParameterizedObstacleMap,
 )
+from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.components.leaves.leaf import Leaf
@@ -38,6 +39,39 @@ class GenericGeometryLeaf(Leaf):
         xdot = self._xdot
         lagrangian_geometry = eval(finsler_structure)
         self._lag = Lagrangian(lagrangian_geometry, var=self._leaf_variables)
+
+class LimitLeaf(GenericGeometryLeaf):
+    """
+    The LimitLeaf is geometry leaf for joint limits.
+
+    This leaf is not parameterized as the joint limits remain static for one robot.
+    """
+    def __init__(
+        self,
+        parent_variables: Variables,
+        joint_index: int,
+        limit: float,
+        limit_index: int,
+    ):
+        limit_name = f"limit_joint_{joint_index}"
+        if limit_index == 0:
+            phi = parent_variables.position_variable()[joint_index] - limit
+        elif limit_index == 1:
+            phi = limit - parent_variables.position_variable()[joint_index]
+        else:
+            print("There are only two limits.")
+        super().__init__(
+            parent_variables,
+            f"{limit_name}_leaf",
+            phi,
+        )
+        self.set_forward_map()
+
+    def set_forward_map(self):
+        self._forward_map = DifferentialMap(self._forward_kinematics, var=self._parent_variables)
+
+    def map(self):
+        return self._forward_map
 
 
 class ObstacleLeaf(GenericGeometryLeaf):
