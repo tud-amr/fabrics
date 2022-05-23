@@ -41,7 +41,7 @@ def initalize_environment(render=True):
             "prime": True,
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
-            "child_link": "panda_hand",
+            "child_link": "panda_vacuum",
             "desired_position": [0.1, -0.6, 0.4],
             "epsilon": 0.05,
             "type": "staticSubGoal",
@@ -84,8 +84,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         Degrees of freedom of the robot (default = 7)
     """
 
-    robot_type = 'panda'
-
     ## Optional reconfiguration of the planner
     # base_inertia = 0.03
     # attractor_potential = "20 * ca.norm_2(x)**4"
@@ -105,14 +103,14 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda.urdf", "r") as file:
+    with open(absolute_path + "/albert_polluted_2.urdf", "r") as file:
         urdf = file.read()
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         'panda',
         urdf=urdf,
         root_link='panda_link0',
-        end_link='panda_link9',
+        end_link='panda_vacuum',
     )
     q = planner.variables.position_variable()
     panda_fk = PandaFk()

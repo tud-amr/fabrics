@@ -79,7 +79,13 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/panda.urdf", "r") as file:
         urdf = file.read()
-    planner = ParameterizedFabricPlanner(degrees_of_freedom, 'panda', urdf=urdf)
+    planner = ParameterizedFabricPlanner(
+        degrees_of_freedom,
+        'panda',
+        urdf=urdf,
+        root_link='panda_link0',
+        end_link='panda_link9',
+    )
     q = planner.variables.position_variable()
     panda_fk = PandaFk()
     forward_kinematics = []

@@ -88,6 +88,8 @@ class FabricPlannerConfig:
         )
     )
     urdf: str = None
+    root_link: str = 'base_link'
+    end_link: str = 'ee_link'
 
 
 class ParameterizedFabricPlanner(object):
@@ -95,7 +97,11 @@ class ParameterizedFabricPlanner(object):
         self._dof = dof
         self._config = FabricPlannerConfig(**kwargs)
         if self._config.urdf:
-            self._forward_kinematics = GenericURDFFk(self._config.urdf, rootLink='world')
+            self._forward_kinematics = GenericURDFFk(
+                self._config.urdf,
+                rootLink=self._config.root_link,
+                end_link=self._config.end_link,
+            )
         else:
             self._forward_kinematics = FkCreator(robot_type).fk()
         self.initialize_joint_variables()
@@ -273,13 +279,13 @@ class ParameterizedFabricPlanner(object):
                 if self._config.urdf:
                     fk_child = self._forward_kinematics.fk(
                         self._variables.position_variable(),
-                        "panda_link0",
+                        self._config.root_link,
                         sub_goal.childLink(),
                         positionOnly=True
                     )
                     fk_parent = self._forward_kinematics.fk(
                         self._variables.position_variable(),
-                        "panda_link0",
+                        self._config.root_link,
                         sub_goal.parentLink(),
                         positionOnly=True
                     )
