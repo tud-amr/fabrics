@@ -5,3 +5,6 @@ class SpecException(Exception):
 
     def what(self):
         return self._expression + ": " + self._message
+
+class ExpressionSparseError(Exception):
+    pass

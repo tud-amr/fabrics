@@ -3,7 +3,6 @@ import urdfenvs.panda_reacher  #pylint: disable=unused-import
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
-from forwardkinematics.urdfFks.pandaFk import PandaFk
 
 import numpy as np
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
@@ -104,14 +103,12 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     damper=damper,
     # )
     planner = ParameterizedFabricPlanner(degrees_of_freedom, robot_type)
-    q = planner.variables.position_variable()
-    panda_fk = PandaFk()
-    forward_kinematics = []
-    for i in range(1, degrees_of_freedom+1):
-        forward_kinematics.append(panda_fk.fk(q, i, positionOnly=True))
+    collision_links = ['panda_link9', 'panda_link8', 'panda_link4']
+    self_collision_pairs = {}
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
-        forward_kinematics,
+        collision_links,
+        self_collision_pairs,
         goal,
         number_obstacles=2,
     )

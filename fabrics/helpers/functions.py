@@ -1,6 +1,7 @@
 import casadi as ca
 
 from fabrics.helpers.exceptions import SpecException
+from fabrics.helpers.exceptions import ExpressionSparseError
 
 
 def checkCompatability(a, b):
@@ -14,6 +15,9 @@ def checkCompatability(a, b):
             "Operation invalid",
             "Different variables: " + str(a.x()) + " vs. " + str(b.x()),
         )
+
+def is_sparse(expression: ca.SX) -> bool:
+    return not ca.symvar(expression)
 
 
 def joinVariables(var1, var2):

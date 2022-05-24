@@ -89,11 +89,12 @@ def set_planner(goal: GoalComposition):
     #     damper=damper,
     # )
     planner = ParameterizedFabricPlanner(degrees_of_freedom, robot_type)
-    q = planner.variables.position_variable()
-    forward_kinematics = [q]
     # The planner hides all the logic behind the function set_components.
+    collision_links = [1]
+    self_collision_links = {}
     planner.set_components(
-        forward_kinematics,
+        collision_links,
+        self_collision_links,
         goal,
         number_obstacles=2,
     )

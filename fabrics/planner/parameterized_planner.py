@@ -3,8 +3,10 @@ from typing import Dict
 import casadi as ca
 import numpy as np
 from copy import deepcopy
+from fabrics.helpers.exceptions import ExpressionSparseError
 
 from fabrics.helpers.variables import Variables
+from fabrics.helpers.functions import is_sparse
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap, DynamicParameterizedDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
@@ -19,7 +21,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.geometry import GenericGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 
@@ -27,9 +29,6 @@ from forwardkinematics.fksCommon.fk_creator import FkCreator
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from pyquaternion import Quaternion
-
-import pickle
-
 
 class InvalidRotationAnglesError(Exception):
     pass
@@ -66,7 +65,10 @@ class FabricPlannerConfig:
         "0.01/(x**8) * xdot**2"
     )
     self_collision_geometry: str = (
-        "-0.5 * / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1) * xdot ** 2"
+        "-0.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    )
+    self_collision_finsler: str = (
+        "0.5/(x**5) * xdot**2"
     )
     attractor_potential: str = (
         "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
@@ -243,16 +245,59 @@ class ParameterizedFabricPlanner(object):
         l_ex_d = ex_factor * exLag._l
         self._eta = 0.5 * (ca.tanh(-alpha_eta * (exLag._l - l_ex_d) - alpha_shift) + 1)
 
+    def get_forward_kinematics(self, link_name) -> ca.SX:
+        if isinstance(link_name, ca.SX):
+            return link_name
+        if self._config.urdf:
+            fk = self._forward_kinematics.fk(
+                self._variables.position_variable(),
+                self._config.root_link,
+                link_name,
+                positionOnly=True
+            )
+        else:
+            fk = self._forward_kinematics.fk(
+                self._variables.position_variable(),
+                link_name,
+                positionOnly=True
+            )
+        return fk
+
     """ DEFAULT COMPOSITION """
-    def set_components(self, fks: list, goal: GoalComposition = None, limits: list = None, number_obstacles: int = 1):
-        # Adds default obstacle
-        for i in range(number_obstacles):
-            obstacle_name = f"obst_{i}"
-            for fk in fks:
+    def set_components(
+        self,
+        collision_links: list,
+        self_collision_pairs: dict,
+        goal: GoalComposition = None,
+        limits: list = None,
+        number_obstacles: int = 1
+    ):
+        # Adds default obstacle avoidance
+        for collision_link in collision_links:
+            fk = self.get_forward_kinematics(collision_link)
+            if is_sparse(fk):
+                print(f"Expression {fk} for link {collision_link} is sparse and thus skipped.")
+                continue
+            for i in range(number_obstacles):
+                obstacle_name = f"obst_{i}"
                 geometry = ObstacleLeaf(self._variables, fk, obstacle_name)
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
+        for self_collision_key, self_collision_list in self_collision_pairs.items():
+            fk_key = self.get_forward_kinematics(self_collision_key)
+            for self_collision_link in self_collision_list:
+                fk_link = self.get_forward_kinematics(self_collision_link)
+                fk = fk_link - fk_key
+                if is_sparse(fk):
+                    print(f"Expression {fk} for links {self_collision_key} and {self_collision_link} is sparse and thus skipped.")
+                    continue
+                self_collision_name = f"self_collision_{self_collision_key}_{self_collision_link}"
+                geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
+                geometry.set_geometry(self.config.self_collision_geometry)
+                geometry.set_finsler_structure(self.config.self_collision_finsler)
+                self.add_leaf(geometry)
+
         if limits:
             for joint_index in range(len(limits)):
                 lower_limit_geometry = LimitLeaf(self._variables, joint_index, limits[joint_index][0], 0)
@@ -276,30 +321,8 @@ class ParameterizedFabricPlanner(object):
             # Adds default attractor
             for j, sub_goal in enumerate(goal.subGoals()):
                 goal_dimension = sub_goal.m()
-                if self._config.urdf:
-                    fk_child = self._forward_kinematics.fk(
-                        self._variables.position_variable(),
-                        self._config.root_link,
-                        sub_goal.childLink(),
-                        positionOnly=True
-                    )
-                    fk_parent = self._forward_kinematics.fk(
-                        self._variables.position_variable(),
-                        self._config.root_link,
-                        sub_goal.parentLink(),
-                        positionOnly=True
-                    )
-                else:
-                    fk_child = self._forward_kinematics.fk(
-                        self._variables.position_variable(),
-                        sub_goal.childLink(),
-                        positionOnly=True
-                    )
-                    fk_parent = self._forward_kinematics.fk(
-                        self._variables.position_variable(),
-                        sub_goal.parentLink(),
-                        positionOnly=True
-                    )
+                fk_child = self.get_forward_kinematics(sub_goal.childLink())
+                fk_parent = self.get_forward_kinematics(sub_goal.parentLink())
                 angles = sub_goal.angle()
                 if angles and isinstance(angles, list) and len(angles) == 4:
                     angles = ca.SX.sym(f"angle_goal_{j}", 3, 3)
@@ -313,6 +336,8 @@ class ParameterizedFabricPlanner(object):
                     fk_child = ca.mtimes(R, fk_child)
                     fk_parent = ca.mtimes(R, fk_parent)
                 fk_sub_goal = fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
+                if is_sparse(fk_sub_goal):
+                    raise ExpressionSparseError()
                 if sub_goal.type() == 'analyticSubGoal':
                     attractor = GenericDynamicAttractor(self._variables, fk_sub_goal, f"goal_{j}")
                 else:

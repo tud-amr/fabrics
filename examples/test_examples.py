@@ -7,6 +7,7 @@ from panda_orientation import run_panda_orientation_example
 from panda_trajectory_following import run_panda_trajectory_example
 from panda_ring import run_panda_ring_example
 from panda_ring_serialized import run_panda_ring_serialized_example
+from panda_self_collision_avoidance import run_panda_self_collision
 from panda_limits import run_panda_limits
 
 def test_panda_example():
@@ -24,7 +25,10 @@ def test_panda_trajectory():
 def test_panda_limits():
     res = run_panda_limits(10, render=False)
     assert isinstance(res, dict)
-    
+
+def test_panda_self_collision_avoidance():
+    res = run_panda_self_collision(10, render=False)
+    assert isinstance(res, dict)
 
 def test_planar_arm_example():
     res = run_planar_arm_example(10, render=False)
