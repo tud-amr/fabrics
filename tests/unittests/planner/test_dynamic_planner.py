@@ -29,14 +29,11 @@ def goal():
     return goal
 
 def test_set_components(planner: ParameterizedFabricPlanner, goal):
-    fks = [planner.variables.position_variable()]
-    planner.set_components(fks, goal)
+    planner.set_components([1], {}, goal)
     planner.concretize()
 
 def test_compute_action(planner: ParameterizedFabricPlanner, goal):
-    fks = [planner.variables.position_variable()]
-    fk = planner.variables.position_variable()
-    planner.set_components(fks, goal)
+    planner.set_components([1], {}, goal)
     planner.concretize()
     q = np.zeros(2)
     qdot = np.zeros(2)

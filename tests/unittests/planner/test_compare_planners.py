@@ -62,9 +62,7 @@ def parameterized_planner_1d(goal_1d):
         collision_finsler=collision_finsler,
         base_inertia=1.0,
     )
-    fks = [planner.variables.position_variable()]
-    fk = planner.variables.position_variable()
-    planner.set_components(fks)
+    planner.set_components([planner._variables.position_variable()], {})
     planner.concretize()
     return planner
 
@@ -80,9 +78,7 @@ def parameterized_planner_2d(goal_2d):
         collision_finsler=collision_finsler,
         base_inertia=1.0,
     )
-    fks = [planner_2d.variables.position_variable()]
-    fk = planner_2d.variables.position_variable()
-    planner_2d.set_components(fks)
+    planner_2d.set_components([2], {})
     planner_2d.concretize()
     return planner_2d
 

@@ -73,6 +73,33 @@ class LimitLeaf(GenericGeometryLeaf):
     def map(self):
         return self._forward_map
 
+class SelfCollisionLeaf(GenericGeometryLeaf):
+    """
+    The SelfCollisionLeaf is a geometry leaf for self collision avoidanceself.
+
+    This leaf is not parameterized as it is not changing at runtimeself.
+    """
+    def __init__(
+        self,
+        parent_variables: Variables,
+        forward_kinematics: ca.SX,
+        self_collision_name: str,
+        self_collision_body_radius: float=0.10,
+    ):
+        super().__init__(
+            parent_variables, self_collision_name, forward_kinematics
+        )
+        self.set_forward_map(self_collision_body_radius)
+
+    def set_forward_map(self, self_collision_body_radius):
+        phi = (
+            ca.norm_2(self._forward_kinematics)
+            / (2 * self_collision_body_radius) - 1
+        )
+        self._forward_map = DifferentialMap(phi, var=self._parent_variables)
+
+    def map(self):
+        return self._forward_map
 
 class ObstacleLeaf(GenericGeometryLeaf):
     """
