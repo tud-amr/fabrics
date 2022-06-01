@@ -366,8 +366,8 @@ class ParameterizedFabricPlanner(object):
         except AttributeError:
             print("No forcing term, using pure geoemtry with execution energy")
             self._geometry.concretize()
-            #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
-            xddot = self._geometry._xddot - self._execution_geometry._alpha * self._geometry.xdot()
+            xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
+            #xddot = self._geometry._xddot - self._execution_geometry._alpha * self._geometry.xdot()
         self._funs = CasadiFunctionWrapper(
             "funs", self.variables.asDict(), {"xddot": xddot}
         )
