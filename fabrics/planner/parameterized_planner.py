@@ -316,6 +316,9 @@ class ParameterizedFabricPlanner(object):
             self.set_execution_energy(execution_energy)
             # Sets speed control
             self.set_speed_control()
+        else:
+            execution_energy = ExecutionLagrangian(self._variables)
+            self.set_execution_energy(execution_energy)
 
     def set_goal_component(self, goal: GoalComposition):
             # Adds default attractor
@@ -361,9 +364,10 @@ class ParameterizedFabricPlanner(object):
             )
             #xddot = self._forced_geometry._xddot
         except AttributeError:
-            print("No forcing term, using pure geoemtry")
+            print("No forcing term, using pure geoemtry with execution energy")
             self._geometry.concretize()
-            xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
+            #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
+            xddot = self._geometry._xddot - self._execution_geometry._alpha * self._geometry.xdot()
         self._funs = CasadiFunctionWrapper(
             "funs", self.variables.asDict(), {"xddot": xddot}
         )

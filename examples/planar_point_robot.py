@@ -16,22 +16,22 @@ def initalize_environment(render=True):
     steps the simulation once.
     """
     env = gym.make(
-        "point-robot-acc-v0", dt=0.05, render=render
+        "point-robot-acc-v0", dt=0.01, render=render
     )
     q0 = np.array([4.3, 1.0])
-    qdot0 = np.array([-1.0, 0.0])
+    qdot0 = np.array([-1.5, 0.2])
     initial_observation = env.reset(pos=q0, vel=qdot0)
     # Definition of the obstacle.
     static_obst_dict = {
         "dim": 2,
         "type": "sphere",
-        "geometry": {"position": [0.0, 3.5], "radius": 0.6},
+        "geometry": {"position": [-0.4, 3.5], "radius": 1.6},
     }
     obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     static_obst_dict = {
         "dim": 2,
         "type": "sphere",
-        "geometry": {"position": [0.0, -1.0], "radius": 0.4},
+        "geometry": {"position": [0.5, -0.3], "radius": 1.2},
     }
     obst2 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     # Definition of the goal.
@@ -43,7 +43,7 @@ def initalize_environment(render=True):
             "indices": [0, 1],
             "parent_link": 0,
             "child_link": 2,
-            "desired_position": [3.0, 2.0],
+            "desired_position": [-3.0, 2.0],
             "epsilon": 0.15,
             "type": "staticSubGoal",
         }
@@ -71,24 +71,26 @@ def set_planner(goal: GoalComposition):
     robot_type = 'pointRobot'
 
     ## Optional reconfiguration of the planner
-    # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     robot_type,
-    #     base_inertia=base_inertia,
-    #     attractor_potential=attractor_potential,
-    #     damper=damper,
-    # )
-    planner = ParameterizedFabricPlanner(degrees_of_freedom, robot_type)
+    attractor_potential = "25.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
+    collision_geometry = "-0.1 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    collision_finsler = "0.5 / (x ** 2) * xdot**2"
+    damper = {
+        "alpha_b": 0.5,
+        "alpha_eta": 0.5,
+        "alpha_shift": 0.5,
+        "beta_distant": 0.01,
+        "beta_close": 6.5,
+        "radius_shift": 0.02,
+    }
+    planner = ParameterizedFabricPlanner(
+        degrees_of_freedom,
+        robot_type,
+        base_inertia=1.0,
+        #attractor_potential=attractor_potential,
+        #collision_geometry=collision_geometry,
+        #collision_finsler=collision_finsler,
+        #damper=damper,
+    )
     # The planner hides all the logic behind the function set_components.
     collision_links = [1]
     self_collision_links = {}
@@ -125,8 +127,8 @@ def run_point_robot_example(n_steps=5000, render=True):
             qdot=ob["xdot"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst2_position,
-            x_obst_1=obst1_position,
+            x_obst_0=obst1_position,
+            x_obst_1=obst2_position,
             radius_obst_0=np.array([obst1.radius()]),
             radius_obst_1=np.array([obst2.radius()]),
             radius_body=np.array([0.02]),
