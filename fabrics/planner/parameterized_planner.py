@@ -219,7 +219,7 @@ class ParameterizedFabricPlanner(object):
             self._forced_speed_controlled_geometry = WeightedGeometry(
                 g=forced_geometry, le=execution_lagrangian
             )
-            self._forced_speed_controlled_geometry.concretize()
+            #self._forced_speed_controlled_geometry.concretize()
         except AttributeError:
             print("No damping")
 
