@@ -149,7 +149,6 @@ def test_simple_task(planner_non_parameterized_1d, parameterized_planner_1d):
 def test_simple_task_2d(planner_non_parameterized_2d, parameterized_planner_2d):
     planner = planner_non_parameterized_2d
     planner_parameterized = parameterized_planner_2d
-    print(planner_parameterized._variables)
     q_0 = np.array([1.0, 0.0])
     for _ in range(10):
         q = -1 + 2 * np.random.random(2)
