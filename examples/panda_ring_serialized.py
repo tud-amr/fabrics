@@ -121,7 +121,10 @@ def run_panda_ring_serialized_example(n_steps=5000, render=True):
             weight_goal_1=sub_goal_1_weight,
             x_obsts=obstacle_positions,
             radius_obsts=obstacle_radii,
-            radius_body=np.array([0.02]),
+            radius_body_panda_link4=np.array([0.1]),
+            radius_body_panda_link8=np.array([0.1]),
+            radius_body_panda_vacuum=np.array([0.03]),
+            radius_body_panda_vacuum_2=np.array([0.03]),
         )
         ob, *_ = env.step(action)
     return {}
