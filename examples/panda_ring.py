@@ -3,6 +3,7 @@
 # https://arxiv.org/abs/2109.10443
 # This implementation is not related to the paper as no code was published with it.
 import gym
+import os
 import urdfenvs.panda_reacher  #pylint: disable=unused-import
 
 from MotionPlanningGoal.goalComposition import GoalComposition
@@ -23,9 +24,9 @@ def initalize_environment(render=True, obstacle_resolution = 8):
     q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
     initial_observation = env.reset(pos=q0)
     # Definition of the obstacle.
-    radius_ring = 0.20
+    radius_ring = 0.25
     obstacles = []
-    whole_position = [0.4, 0.0, 0.7]
+    whole_position = [0.7, 0.2, 0.9]
     for i in range(obstacle_resolution + 1):
         angle = i/obstacle_resolution * 2.*np.pi
         position = [
@@ -36,31 +37,31 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         static_obst_dict = {
             "dim": 3,
             "type": "sphere",
-            "geometry": {"position": position, "radius": 0.05},
+            "geometry": {"position": position, "radius": 0.15},
         }
         obstacles.append(SphereObstacle(name="staticObst", contentDict=static_obst_dict))
     # Definition of the goal.
     goal_position = whole_position
-    goal_position[0] += 0.3
+    goal_position[0] += 0.1
     goal_dict = {
         "subgoal0": {
             "m": 3,
             "w": 1.0,
             "prime": True,
             "indices": [0, 1, 2],
-            "parent_link": 0,
-            "child_link": 7,
+            "parent_link": "panda_link0",
+            "child_link": "panda_vacuum",
             "desired_position": whole_position,
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
         "subgoal1": {
             "m": 2,
-            "w": 10.0,
+            "w": 5.0,
             "prime": False,
             "indices": [1, 2],
-            "parent_link": 6,
-            "child_link": 7,
+            "parent_link": "panda_link7",
+            "child_link": "panda_hand",
             "desired_position": [0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
@@ -95,7 +96,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
 
     ## Optional reconfiguration of the planner
     # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
+    attractor_potential = "5.0 * (ca.norm_2(x) + 1 /10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
     # damper = {
     #     "alpha_b": 0.5,
     #     "alpha_eta": 0.5,
@@ -111,11 +112,32 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
+    # attractor_potential = "15.0 * (ca.norm_2(x) + 1 /10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
+    # collision_geometry= "-0.1 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    # collision_finsler= "0.1/(x**1) * xdot**2"
+    damper = {
+        "alpha_b": 0.5,
+        "alpha_eta": 0.5,
+        "alpha_shift": 0.5,
+        "beta_distant": 0.01,
+        "beta_close": 6.5,
+        "radius_shift": 0.1,
+    }
+    absolute_path = os.path.dirname(os.path.abspath(__file__))
+    with open(absolute_path + "/albert_polluted_2.urdf", "r") as file:
+        urdf = file.read()
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         robot_type,
+        urdf=urdf,
+        root_link='panda_link0',
+        end_link=['panda_vacuum_2', 'panda_vacuum'],
     )
-    collision_links = ['panda_link9', 'panda_link8', 'panda_link4']
+    panda_limits = [
+            [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973],
+            [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
+        ]
+    collision_links = ['panda_link8', 'panda_link4', 'panda_vacuum', "panda_vacuum_2"]
     self_collision_pairs = {}
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
@@ -123,13 +145,14 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         self_collision_pairs,
         goal,
         number_obstacles=obstacle_resolution,
+        limits=panda_limits,
     )
     planner.concretize()
     return planner
 
 
 def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
-    obstacle_resolution_ring = 10
+    obstacle_resolution_ring = 6
     (env, obstacles, goal, initial_observation) = initalize_environment(
         render=render, obstacle_resolution=obstacle_resolution_ring
     )
@@ -152,7 +175,12 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
         obstacle_positions.append(obst.position())
         obstacle_radii.append(np.array(obst.radius()))
 
-    for _ in range(n_steps):
+    for i in range(n_steps):
+        if i % 100 == 0:
+            print(i)
+        if i == 500:
+            sub_goal_0_position = np.array([0.4, -0.7, 0.3])
+
         action = planner.compute_action(
             q=ob["x"],
             qdot=ob["xdot"],
@@ -162,11 +190,14 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
             weight_goal_1=sub_goal_1_weight,
             x_obsts = obstacle_positions,
             radius_obsts = obstacle_radii,
-            radius_body=np.array([0.02]),
+            radius_body_panda_link4=np.array([0.1]),
+            radius_body_panda_link8=np.array([0.1]),
+            radius_body_panda_vacuum=np.array([0.03]),
+            radius_body_panda_vacuum_2=np.array([0.03]),
         )
         ob, *_ = env.step(action)
     return {}
 
 
 if __name__ == "__main__":
-    res = run_panda_ring_example(n_steps=5000)
+    res = run_panda_ring_example(n_steps=10000)

@@ -116,16 +116,17 @@ class ObstacleLeaf(GenericGeometryLeaf):
         parent_variables: Variables,
         forward_kinematics: ca.SX,
         obstacle_name: str,
+        collision_link: str,
     ):
         super().__init__(
             parent_variables, f"{obstacle_name}_leaf", forward_kinematics
         )
-        self.set_forward_map(obstacle_name)
+        self.set_forward_map(obstacle_name, collision_link)
 
-    def set_forward_map(self, obstacle_name):
+    def set_forward_map(self, obstacle_name, collision_link):
         radius_name = f"radius_{obstacle_name}"
         reference_name = f"x_{obstacle_name}"
-        radius_body_name = f"radius_body"
+        radius_body_name = f"radius_body_{collision_link}"
         obstacle_dimension = self._forward_kinematics.size()[0]
         if radius_name in self._parent_variables.parameters():
             radius_variable = self._parent_variables.parameters()[radius_name]
