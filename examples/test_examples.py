@@ -1,6 +1,7 @@
 from planar_arm import run_planar_arm_example
 from planar_arm_limits import run_planar_arm_limits_example
 from planar_point_robot import run_point_robot_example
+from planar_point_robot_symbolic import run_point_robot_symbolic
 from planar_point_robot_line_goal import run_point_robot_line_goal_example
 from panda import run_panda_example
 from panda_orientation import run_panda_orientation_example
@@ -42,6 +43,10 @@ def test_planar_point_robot_example():
     res = run_point_robot_example(10, render=False)
     assert isinstance(res, dict)
 
+def test_planar_point_symbolic():
+    res = run_point_robot_symbolic(n_steps=10, render=False)
+    assert isinstance(res, dict)
+
 def test_planar_point_robot_line_goal_example():
     res = run_point_robot_line_goal_example(10, render=False)
     assert isinstance(res, dict)
@@ -51,7 +56,7 @@ def test_panda_orientation_example():
     assert isinstance(res, dict)
 
 def test_serialization_example():
-    run_panda_ring_example(n_steps=1, render=False, serialize=True)
+    run_panda_ring_example(n_steps=10, render=False, serialize=True)
     res = run_panda_ring_serialized_example(n_steps=10, render=False)
     assert isinstance(res, dict)
 

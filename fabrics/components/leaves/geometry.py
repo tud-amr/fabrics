@@ -9,6 +9,7 @@ from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.components.leaves.leaf import Leaf
 from fabrics.helpers.variables import Variables
+from fabrics.helpers.functions import parse_symbolic_input
 
 
 class GenericGeometryLeaf(Leaf):
@@ -23,11 +24,8 @@ class GenericGeometryLeaf(Leaf):
         """
         x = self._x
         xdot = self._xdot
-        k_geo = ca.SX.sym(f"k_geo_{self._leaf_name}")
-        exp_geo = ca.SX.sym(f"exp_geo_{self._leaf_name}")
-        self._parent_variables.add_parameter(k_geo.name(), k_geo)
-        self._parent_variables.add_parameter(exp_geo.name(), exp_geo)
-        h_geometry = eval(geometry)
+        new_parameters, h_geometry = parse_symbolic_input(geometry, x, xdot, name=self._leaf_name)
+        self._parent_variables.add_parameters(new_parameters)
         self._geo = Geometry(h=h_geometry, var=self._leaf_variables)
 
     def set_finsler_structure(self, finsler_structure: str) -> None:
@@ -41,11 +39,8 @@ class GenericGeometryLeaf(Leaf):
         """
         x = self._x
         xdot = self._xdot
-        k_fin = ca.SX.sym(f"k_fin_{self._leaf_name}")
-        exp_fin = ca.SX.sym(f"exp_fin_{self._leaf_name}")
-        self._parent_variables.add_parameter(k_fin.name(), k_fin)
-        self._parent_variables.add_parameter(exp_fin.name(), exp_fin)
-        lagrangian_geometry = eval(finsler_structure)
+        new_parameters, lagrangian_geometry = parse_symbolic_input(finsler_structure, x, xdot, name=self._leaf_name)
+        self._parent_variables.add_parameters(new_parameters)
         self._lag = Lagrangian(lagrangian_geometry, var=self._leaf_variables)
 
 class LimitLeaf(GenericGeometryLeaf):
@@ -125,9 +120,8 @@ class ObstacleLeaf(GenericGeometryLeaf):
         forward_kinematics: ca.SX,
         obstacle_name: str,
     ):
-        self._leaf_name = f"{obstacle_name}_leaf"
         super().__init__(
-            parent_variables, self._leaf_name, forward_kinematics
+            parent_variables, f"{obstacle_name}_leaf", forward_kinematics
         )
         self.set_forward_map(obstacle_name)
 
