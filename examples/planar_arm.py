@@ -148,7 +148,9 @@ def run_planar_arm_example(n_steps=5000, render=True):
             x_obst_1=obst1_position,
             radius_obst_0=np.array([obst1.radius()]),
             radius_obst_1=np.array([obst2.radius()]),
-            radius_body=np.array([0.02]),
+            radius_body_1=np.array([0.02]),
+            radius_body_2=np.array([0.02]),
+            radius_body_3=np.array([0.02]),
         )
         ob, *_ = env.step(action)
     return {}

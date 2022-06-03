@@ -112,7 +112,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         end_link='panda_vacuum',
     )
     q = planner.variables.position_variable()
-    collision_links = ['panda_link9', 'panda_link8', 'panda_link4']
+    collision_links = ['panda_vacuum', 'panda_link8', 'panda_link4']
     self_collision_pairs = {}
     planner.set_components(
         collision_links,
@@ -153,7 +153,9 @@ def run_panda_example(n_steps=5000, render=True):
             x_obst_1=obst1_position,
             radius_obst_0=np.array([obst1.radius()]),
             radius_obst_1=np.array([obst2.radius()]),
-            radius_body=np.array([0.02]),
+            radius_body_panda_link4=np.array([0.02]),
+            radius_body_panda_link8=np.array([0.02]),
+            radius_body_panda_vacuum=np.array([0.02]),
         )
         ob, *_ = env.step(action)
     return {}

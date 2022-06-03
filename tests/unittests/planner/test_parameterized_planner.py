@@ -41,9 +41,9 @@ def test_compute_action(planner: ParameterizedFabricPlanner, goal):
     x_obst = np.array([1.0, 0.2])
     qddot = planner.compute_action(
         q=q, qdot=qdot, x_goal_0=x_goal, weight_goal_0=np.array([1.0]),
-        x_obst_0=x_obst, radius_body=np.array([0.5]), radius_obst_0=np.array([0.5])
+        x_obst_0=x_obst, radius_body_1=np.array([0.5]), radius_obst_0=np.array([0.5])
     )
     assert isinstance(qddot, np.ndarray)
     assert qddot.size == 2
     assert qddot.shape == (2,)
-    assert qddot[0] == pytest.approx(0.494771)
+    assert qddot[0] == pytest.approx(1.116237)
