@@ -142,14 +142,13 @@ def test_simple_task(planner_non_parameterized_1d, parameterized_planner_1d):
         qddot_parameterized = planner_parameterized.compute_action(
             q=q, qdot=qdot, x_obst_0=q_0,
             radius_obst_0=np.array([0.5]),
-            radius_body=np.array([0.5])
+            radius_body_q=np.array([0.5])
         )
         assert qddot[0] == pytest.approx(qddot_parameterized[0])
 
 def test_simple_task_2d(planner_non_parameterized_2d, parameterized_planner_2d):
     planner = planner_non_parameterized_2d
     planner_parameterized = parameterized_planner_2d
-    print(planner_parameterized._variables)
     q_0 = np.array([1.0, 0.0])
     for _ in range(10):
         q = -1 + 2 * np.random.random(2)
@@ -157,7 +156,7 @@ def test_simple_task_2d(planner_non_parameterized_2d, parameterized_planner_2d):
         qddot = planner.computeAction(q=q, qdot=qdot)
         qddot_parameterized = planner_parameterized.compute_action(
             q=q, qdot=qdot, x_obst_0=q_0,
-            radius_obst_0=np.array([0.5]), radius_body=np.array([0.5])
+            radius_obst_0=np.array([0.5]), radius_body_2=np.array([0.5])
         )
         assert qddot[0] == pytest.approx(qddot_parameterized[0])
         assert qddot[1] == pytest.approx(qddot_parameterized[1])

@@ -782,7 +782,14 @@ in the right frame w.r.t the ground. -->
     <child link="panda_vacuum"/>
     <origin rpy="0 0 0" xyz="0 0 0.33"/>
   </joint>
+  <joint name="panda_vacuum_joint_2" type="fixed">
+    <parent link="panda_hand"/>
+    <child link="panda_vacuum_2"/>
+    <origin rpy="0 0 0" xyz="0 0 0.25"/>
+  </joint>
   <link name="panda_vacuum">
+    </link>
+  <link name="panda_vacuum_2">
     </link>
   <link name="panda_rightfinger">
     <inertial>

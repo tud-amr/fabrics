@@ -45,7 +45,7 @@ def initalize_environment(render=True):
         },
         "subgoal1": {
             "m": 2,
-            "w": 200.0,
+            "w": 20.0,
             "prime": False,
             "indices": [0, 1],
             "parent_link": 6,
@@ -148,7 +148,9 @@ def run_panda_orientation_example(n_steps=5000, render=True):
             x_obst_1=obst1_position,
             radius_obst_0=np.array([obst1.radius()]),
             radius_obst_1=np.array([obst2.radius()]),
-            radius_body=np.array([0.02]),
+            radius_body_panda_link4=np.array([0.02]),
+            radius_body_panda_link8=np.array([0.02]),
+            radius_body_panda_link9=np.array([0.02]),
         )
         ob, *_ = env.step(action)
     return {}

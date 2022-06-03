@@ -56,19 +56,19 @@ class FabricPlannerConfig:
         "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
     collision_finsler: str = (
-        "0.5/(x**5) * xdot**2"
+        "0.1/(x**1) * xdot**2"
     )
     limit_geometry: str = (
         "-0.01 / (x ** 8) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
     limit_finsler: str = (
-        "0.01/(x**8) * xdot**2"
+        "0.01/(x**1) * xdot**2"
     )
     self_collision_geometry: str = (
         "-0.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
     self_collision_finsler: str = (
-        "0.5/(x**5) * xdot**2"
+        "0.1/(x**1) * xdot**2"
     )
     attractor_potential: str = (
         "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
@@ -280,7 +280,7 @@ class ParameterizedFabricPlanner(object):
                 continue
             for i in range(number_obstacles):
                 obstacle_name = f"obst_{i}"
-                geometry = ObstacleLeaf(self._variables, fk, obstacle_name)
+                geometry = ObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
