@@ -31,13 +31,14 @@ def parse_symbolic_input(expression: str, x: ca.SX, xdot: ca.SX, name: str = '')
         name = '_' + name
     new_parameters = {}
     parameters = re.findall(r"\(\'(\w*)\'\)", expression)
-    for parameter in parameters:
-        expression = expression.replace(parameter, parameter + name)
+    for i, _ in enumerate(parameters):
+        expression = expression.replace(parameters[i], parameters[i] + name)
+        parameters[i] += name
 
     symbolic_expression = eval(expression)
     all_variables = ca.symvar(symbolic_expression)
     for variable in all_variables:
-        if not(variable.name() == x.name() or variable.name() == xdot.name()):
+        if variable.name() in parameters:
             new_parameters[variable.name()] = variable
     return new_parameters, symbolic_expression
 
