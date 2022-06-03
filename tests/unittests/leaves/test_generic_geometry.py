@@ -21,7 +21,7 @@ def generic_geometry():
     var_q = Variables(
         state_variables={"q": q, "qdot": qdot}
     )
-    return GenericGeometryLeaf(var_q, q, "simple_leaf")
+    return GenericGeometryLeaf(var_q, "simple_leaf", q)
 
 
 def test_set_geometry(generic_geometry: GenericGeometryLeaf):

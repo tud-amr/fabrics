@@ -9,6 +9,7 @@ from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.components.leaves.leaf import Leaf
 from fabrics.helpers.variables import Variables
+from fabrics.helpers.functions import parse_symbolic_input
 
 
 class GenericGeometryLeaf(Leaf):
@@ -23,7 +24,8 @@ class GenericGeometryLeaf(Leaf):
         """
         x = self._x
         xdot = self._xdot
-        h_geometry = eval(geometry)
+        new_parameters, h_geometry = parse_symbolic_input(geometry, x, xdot, name=self._leaf_name)
+        self._parent_variables.add_parameters(new_parameters)
         self._geo = Geometry(h=h_geometry, var=self._leaf_variables)
 
     def set_finsler_structure(self, finsler_structure: str) -> None:
@@ -37,7 +39,8 @@ class GenericGeometryLeaf(Leaf):
         """
         x = self._x
         xdot = self._xdot
-        lagrangian_geometry = eval(finsler_structure)
+        new_parameters, lagrangian_geometry = parse_symbolic_input(finsler_structure, x, xdot, name=self._leaf_name)
+        self._parent_variables.add_parameters(new_parameters)
         self._lag = Lagrangian(lagrangian_geometry, var=self._leaf_variables)
 
 class LimitLeaf(GenericGeometryLeaf):

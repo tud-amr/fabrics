@@ -22,6 +22,7 @@ class Leaf(object):
         self._dm = None
         self._lag = None
         self._geo = None
+        self._leaf_name = leaf_name
 
     def set_params(self, **kwargs):
         for key in self._p:

@@ -1,4 +1,5 @@
 import casadi as ca
+import re
 
 from fabrics.helpers.exceptions import SpecException
 from fabrics.helpers.exceptions import ExpressionSparseError
@@ -18,6 +19,27 @@ def checkCompatability(a, b):
 
 def is_sparse(expression: ca.SX) -> bool:
     return not ca.symvar(expression)
+
+def symbolic(name: str):
+    return ca.SX.sym(name, 1)
+
+def sym(name: str):
+    return symbolic(name)
+
+def parse_symbolic_input(expression: str, x: ca.SX, xdot: ca.SX, name: str = '') -> tuple:
+    if len(name) > 0:
+        name = '_' + name
+    new_parameters = {}
+    parameters = re.findall(r"\(\'(\w*)\'\)", expression)
+    for parameter in parameters:
+        expression = expression.replace(parameter, parameter + name)
+
+    symbolic_expression = eval(expression)
+    all_variables = ca.symvar(symbolic_expression)
+    for variable in all_variables:
+        if not(variable.name() == x.name() or variable.name() == xdot.name()):
+            new_parameters[variable.name()] = variable
+    return new_parameters, symbolic_expression
 
 
 def joinVariables(var1, var2):
