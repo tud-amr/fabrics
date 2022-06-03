@@ -6,7 +6,7 @@ from copy import deepcopy
 from fabrics.helpers.exceptions import ExpressionSparseError
 
 from fabrics.helpers.variables import Variables
-from fabrics.helpers.functions import is_sparse
+from fabrics.helpers.functions import is_sparse, parse_symbolic_input
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap, DynamicParameterizedDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
@@ -49,9 +49,9 @@ def compute_rotation_matrix(angles) -> np.ndarray:
 
 @dataclass
 class FabricPlannerConfig:
-    base_inertia: float = 0.2
-    #s = -0.5 * (ca.sign(xdot) - 1)
-    #h = -p["lam"] / (x ** p["exp"]) * s * xdot ** 2
+    base_energy: str = (
+        "0.5 * 0.2 * ca.dot(xdot, xdot)"
+    )
     collision_geometry: str = (
         "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     )
@@ -118,8 +118,10 @@ class ParameterizedFabricPlanner(object):
         self._variables = Variables(state_variables={"q": q, "qdot": qdot})
 
     def set_base_geometry(self):
+        q = self._variables.position_variable()
         qdot = self._variables.velocity_variable()
-        base_energy = 0.5 * self._config.base_inertia * ca.dot(qdot, qdot)
+        new_parameters, base_energy =  parse_symbolic_input(self._config.base_energy, q, qdot)
+        self._variables.add_parameters(new_parameters)
         base_geometry = Geometry(h=ca.SX(np.zeros(self._dof)), var=self.variables)
         base_lagrangian = Lagrangian(base_energy, var=self._variables)
         self._geometry = WeightedGeometry(g=base_geometry, le=base_lagrangian)

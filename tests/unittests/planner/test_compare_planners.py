@@ -60,7 +60,7 @@ def parameterized_planner_1d(goal_1d):
         'pointRobot',
         collision_geometry=geometry_expression,
         collision_finsler=collision_finsler,
-        base_inertia=1.0,
+        base_energy="0.5 * ca.dot(xdot, xdot)"
     )
     planner.set_components([planner._variables.position_variable()], {})
     planner.concretize()
@@ -76,7 +76,7 @@ def parameterized_planner_2d(goal_2d):
         'pointRobot',
         collision_geometry=geometry_expression,
         collision_finsler=collision_finsler,
-        base_inertia=1.0,
+        base_energy="0.5 * ca.dot(xdot, xdot)"
     )
     planner_2d.set_components([2], {})
     planner_2d.concretize()
