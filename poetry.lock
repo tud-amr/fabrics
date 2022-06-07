@@ -274,7 +274,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.18"
+version = "0.1.19"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -293,7 +293,7 @@ PyYAML = "^6.0"
 type = "git"
 url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
 reference = "main"
-resolved_reference = "fe5639920e68f9191491c5424be993b2bdbf7564"
+resolved_reference = "0544c65692e4c41671b35202bf8de3ca0b723d62"
 
 [[package]]
 name = "networkx"

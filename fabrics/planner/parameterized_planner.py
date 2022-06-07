@@ -24,6 +24,7 @@ from fabrics.components.leaves.geometry import GenericGeometryLeaf
 from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf
 
 from MotionPlanningGoal.goalComposition import GoalComposition
+from MotionPlanningGoal.subGoal import SubGoal
 
 from forwardkinematics.fksCommon.fk_creator import FkCreator
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
@@ -319,25 +320,33 @@ class ParameterizedFabricPlanner(object):
             # Sets speed control
             self.set_speed_control()
 
+    def get_differential_map(self, sub_goal_index: int, sub_goal: SubGoal):
+        if sub_goal.type() ==  'staticSubGoal':
+            fk_child = self.get_forward_kinematics(sub_goal.childLink())
+            fk_parent = self.get_forward_kinematics(sub_goal.parentLink())
+            angles = sub_goal.angle()
+            if angles and isinstance(angles, list) and len(angles) == 4:
+                angles = ca.SX.sym(f"angle_goal_{sub_goal_index}", 3, 3)
+                self._variables.add_parameter(f'angle_goal_{sub_goal_index}', angles)
+                # rotation
+                R = compute_rotation_matrix(angles)
+                fk_child = ca.mtimes(R, fk_child)
+                fk_parent = ca.mtimes(R, fk_parent)
+            elif angles:
+                R = compute_rotation_matrix(angles)
+                fk_child = ca.mtimes(R, fk_child)
+                fk_parent = ca.mtimes(R, fk_parent)
+            return fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
+        if sub_goal.type() == 'staticJointSpaceSubGoal':
+            return self._variables.position_variable()[sub_goal.indices()]
+
+
+
     def set_goal_component(self, goal: GoalComposition):
             # Adds default attractor
             for j, sub_goal in enumerate(goal.subGoals()):
+                fk_sub_goal = self.get_differential_map(j, sub_goal)
                 goal_dimension = sub_goal.m()
-                fk_child = self.get_forward_kinematics(sub_goal.childLink())
-                fk_parent = self.get_forward_kinematics(sub_goal.parentLink())
-                angles = sub_goal.angle()
-                if angles and isinstance(angles, list) and len(angles) == 4:
-                    angles = ca.SX.sym(f"angle_goal_{j}", 3, 3)
-                    self._variables.add_parameter(f'angle_goal_{j}', angles)
-                    # rotation
-                    R = compute_rotation_matrix(angles)
-                    fk_child = ca.mtimes(R, fk_child)
-                    fk_parent = ca.mtimes(R, fk_parent)
-                elif angles:
-                    R = compute_rotation_matrix(angles)
-                    fk_child = ca.mtimes(R, fk_child)
-                    fk_parent = ca.mtimes(R, fk_parent)
-                fk_sub_goal = fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
                 if is_sparse(fk_sub_goal):
                     raise ExpressionSparseError()
                 if sub_goal.type() == 'analyticSubGoal':
