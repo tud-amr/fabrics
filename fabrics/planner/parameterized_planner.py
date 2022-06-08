@@ -321,7 +321,9 @@ class ParameterizedFabricPlanner(object):
             self.set_speed_control()
 
     def get_differential_map(self, sub_goal_index: int, sub_goal: SubGoal):
-        if sub_goal.type() ==  'staticSubGoal':
+        if sub_goal.type() == 'staticJointSpaceSubGoal':
+            return self._variables.position_variable()[sub_goal.indices()]
+        else:
             fk_child = self.get_forward_kinematics(sub_goal.childLink())
             fk_parent = self.get_forward_kinematics(sub_goal.parentLink())
             angles = sub_goal.angle()
@@ -337,8 +339,6 @@ class ParameterizedFabricPlanner(object):
                 fk_child = ca.mtimes(R, fk_child)
                 fk_parent = ca.mtimes(R, fk_parent)
             return fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
-        if sub_goal.type() == 'staticJointSpaceSubGoal':
-            return self._variables.position_variable()[sub_goal.indices()]
 
 
 
