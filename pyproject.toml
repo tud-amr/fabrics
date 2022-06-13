@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.2.23"
+version = "0.2.24"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
@@ -19,6 +19,7 @@ urdfenvs = {git = "https://git@github.com/maxspahn/gym_envs_urdf.git", rev = "ma
 dataclasses = { version = "^0.8", python = "<3.7" }
 pyquaternion = "^0.9.9"
 pickle-mixin = "^1.0.2"
+quaternionic = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.4"
