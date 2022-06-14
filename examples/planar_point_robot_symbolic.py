@@ -137,10 +137,10 @@ def run_point_robot_symbolic(n_steps=5000, render=True):
             radius_obst_0=np.array([obst1.radius()]),
             radius_obst_1=np.array([obst2.radius()]),
             radius_body_1=np.array([0.02]),
-            k_geo_obst_0_leaf=np.array([0.2]),
-            exp_geo_obst_0_leaf=np.array([0.2]),
-            k_geo_obst_1_leaf=np.array([0.2]),
-            exp_geo_obst_1_leaf=np.array([0.2])
+            k_geo_obst_0_1_leaf=np.array([0.2]),
+            exp_geo_obst_0_1_leaf=np.array([0.2]),
+            k_geo_obst_1_1_leaf=np.array([0.2]),
+            exp_geo_obst_1_1_leaf=np.array([0.2])
         )
         ob, *_ = env.step(action)
     return {}

@@ -122,7 +122,7 @@ class ObstacleLeaf(GenericGeometryLeaf):
         collision_link: str,
     ):
         super().__init__(
-            parent_variables, f"{obstacle_name}_leaf", forward_kinematics
+            parent_variables, f"{obstacle_name}_{collision_link}_leaf", forward_kinematics
         )
         self.set_forward_map(obstacle_name, collision_link)
 
