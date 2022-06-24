@@ -13,7 +13,22 @@ class ParameterizedGoalMap(ParameterizedDifferentialMap):
 class ParameterizedGeometryMap(ParameterizedDifferentialMap):
     pass
 
+class ParameterizedObstacleMap(ParameterizedGeometryMap):
+    def __init__(
+        self,
+        var: Variables,
+        fk,
+        radius_variable,
+        radius_body_variable,
+    ):
+        phi = (
+            ca.norm_2(fk)
+            / (radius_variable + radius_body_variable)
+            - 1
+        )
+        super().__init__(phi, var=var)
 
+"""
 class ParameterizedObstacleMap(ParameterizedGeometryMap):
     def __init__(
         self,
@@ -29,3 +44,4 @@ class ParameterizedObstacleMap(ParameterizedGeometryMap):
             - 1
         )
         super().__init__(phi, var=var)
+"""

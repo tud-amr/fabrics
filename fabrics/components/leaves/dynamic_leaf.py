@@ -10,13 +10,14 @@ class DynamicLeaf(object):
         leaf_name: str,
         forward_kinematics: ca.SX,
         dim: int = 1,
+        dim_ref: int = 1,
     ):
         self._parent_variables = parent_variables
         self._x = ca.SX.sym(f"x_{leaf_name}", dim)
         self._xdot = ca.SX.sym(f"xdot_{leaf_name}", dim)
-        self._x_ref = ca.SX.sym(f"x_ref_{leaf_name}", dim)
-        self._xdot_ref = ca.SX.sym(f"xdot_ref_{leaf_name}", dim)
-        self._xddot_ref = ca.SX.sym(f"xddot_ref_{leaf_name}", dim)
+        self._x_ref = ca.SX.sym(f"x_ref_{leaf_name}", dim_ref)
+        self._xdot_ref = ca.SX.sym(f"xdot_ref_{leaf_name}", dim_ref)
+        self._xddot_ref = ca.SX.sym(f"xddot_ref_{leaf_name}", dim_ref)
         reference_parameters = {
             f"x_ref_{leaf_name}": self._x_ref,
             f"xdot_ref_{leaf_name}": self._xdot_ref,
@@ -38,6 +39,7 @@ class DynamicLeaf(object):
         self._dm = None
         self._lag = None
         self._geo = None
+        self._leaf_name = leaf_name
 
     def set_params(self, **kwargs):
         for key in self._p:

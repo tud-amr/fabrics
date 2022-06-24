@@ -2,7 +2,7 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicParameterizedDifferentialMap
 from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables, checkCompatability
 
@@ -110,3 +110,9 @@ class Spec:
         else:
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
         return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=var, refTrajs=refTrajs)
+
+    def dynamic_pull(self, dm: DynamicParameterizedDifferentialMap):
+        M_pulled = self.M()
+        f_pulled = self.f()
+        __import__('pdb').set_trace()
+        return Spec(M_pulled, f=f_pulled, var=dm._vars)

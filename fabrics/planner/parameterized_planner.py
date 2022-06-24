@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import pdb
 from typing import Dict
 import casadi as ca
 import numpy as np
@@ -20,8 +21,8 @@ from fabrics.components.energies.execution_energies import ExecutionLagrangian
 from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
-from fabrics.components.leaves.geometry import GenericGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf
+from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf, GenericGeometryLeaf
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningGoal.subGoal import SubGoal
@@ -146,6 +147,32 @@ class ParameterizedFabricPlanner(object):
         weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian)
         self.add_weighted_geometry(forward_map, weighted_geometry)
 
+    def add_dynamic_geometry(
+        self,
+        forward_map: DifferentialMap,
+        dynamic_map: DifferentialMap,
+        lagrangian: Lagrangian,
+        geometry: Geometry,
+    ) -> None:
+        assert isinstance(forward_map, DifferentialMap)
+        assert isinstance(dynamic_map, DynamicParameterizedDifferentialMap)
+        assert isinstance(lagrangian, Lagrangian)
+        assert isinstance(geometry, Geometry)
+        #if not hasattr(self, '_forced_geometry'):
+        #    self._forced_geometry = deepcopy(self._geometry)
+        #self._forced_geometry += WeightedGeometry(
+        #    g=geometry, le=lagrangian
+        #).pull(dynamic_map).pull(forward_map)
+        weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian)
+        pulled_weighted_geometry = weighted_geometry.pull(forward_map)
+        pulled_2_weighted_geometry = pulled_weighted_geometry.dynamic_pull(dynamic_map)
+        pwg2 = pulled_2_weighted_geometry
+        pwg = pulled_weighted_geometry
+        __import__('pdb').set_trace()
+        self._geometry += pulled_2_weighted_geometry
+        #self._variables = self._variables + self._forced_geometry._vars
+        #self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
+
     def add_weighted_geometry(
         self, forward_map: DifferentialMap, weighted_geometry: WeightedGeometry
     ) -> None:
@@ -159,10 +186,12 @@ class ParameterizedFabricPlanner(object):
     def add_leaf(self, leaf: Leaf, prime_leaf: bool= False) -> None:
         if isinstance(leaf, GenericAttractor):
             self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry(), prime_leaf)
-        if isinstance(leaf, GenericDynamicAttractor):
+        elif isinstance(leaf, GenericDynamicAttractor):
             self.add_dynamic_forcing_geometry(leaf.map(), leaf.dynamic_map(), leaf.lagrangian(), leaf.geometry(), leaf._xdot_ref, prime_leaf)
-        if isinstance(leaf, GenericGeometryLeaf):
+        elif isinstance(leaf, GenericGeometryLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+        elif isinstance(leaf, GenericDynamicGeometryLeaf):
+            self.add_dynamic_geometry(leaf.map(), leaf.dynamic_map(), leaf.lagrangian(), leaf.geometry())
 
     def add_forcing_geometry(
         self,
@@ -273,7 +302,8 @@ class ParameterizedFabricPlanner(object):
         self_collision_pairs: dict,
         goal: GoalComposition = None,
         limits: list = None,
-        number_obstacles: int = 1
+        number_obstacles: int = 1,
+        number_dynamic_obstacles: int = 0,
     ):
         # Adds default obstacle avoidance
         for collision_link in collision_links:
@@ -284,6 +314,12 @@ class ParameterizedFabricPlanner(object):
             for i in range(number_obstacles):
                 obstacle_name = f"obst_{i}"
                 geometry = ObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
+                geometry.set_geometry(self.config.collision_geometry)
+                geometry.set_finsler_structure(self.config.collision_finsler)
+                self.add_leaf(geometry)
+            for i in range(number_dynamic_obstacles):
+                obstacle_name = f"dynamic_obst_{i}"
+                geometry = DynamicObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
