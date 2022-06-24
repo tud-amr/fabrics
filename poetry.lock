@@ -1,6 +1,6 @@
 [[package]]
 name = "astroid"
-version = "2.11.5"
+version = "2.11.6"
 description = "An abstract syntax tree for Python with inference support."
 category = "main"
 optional = false
@@ -88,7 +88,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "colorama"
-version = "0.4.4"
+version = "0.4.5"
 description = "Cross-platform colored terminal text."
 category = "main"
 optional = false
@@ -428,7 +428,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "planarenvs"
-version = "0.1.7"
+version = "1.0.1"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
@@ -437,21 +437,19 @@ develop = false
 
 [package.dependencies]
 casadi = "3.5.6.pre2"
-forwardkinematics = {git = "https://git@github.com/maxspahn/forwardKinematics.git", rev = "release-1.0"}
+forwardkinematics = "1.0.1"
 gym = "^0.21.0"
+motion-planning-scenes = "0.1.19"
 numpy = "^1.5.1"
 pyglet = "^1.5.21"
 pylint = "^2.13.3"
 scipy = "^1.5"
 
-[package.extras]
-scenes = ["motion-planning-scenes @ git+https://git@github.com/maxspahn/motion_planning_scenes.git@main"]
-
 [package.source]
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_planar.git"
-reference = "master"
-resolved_reference = "9e35aaac52fba87500cb469e429ca21659848830"
+reference = "ft-multi-robot"
+resolved_reference = "8cc68cc8c6d18a14b24a48f7f0e57e379a965a20"
 
 [[package]]
 name = "platformdirs"
@@ -823,12 +821,12 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2,<3.10"
-content-hash = "86d327dc5dff3f0f719beae519855878dd11271ca4c10560ff36cda184ecf339"
+content-hash = "4802a81400e91e18dcb8ce9dcbd2be606ee45da87048bbf2cb7116b19b6fc151"
 
 [metadata.files]
 astroid = [
-    {file = "astroid-2.11.5-py3-none-any.whl", hash = "sha256:14ffbb4f6aa2cf474a0834014005487f7ecd8924996083ab411e7fa0b508ce0b"},
-    {file = "astroid-2.11.5.tar.gz", hash = "sha256:f4e4ec5294c4b07ac38bab9ca5ddd3914d4bf46f9006eb5c0ae755755061044e"},
+    {file = "astroid-2.11.6-py3-none-any.whl", hash = "sha256:ba33a82a9a9c06a5ceed98180c5aab16e29c285b828d94696bf32d6015ea82a9"},
+    {file = "astroid-2.11.6.tar.gz", hash = "sha256:4f933d0bf5e408b03a6feb5d23793740c27e07340605f236496cd6ce552043d6"},
 ]
 atomicwrites = [
     {file = "atomicwrites-1.4.0-py2.py3-none-any.whl", hash = "sha256:6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197"},
@@ -887,8 +885,8 @@ cloudpickle = [
     {file = "cloudpickle-2.1.0.tar.gz", hash = "sha256:bb233e876a58491d9590a676f93c7a5473a08f747d5ab9df7f9ce564b3e7938e"},
 ]
 colorama = [
-    {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
-    {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
+    {file = "colorama-0.4.5-py2.py3-none-any.whl", hash = "sha256:854bf444933e37f5824ae7bfc1e98d5bce2ebe4160d46b5edf346a89358e99da"},
+    {file = "colorama-0.4.5.tar.gz", hash = "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"},
 ]
 cycler = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
