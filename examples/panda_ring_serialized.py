@@ -21,7 +21,7 @@ def initalize_environment(render=True, obstacle_resolution=8):
     q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
     initial_observation = env.reset(pos=q0)
     # Definition of the obstacle.
-    radius_ring = 0.20
+    radius_ring = 0.25
     obstacles = []
     whole_position = [0.4, 0.0, 0.7]
     for i in range(obstacle_resolution + 1):
@@ -45,7 +45,7 @@ def initalize_environment(render=True, obstacle_resolution=8):
     goal_dict = {
         "subgoal0": {
             "m": 3,
-            "w": 200.0,
+            "w": 2.0,
             "prime": True,
             "indices": [0, 1, 2],
             "parent_link": 0,
@@ -55,13 +55,13 @@ def initalize_environment(render=True, obstacle_resolution=8):
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "m": 2,
-            "w": 5000.0,
+            "m": 3,
+            "w": 5.0,
             "prime": False,
-            "indices": [1, 2],
+            "indices": [0, 1, 2],
             "parent_link": 6,
             "child_link": 7,
-            "desired_position": [0.0, 0.0],
+            "desired_position": [0.107, 0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -121,10 +121,11 @@ def run_panda_ring_serialized_example(n_steps=5000, render=True):
             weight_goal_1=sub_goal_1_weight,
             x_obsts=obstacle_positions,
             radius_obsts=obstacle_radii,
+            radius_body_panda_link1=np.array([0.1]),
             radius_body_panda_link4=np.array([0.1]),
-            radius_body_panda_link8=np.array([0.1]),
-            radius_body_panda_vacuum=np.array([0.03]),
-            radius_body_panda_vacuum_2=np.array([0.03]),
+            radius_body_panda_link6=np.array([0.15]),
+            radius_body_panda_hand=np.array([0.1]),
+            angle_goal_1=np.identity(3),
         )
         ob, *_ = env.step(action)
     return {}

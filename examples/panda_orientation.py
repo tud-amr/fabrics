@@ -1,5 +1,6 @@
 import gym
 import urdfenvs.panda_reacher  #pylint: disable=unused-import
+from pyquaternion import Quaternion
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
@@ -50,7 +51,7 @@ def initalize_environment(render=True):
             "indices": [0, 1],
             "parent_link": 6,
             "child_link": 7,
-            "angle": [0.0, 0.4, 0.8, 0.3],
+            "angle": [-0.8, -0.7, -0.2, 1.0],
             "desired_position": [0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
@@ -133,8 +134,7 @@ def run_panda_orientation_example(n_steps=5000, render=True):
     sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
-    sub_goal_0_angles = np.identity(3)
-    sub_goal_1_angles = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0]])
+    sub_goal_1_angles = Quaternion(goal.subGoals()[1].angle()).rotation_matrix
     for _ in range(n_steps):
         action = planner.compute_action(
             q=ob["x"],
