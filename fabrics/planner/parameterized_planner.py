@@ -332,12 +332,12 @@ class ParameterizedFabricPlanner(object):
                 self._variables.add_parameter(f'angle_goal_{sub_goal_index}', angles)
                 # rotation
                 R = compute_rotation_matrix(angles)
-                fk_child = ca.mtimes(ca.transpose(R), fk_child)
-                fk_parent = ca.mtimes(ca.transpose(R), fk_parent)
+                fk_child = ca.mtimes(R, fk_child)
+                fk_parent = ca.mtimes(R, fk_parent)
             elif angles:
                 R = compute_rotation_matrix(angles)
-                fk_child = ca.mtimes(ca.transpose(R), fk_child)
-                fk_parent = ca.mtimes(ca.transpose(R), fk_parent)
+                fk_child = ca.mtimes(R, fk_child)
+                fk_parent = ca.mtimes(R, fk_parent)
             return fk_child[sub_goal.indices()] - fk_parent[sub_goal.indices()]
 
 
