@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-import pdb
 from typing import Dict
 import casadi as ca
 import numpy as np
@@ -9,7 +8,7 @@ from fabrics.helpers.exceptions import ExpressionSparseError
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.functions import is_sparse, parse_symbolic_input
 
-from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap, DynamicParameterizedDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
@@ -155,7 +154,7 @@ class ParameterizedFabricPlanner(object):
         geometry: Geometry,
     ) -> None:
         assert isinstance(forward_map, DifferentialMap)
-        assert isinstance(dynamic_map, DynamicParameterizedDifferentialMap)
+        assert isinstance(dynamic_map, DynamicDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
         #if not hasattr(self, '_forced_geometry'):
@@ -168,7 +167,6 @@ class ParameterizedFabricPlanner(object):
         pulled_2_weighted_geometry = pulled_weighted_geometry.dynamic_pull(dynamic_map)
         pwg2 = pulled_2_weighted_geometry
         pwg = pulled_weighted_geometry
-        __import__('pdb').set_trace()
         self._geometry += pulled_2_weighted_geometry
         #self._variables = self._variables + self._forced_geometry._vars
         #self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
@@ -200,7 +198,7 @@ class ParameterizedFabricPlanner(object):
         geometry: Geometry,
         prime_forcing_leaf: bool,
     ) -> None:
-        assert isinstance(forward_map, ParameterizedDifferentialMap)
+        assert isinstance(forward_map, DifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
         if not hasattr(self, '_forced_geometry'):
@@ -223,15 +221,16 @@ class ParameterizedFabricPlanner(object):
         prime_forcing_leaf: bool,
     ) -> None:
         assert isinstance(forward_map, DifferentialMap)
-        assert isinstance(dynamic_map, DynamicParameterizedDifferentialMap)
+        assert isinstance(dynamic_map, DynamicDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
         assert isinstance(target_velocity, ca.SX)
         if not hasattr(self, '_forced_geometry'):
             self._forced_geometry = deepcopy(self._geometry)
-        self._forced_geometry += WeightedGeometry(
-            g=geometry, le=lagrangian
-        ).pull(dynamic_map).pull(forward_map)
+        wg = WeightedGeometry(g=geometry, le=lagrangian)
+        pwg = wg.dynamic_pull(dynamic_map)
+        ppwg = pwg.pull(forward_map)
+        self._forced_geometry += ppwg
         if prime_forcing_leaf:
             self._forced_variables = geometry._vars
             self._forced_forward_map = forward_map

@@ -1,4 +1,3 @@
-import pdb
 import casadi as ca
 import numpy as np
 
@@ -98,6 +97,7 @@ class DynamicObstacleLeaf(GenericDynamicGeometryLeaf):
         self._forward_map = ParameterizedObstacleMap(
             self._parent_variables,
             self._forward_kinematics,
+            np.zeros(2),
             radius_variable,
             radius_body_variable,
         )

@@ -1,3 +1,4 @@
+import pdb
 import casadi as ca
 import numpy as np
 
@@ -6,19 +7,17 @@ from fabrics.helpers.variables import Variables
 
 
 class DifferentialMap:
-    """description"""
+    _vars: Variables
+    _J: ca.SX
+    _Jdot: ca.SX
 
-    def __init__(self, phi: ca.SX, **kwargs):
-        if 'q' in kwargs.keys() and 'qdot' in kwargs.keys():
-            q = kwargs.get('q')
-            qdot = kwargs.get('qdot')
-            self._vars = Variables(state_variables={'q': q, 'qdot': qdot})
-        elif 'var' in kwargs.keys():
-            self._vars = kwargs.get('var')
+    def __init__(self, phi: ca.SX, variables: Variables, **kwargs):
+        assert isinstance(phi, ca.SX)
+        assert isinstance(variables, Variables)
+        self._vars = variables
         Jdot_sign = -1
         if 'Jdot_sign' in kwargs.keys():
             Jdot_sign = kwargs.get('Jdot_sign')
-        assert isinstance(phi, ca.SX)
         self._vars.verify()
         self._phi = phi
         q = self._vars.position_variable()
@@ -26,19 +25,22 @@ class DifferentialMap:
         self._J = ca.jacobian(phi, q)
         self._Jdot = Jdot_sign * ca.jacobian(ca.mtimes(self._J, qdot), q)
 
-    def Jdotqdot(self):
+    def Jdotqdot(self) -> ca.SX:
         return ca.mtimes(self._Jdot, self.qdot())
 
-    def phidot(self):
+    def phidot(self) -> ca.SX:
         return ca.mtimes(self._J, self.qdot())
 
-    def concretize(self):
+    def concretize(self) -> None:
         self._funs = CasadiFunctionWrapper(
             "funs", self._vars.asDict(), {"phi": self._phi, "J": self._J, "Jdot": self._Jdot}
         )
 
-    def params(self):
-        return []
+    def params(self) -> dict:
+        return self._vars.parameters()
+
+    def state_variables(self) -> dict:
+        return self._vars.state_variables()
 
     def forward(self, **kwargs):
         evaluations = self._funs.evaluate(**kwargs)
@@ -53,29 +55,34 @@ class DifferentialMap:
     def qdot(self):
         return self._vars.velocity_variable()
 
-class ParameterizedDifferentialMap(DifferentialMap):
-    def __init__(self, phi: ca.SX, **kwargs):
-        super().__init__(phi, **kwargs)
+class DynamicDifferentialMap(DifferentialMap):
+    _phi_dot: ca.SX
+    _Jdotqdot: ca.SX
 
-class DynamicParameterizedDifferentialMap(DifferentialMap):
-    def __init__(self, phi: ca.SX, phi_dot: ca.SX, Jdotqdot: ca.SX, **kwargs):
-        super().__init__(phi, **kwargs)
-        self._phi_dot = phi_dot
-        self._Jdotqdot = Jdotqdot
+    def __init__(self, variables: Variables, ref_names=['x_ref', 'xdot_ref', 'xddot_ref'], **kwargs):
+        self._x_ref_name = ref_names[0]
+        self._xdot_ref_name = ref_names[1]
+        self._xddot_ref_name = ref_names[2]
+        phi = variables.position_variable() - variables.parameter_by_name(self._x_ref_name)
+        self._phi_dot = variables.velocity_variable() - variables.parameter_by_name(self._xdot_ref_name)
 
-    def phidot(self):
+        super().__init__(phi, variables, **kwargs)
+
+    def x_ref(self) -> ca.SX:
+        return self._vars.parameter_by_name(self._x_ref_name)
+
+    def xdot_ref(self) -> ca.SX:
+        return self._vars.parameter_by_name(self._xdot_ref_name)
+
+    def xddot_ref(self) -> ca.SX:
+        return self._vars.parameter_by_name(self._xddot_ref_name)
+
+    def phidot(self) -> ca.SX:
         return self._phi_dot
 
-    def Jdotqdot(self):
-        return self._Jdotqdot
-
-    def concretize(self):
+    def concretize(self) -> None:
         self._funs = CasadiFunctionWrapper(
-                "funs", self._vars.asDict(),
-                {
-                    "x_rel": self._phi,
-                    "xdot_rel": self._phi_dot
-                }
+            "funs", self._vars.asDict(), {"x_rel": self._phi, "xdot_rel": self._phi_dot}
         )
 
     def forward(self, **kwargs):
@@ -83,45 +90,3 @@ class DynamicParameterizedDifferentialMap(DifferentialMap):
         x = evaluations['x_rel']
         xdot = evaluations['xdot_rel']
         return x, xdot
-
-
-
-class RelativeDifferentialMap(DifferentialMap):
-    def __init__(self, **kwargs):
-        if 'q' in kwargs.keys() and 'qdot' in kwargs.keys():
-            q = kwargs.get('q')
-            qdot = kwargs.get('qdot')
-            self._vars = Variables(state_variables={'q': q, 'qdot': qdot})
-        elif 'var' in kwargs.keys():
-            self._vars = kwargs.get('var')
-        if 'refTraj' in kwargs:
-            self._refTraj = kwargs.get('refTraj')
-        phi = self._vars.position_variable() - self._refTraj.x()
-        super().__init__(phi, var=self._vars)
-        self._relative_velocity = self._vars.velocity_variable() - self._refTraj.xdot()
-
-    def forward(self, **kwargs):
-        for key in kwargs:
-            assert isinstance(kwargs[key], np.ndarray)
-        evaluations = self._funs.evaluate(**kwargs)
-        x = evaluations['phi']
-        xdot = evaluations['relative_velocity']
-        return x, xdot
-
-    def concretize(self):
-        var = self._vars + self._refTraj._vars
-        self._funs = CasadiFunctionWrapper(
-                "funs", var.asDict(),
-                {
-                    "phi": self._phi,
-                    "J": self._J,
-                    "Jdot": self._Jdot,
-                    "relative_velocity": self._relative_velocity
-                }
-        )
-
-    def Jdotqdot(self):
-        return -1 * self._refTraj.xddot()
-
-    def phidot(self):
-        return self.qdot() - self._refTraj.xdot()

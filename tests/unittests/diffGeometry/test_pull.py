@@ -4,6 +4,8 @@ import numpy as np
 from fabrics.diffGeometry.spec import Spec
 from fabrics.diffGeometry.diffMap import DifferentialMap
 
+from fabrics.helpers.variables import Variables
+
 Jdot_sign = -1
 
 
@@ -22,7 +24,8 @@ def simple_differentialMap():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
-    dm = DifferentialMap(phi, q=q, qdot=qdot, Jdot_sign=Jdot_sign)
+    variables = Variables(state_variables={'q': q, 'qdot': qdot})
+    dm = DifferentialMap(phi, variables, Jdot_sign=Jdot_sign)
     return dm
 
 

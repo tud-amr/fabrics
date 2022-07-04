@@ -5,7 +5,7 @@ from copy import deepcopy
 from fabrics.diffGeometry.spec import Spec, checkCompatability
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.diffGeometry.casadi_helpers import outerProduct
 
 from fabrics.helpers.constants import eps
@@ -30,12 +30,15 @@ class EnergizedGeometry(Spec):
 
 class WeightedGeometry(Spec):
     def __init__(self, **kwargs):
+        self._x_ref_name = "x_ref"
+        self._xdot_ref_name = "xdot_ref"
+        self._xddot_ref_name = "xddot_ref"
         le = kwargs.get("le")
         assert isinstance(le, Lagrangian)
         if "g" in kwargs:
             g = kwargs.get("g")
             checkCompatability(le, g)
-            var = g._vars
+            var = g._vars + le._vars
             self._refTrajs = joinRefTrajs(le._refTrajs, g._refTrajs)
             self._le = le
             self._h = g._h
@@ -86,6 +89,11 @@ class WeightedGeometry(Spec):
     def pull(self, dm: DifferentialMap):
         spec = super().pull(dm)
         le_pulled = self._le.pull(dm)
+        return WeightedGeometry(s=spec, le=le_pulled)
+
+    def dynamic_pull(self, dm: DifferentialMap):
+        spec = super().dynamic_pull(dm)
+        le_pulled = self._le.dynamic_pull(dm)
         return WeightedGeometry(s=spec, le=le_pulled)
 
     def x(self):

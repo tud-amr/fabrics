@@ -2,7 +2,7 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicParameterizedDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables, checkCompatability
 
@@ -14,6 +14,9 @@ class Spec:
     """description"""
 
     def __init__(self, M: ca.SX, **kwargs):
+        self._x_ref_name = "x_ref"
+        self._xdot_ref_name = "xdot_ref"
+        self._xddot_ref_name = "xddot_ref"
         if 'f' in kwargs:
             f = kwargs.get('f')
             assert isinstance(f, ca.SX)
@@ -29,10 +32,20 @@ class Spec:
         self._refTrajs = []
         if 'refTrajs' in kwargs:
             self._refTrajs = kwargs.get('refTrajs')
+        if self.is_dynamic():
+            self._J_ref_inv = np.identity(self.x_ref().size()[0])
+        if "J_ref" in kwargs:
+            self._J_ref = kwargs.get("J_ref")
+            import warnings
+            warnings.warn("Casadi pseudo inverse is used in Lagrangian")
+            self._J_ref_inv = ca.pinv(self._J_ref + np.identity(self.x_ref().size()[0]) * eps)
         self._xdot_d = np.zeros(self.x().size()[0])
         self._vars.verify()
         assert isinstance(M, ca.SX)
         self._M = M
+
+    def x_ref(self):
+        return self._vars.parameter_by_name(self._x_ref_name)
 
     def h(self):
         if hasattr(self, '_h'):
@@ -104,15 +117,36 @@ class Spec:
         f_pulled_subst_x_xdot = ca.substitute(
             f_pulled_subst_x, xdot, dm.phidot()
         )
-        var = dm._vars
+        new_state_variables = dm.state_variables()
+        new_parameters = {}
+        new_parameters.update(self._vars.parameters())
+        new_parameters.update(dm.params())
+        new_vars = Variables(state_variables=new_state_variables, parameters=new_parameters)
+        J_ref = dm._J
+        if self.is_dynamic():
+            return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars, J_ref=J_ref)
+        else:
+            return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars)
+        """
         if hasattr(dm, '_refTraj'):
             refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
         else:
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
-        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=var, refTrajs=refTrajs)
+        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars, refTrajs=refTrajs)
+        """
 
-    def dynamic_pull(self, dm: DynamicParameterizedDifferentialMap):
+    def is_dynamic(self) -> bool:
+        return self._x_ref_name in self._vars.parameters()
+
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
         M_pulled = self.M()
-        f_pulled = self.f()
-        __import__('pdb').set_trace()
-        return Spec(M_pulled, f=f_pulled, var=dm._vars)
+        x = self._vars.position_variable()
+        xdot = self._vars.velocity_variable()
+        M_pulled_subst_x = ca.substitute(M_pulled, x, dm._phi)
+        M_pulled_subst_x_xdot = ca.substitute(M_pulled_subst_x, xdot, dm.phidot())
+        f_pulled = self.f()  - ca.mtimes(self.M(), dm.xddot_ref())
+        f_pulled_subst_x = ca.substitute(f_pulled, x, dm._phi)
+        f_pulled_subst_x_xdot = ca.substitute(
+            f_pulled_subst_x, xdot, dm.phidot()
+        )
+        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=dm._vars)

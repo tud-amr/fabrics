@@ -9,6 +9,7 @@ from fabrics.diffGeometry.energized_geometry import (
 from fabrics.diffGeometry.energy import Lagrangian, FinslerStructure
 from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.helpers.constants import eps
+from fabrics.helpers.variables import Variables
 
 
 @pytest.fixture
@@ -26,10 +27,11 @@ def energization_example():
 def energization_example_pulled():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
+    variables = Variables(state_variables={'q': q, 'qdot': qdot})
     x = ca.SX.sym("x", 2)
     xdot = ca.SX.sym("xdot", 2)
     phi = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
-    dm = DifferentialMap(phi, q=q, qdot=qdot, Jdot_sign=+1)
+    dm = DifferentialMap(phi, variables, Jdot_sign=+1)
     h = 0.5 * ca.norm_2(xdot) ** 2 / (x ** 2 + eps)
     geo = Geometry(h=h, x=x, xdot=xdot)
     l = 0.5 * ca.dot(x, x) * ca.dot(xdot, xdot)
@@ -54,11 +56,12 @@ def two_energizations():
 def two_different_spaces():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
+    variables = Variables(state_variables={'q': q, 'qdot': qdot})
     # polar coordinates
     x1 = ca.SX.sym("x", 2)
     xdot1 = ca.SX.sym("xdot", 2)
     phi1 = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
-    dm1 = DifferentialMap(phi1, q=q, qdot=qdot, Jdot_sign=+1)
+    dm1 = DifferentialMap(phi1, variables, Jdot_sign=+1)
     h1 = 0.5 * ca.norm_2(xdot1) ** 2 / (x1 ** 2 + eps)
     geo1 = Geometry(h=h1, x=x1, xdot=xdot1)
     l1 = 0.5 * ca.dot(x1, x1) * ca.dot(xdot1, xdot1)
@@ -67,7 +70,7 @@ def two_different_spaces():
     x2 = ca.SX.sym("x", 1)
     xdot2 = ca.SX.sym("xdot", 1)
     phi2 = q[1]
-    dm2 = DifferentialMap(phi2, q=q, qdot=qdot, Jdot_sign=+1)
+    dm2 = DifferentialMap(phi2, variables, Jdot_sign=+1)
     h2 = 0.5 * ca.norm_2(xdot2) ** 2 / (x2 ** 2 + eps)
     geo2 = Geometry(h=h2, x=x2, xdot=xdot2)
     l2 = 0.5 * ca.dot(x2, x2) * ca.dot(xdot2, xdot2)

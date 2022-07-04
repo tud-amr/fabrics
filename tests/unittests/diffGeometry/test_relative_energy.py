@@ -3,6 +3,7 @@ import casadi as ca
 import numpy as np
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
+from fabrics.diffGeometry.diffMap import DynamicDifferentialMap
 
 from fabrics.helpers.variables import Variables
 
@@ -11,30 +12,28 @@ from fabrics.helpers.variables import Variables
 def rel_lag():
     traj = ['0.5 * t']
     J = ca.SX(np.identity(1))
+    x = ca.SX.sym("x", 1)
+    xdot = ca.SX.sym("xdot", 1)
+    q_rel = ca.SX.sym("q_rel", 1)
+    qdot_rel = ca.SX.sym("qdot_rel", 1)
     q_p = ca.SX.sym("q_p", 1)
     qdot_p = ca.SX.sym("qdot_p", 1)
     qddot_p = ca.SX.sym("qddot_p", 1)
-    variables = Variables(parameters= {'q_p': q_p, 'qdot_p': qdot_p, 'qddot_p': qddot_p})
-    refTraj = AnalyticSymbolicTrajectory(J, 1, traj=traj, var=variables)
-    x = ca.SX.sym("x", 1)
-    xdot = ca.SX.sym("xdot", 1)
-    l_en = 0.5 * (xdot - refTraj.xdot()) ** 2
-    return Lagrangian(l_en, x=x, xdot=xdot, refTrajs=[refTraj])
+    variables = Variables(state_variables={'q_rel': q_rel, 'qdot_rel': qdot_rel})
+    l_en = 0.5 * (qdot_rel) ** 2
+    variables_dynamic = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x_ref': q_p, 'xdot_ref': qdot_p, 'xddot_ref': qddot_p})
+    dm = DynamicDifferentialMap(variables_dynamic)
+    return Lagrangian(l_en, var=variables).dynamic_pull(dm)
 
 
 def test_rel_lag(rel_lag):
-    ref_traj = rel_lag._refTrajs[0]
-    ref_traj.concretize()
     rel_lag.concretize()
-    # Evaluation
-    t = 0.5
-    x_p, xdot_p, xddot_p = ref_traj.evaluate(t)
-    assert x_p == pytest.approx(0.25)
-    assert xdot_p == pytest.approx(0.5)
-    assert xddot_p == pytest.approx(0.0)
+    x_p = np.array([0.25])
+    xdot_p = np.array([0.5])
+    xddot_p = np.array([0.0])
     x = np.array([0.0])
     xdot = np.array([0.0])
-    M, f, H = rel_lag.evaluate(x=x, xdot=xdot, q_p=x_p, qdot_p=xdot_p, qddot_p=xddot_p)
+    M, f, H = rel_lag.evaluate(x=x, xdot=xdot, x_ref=x_p, xdot_ref=xdot_p, xddot_ref=xddot_p)
     assert H == pytest.approx(0.5**3, rel=1e-4)
     assert M[0, 0] == pytest.approx(1.0, rel=1e-4)
     assert f[0] == pytest.approx(0.0, rel=1e-4)

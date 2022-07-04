@@ -1,15 +1,16 @@
-import pdb
 import casadi as ca
 import numpy as np
 
 from copy import deepcopy
 
 from fabrics.diffGeometry.spec import Spec, checkCompatability
-from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 
 from fabrics.helpers.functions import joinRefTrajs
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+
+from fabrics.helpers.constants import eps
 
 
 class LagrangianException(Exception):
@@ -26,6 +27,9 @@ class Lagrangian(object):
 
     def __init__(self, l: ca.SX, **kwargs):
         self._l = l
+        self._x_ref_name = "x_ref"
+        self._xdot_ref_name = "xdot_ref"
+        self._xddot_ref_name = "xddot_ref"
         assert isinstance(l, ca.SX)
         if 'x' in kwargs:
             self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
@@ -36,7 +40,17 @@ class Lagrangian(object):
         if 'refTrajs' in kwargs:
             self._refTrajs = kwargs.get('refTrajs')
             self._rel = len(self._refTrajs) > 0
+        if self.is_dynamic():
+            self._J_ref_inv = np.identity(self.x_ref().size()[0])
+        if "J_ref" in kwargs:
+            self._J_ref = kwargs.get("J_ref")
+            import warnings
+            warnings.warn("Casadi pseudo inverse is used in Lagrangian")
+            self._J_ref_inv = ca.pinv(self._J_ref + np.identity(self.x_ref().size()[0]) * eps)
         self.applyEulerLagrange()
+
+    def x_ref(self):
+        return self._vars.parameter_by_name(self._x_ref_name)
 
     def x(self):
         return self._vars.position_variable()
@@ -45,8 +59,8 @@ class Lagrangian(object):
         return self._vars.velocity_variable()
 
     def xdot_rel(self):
-        if self._rel:
-            return self.xdot() - self._refTrajs[-1].xdot()
+        if self.is_dynamic():
+            return self.xdot() - ca.mtimes(self._J_ref_inv, self._vars.parameter_by_name('xdot_ref'))
         else:
             return self.xdot()
 
@@ -56,6 +70,10 @@ class Lagrangian(object):
         refTrajs = joinRefTrajs(self._refTrajs, b._refTrajs)
         return Lagrangian(self._l + b._l, var=self._vars, refTrajs=refTrajs)
 
+    def is_dynamic(self) -> bool:
+        return self._x_ref_name in self._vars.parameters()
+
+
     def applyEulerLagrange(self):
         dL_dxdot = ca.gradient(self._l, self.xdot())
         dL_dx = ca.gradient(self._l, self.x())
@@ -64,8 +82,10 @@ class Lagrangian(object):
         f_rel = np.zeros(self.x().size()[0])
         en_rel = np.zeros(1)
 
-        for refTraj in self._refTrajs:
-            x_ref, xdot_ref, xddot_ref = refTraj.parameters()
+        if self.is_dynamic():
+            x_ref = self._vars.parameters()['x_ref']
+            xdot_ref = self._vars.parameters()['xdot_ref']
+            xddot_ref = self._vars.parameters()['xddot_ref']
             dL_dxpdot = ca.gradient(self._l, xdot_ref)
             d2L_dxdotdxpdot = ca.jacobian(dL_dxdot, xdot_ref)
             d2L_dxdotdxp = ca.jacobian(dL_dxdot, x_ref)
@@ -101,12 +121,26 @@ class Lagrangian(object):
         assert isinstance(dm, DifferentialMap)
         l_subst = ca.substitute(self._l, self.x(), dm._phi)
         l_subst2 = ca.substitute(l_subst, self.xdot(), dm.phidot())
-        new_vars = dm._vars
+        new_state_variables = dm.state_variables()
+        new_parameters = {}
+        new_parameters.update(self._vars.parameters())
+        new_parameters.update(dm.params())
+        new_vars = Variables(state_variables=new_state_variables, parameters=new_parameters)
         if hasattr(dm, '_refTraj'):
             refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
         else:
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
-        return Lagrangian(l_subst2, var=new_vars, refTrajs=refTrajs)
+        J_ref = dm._J
+        if self.is_dynamic():
+            return Lagrangian(l_subst2, var=new_vars, J_ref=J_ref)
+        else:
+            return Lagrangian(l_subst2, var=new_vars)
+
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
+        l_pulled = self._l
+        l_pulled_subst_x = ca.substitute(l_pulled, self.x(), dm._phi)
+        l_pulled_subst_x_xdot = ca.substitute(l_pulled_subst_x, self.xdot(), dm.phidot())
+        return Lagrangian(l_pulled_subst_x_xdot, var=dm._vars)
 
 
 class FinslerStructure(Lagrangian):

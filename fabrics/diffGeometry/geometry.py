@@ -1,8 +1,9 @@
+import pdb
 import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import joinVariables
 from fabrics.helpers.variables import Variables
@@ -57,12 +58,22 @@ class Geometry:
         h_pulled = ca.mtimes(ca.pinv(JtJ_eps), h_1 + h_2)
         h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
         h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
-        new_vars = dm._vars
+        new_state_variables = dm.state_variables()
+        new_parameters = {}
+        new_parameters.update(self._vars.parameters())
+        new_parameters.update(dm.params())
+        new_vars = Variables(state_variables=new_state_variables, parameters=new_parameters)
         if hasattr(dm, '_refTraj'):
             refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
         else:
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
         return Geometry(h=h_pulled_subst_x_xdot, var=new_vars, refTrajs=refTrajs)
+
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
+        h_pulled = self._h - dm.params()['xddot_ref']
+        h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
+        h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
+        return Geometry(h=h_pulled_subst_x_xdot, var=dm._vars)
 
     def concretize(self):
         self._xddot = -self._h

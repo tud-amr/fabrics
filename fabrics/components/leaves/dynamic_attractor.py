@@ -28,7 +28,8 @@ class GenericDynamicAttractor(DynamicLeaf):
             root_variables,
             f"{attractor_name}_leaf",
             fk_goal,
-            dim=goal_dimension,
+            dim_ref=goal_dimension,
+            dim=goal_dimension
         )
         self.set_forward_map(attractor_name)
 
@@ -45,7 +46,7 @@ class GenericDynamicAttractor(DynamicLeaf):
         }
         self._weight = weight_variable
         self._parent_variables.add_parameters(geo_parameters)
-        self._forward_map = DifferentialMap(self._forward_kinematics, var=self._parent_variables)
+        self._forward_map = DifferentialMap(self._forward_kinematics, self._parent_variables)
 
     def set_potential(self, potential: str) -> None:
         x = self._x

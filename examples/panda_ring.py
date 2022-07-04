@@ -191,7 +191,7 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
             radius_body_panda_link4=np.array([0.1]),
             radius_body_panda_link6=np.array([0.15]),
             radius_body_panda_hand=np.array([0.1]),
-            angle_goal_1=sub_goal_0_rotation_matrix,
+            angle_goal_1=np.array(sub_goal_0_rotation_matrix),
         )
         ob, *_ = env.step(action)
 
@@ -199,4 +199,4 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
 
 
 if __name__ == "__main__":
-    res = run_panda_ring_example(n_steps=10000)
+    res = run_panda_ring_example(n_steps=10000, serialize = True)

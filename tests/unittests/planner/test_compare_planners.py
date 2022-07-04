@@ -4,7 +4,6 @@ import numpy as np
 from fabrics.planner.fabricPlanner import FabricPlanner
 from fabrics.diffGeometry.diffMap import (
     DifferentialMap,
-    RelativeDifferentialMap,
 )
 from fabrics.diffGeometry.energy import FinslerStructure, Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
@@ -96,7 +95,7 @@ def planner_non_parameterized_1d():
     planner = FabricPlanner(geo_base, l_base)
     q_0 = 1
     phi = ca.fabs(q - q_0) - 1
-    dm = DifferentialMap(phi, var=var_q)
+    dm = DifferentialMap(phi, var_q)
     lg = 1 / x * xdot
     l = FinslerStructure(lg, var=var_x)
     h = 0.5 / (x ** 2) * xdot
@@ -120,7 +119,7 @@ def planner_non_parameterized_2d():
     planner = FabricPlanner(geo_base, l_base)
     q0 = np.array([1.0, 0.0])
     phi = ca.norm_2(q - q0) - 1
-    dm = DifferentialMap(phi, var=var_q)
+    dm = DifferentialMap(phi, var_q)
     lg = 1 / x * xdot
     l = FinslerStructure(lg, var=var_x)
     h = 0.5 / (x ** 2) * xdot

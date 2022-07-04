@@ -2,7 +2,7 @@ import pytest
 import casadi as ca
 import numpy as np
 from fabrics.helpers.variables import Variables
-from fabrics.diffGeometry.diffMap import DynamicParameterizedDifferentialMap
+from fabrics.diffGeometry.diffMap import DynamicDifferentialMap
 
 Jdot_sign = +1
 
@@ -21,7 +21,7 @@ def test_dynamic_map_creation():
     phi = x - x_ref
     phi_dot = xdot - xdot_ref
     Jdotqdot = -xddot_ref
-    dm = DynamicParameterizedDifferentialMap(phi, phi_dot, Jdotqdot, var=var)
+    dm = DynamicDifferentialMap(var)
     dm.concretize()
     x_test = np.array([0.1, 0.2])
     xdot_test = np.array([0.1, 0.2])
