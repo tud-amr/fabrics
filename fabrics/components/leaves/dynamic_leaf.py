@@ -15,8 +15,10 @@ class DynamicLeaf(object):
         self._parent_variables = parent_variables
         self._x = ca.SX.sym(f"x_{leaf_name}", dim)
         self._xdot = ca.SX.sym(f"xdot_{leaf_name}", dim)
-        self._x_rel = ca.SX.sym(f"x_rel_{leaf_name}", dim)
-        self._xdot_rel = ca.SX.sym(f"xdot_rel_{leaf_name}", dim)
+        self._fk_x = ca.SX.sym(f"fk_x_{leaf_name}", dim_ref)
+        self._fk_xdot = ca.SX.sym(f"fk_xdot_{leaf_name}", dim_ref)
+        self._x_rel = ca.SX.sym(f"x_rel_{leaf_name}", dim_ref)
+        self._xdot_rel = ca.SX.sym(f"xdot_rel_{leaf_name}", dim_ref)
         self._x_ref = ca.SX.sym(f"x_ref_{leaf_name}", dim_ref)
         self._xdot_ref = ca.SX.sym(f"xdot_ref_{leaf_name}", dim_ref)
         self._xddot_ref = ca.SX.sym(f"xddot_ref_{leaf_name}", dim_ref)
@@ -25,11 +27,13 @@ class DynamicLeaf(object):
             f"xdot_ref_{leaf_name}": self._xdot_ref,
             f"xddot_ref_{leaf_name}": self._xddot_ref,
         }
-        self._leaf_variables = Variables(
-            state_variables={f"x_{leaf_name}": self._x, f"xdot_{leaf_name}": self._xdot},
+        self._fk_variables = Variables(
+            state_variables={f"fk_x_{leaf_name}": self._fk_x, f"fk_xdot_{leaf_name}": self._fk_xdot},
             parameters=reference_parameters,
         )
-        #self._parent_variables.add_parameters(reference_parameters)
+        self._leaf_variables = Variables(
+            state_variables={f"x_{leaf_name}": self._x, f"xdot_{leaf_name}": self._xdot},
+        )
         self._relative_variables = Variables(
                 state_variables={'x_rel': self._x_rel, 'xdot_rel': self._xdot_rel}
             )
@@ -37,7 +41,7 @@ class DynamicLeaf(object):
         phi_dot_dynamic = self._xdot - self._xdot_ref
         Jdotqdot_dynamic = -self._xddot_ref
         self._dynamic_map = DynamicDifferentialMap(
-                self._leaf_variables, ref_names=list(reference_parameters.keys())
+                self._fk_variables, ref_names=list(reference_parameters.keys())
         )
         self._parent_variables.add_parameters(reference_parameters)
         self._forward_kinematics = forward_kinematics

@@ -94,13 +94,17 @@ class DynamicObstacleLeaf(GenericDynamicGeometryLeaf):
             radius_body_name: radius_body_variable,
         }
         self._parent_variables.add_parameters(geo_parameters)
-        self._forward_map = ParameterizedObstacleMap(
-            self._parent_variables,
-            self._forward_kinematics,
+        self._forward_map = DifferentialMap(self._forward_kinematics, self._parent_variables)
+        self._geometry_map = ParameterizedObstacleMap(
+            self._relative_variables,
+            self._relative_variables.position_variable(),
             np.zeros(2),
             radius_variable,
             radius_body_variable,
         )
+
+    def geometry_map(self):
+        return self._geometry_map
 
     def map(self):
         return self._forward_map

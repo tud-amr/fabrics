@@ -149,11 +149,13 @@ class ParameterizedFabricPlanner(object):
     def add_dynamic_geometry(
         self,
         forward_map: DifferentialMap,
-        dynamic_map: DifferentialMap,
+        dynamic_map: DynamicDifferentialMap,
+        geometry_map: DifferentialMap,
         lagrangian: Lagrangian,
         geometry: Geometry,
     ) -> None:
         assert isinstance(forward_map, DifferentialMap)
+        assert isinstance(geometry_map, DifferentialMap)
         assert isinstance(dynamic_map, DynamicDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
@@ -163,11 +165,10 @@ class ParameterizedFabricPlanner(object):
         #    g=geometry, le=lagrangian
         #).pull(dynamic_map).pull(forward_map)
         weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian)
-        pulled_weighted_geometry = weighted_geometry.pull(forward_map)
-        pulled_2_weighted_geometry = pulled_weighted_geometry.dynamic_pull(dynamic_map)
-        pwg2 = pulled_2_weighted_geometry
-        pwg = pulled_weighted_geometry
-        self._geometry += pulled_2_weighted_geometry
+        pwg1 = weighted_geometry.pull(geometry_map)
+        pwg2 = pwg1.dynamic_pull(dynamic_map)
+        pwg3 = pwg2.pull(forward_map)
+        self._geometry += pwg3
         #self._variables = self._variables + self._forced_geometry._vars
         #self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
 
@@ -189,7 +190,7 @@ class ParameterizedFabricPlanner(object):
         elif isinstance(leaf, GenericGeometryLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
         elif isinstance(leaf, GenericDynamicGeometryLeaf):
-            self.add_dynamic_geometry(leaf.map(), leaf.dynamic_map(), leaf.lagrangian(), leaf.geometry())
+            self.add_dynamic_geometry(leaf.map(), leaf.dynamic_map(), leaf.geometry_map(), leaf.lagrangian(), leaf.geometry())
 
     def add_forcing_geometry(
         self,
