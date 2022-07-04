@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.2.26"
+version = "0.2.27"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
