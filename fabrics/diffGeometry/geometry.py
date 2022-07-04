@@ -14,6 +14,9 @@ class Geometry:
     """description"""
 
     def __init__(self, **kwargs):
+        self._x_ref_name = "x_ref"
+        self._xdot_ref_name = "xdot_ref"
+        self._xddot_ref_name = "xddot_ref"
         if 'x' in kwargs:
             h = kwargs.get("h")
             self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
@@ -71,6 +74,10 @@ class Geometry:
 
     def dynamic_pull(self, dm: DynamicDifferentialMap):
         h_pulled = self._h - dm.params()['xddot_ref']
+        return Geometry(h=h_pulled_subst_x_xdot, var=dm._vars)
+
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
+        h_pulled = self._h - dm.xddot_ref()
         h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
         h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
         return Geometry(h=h_pulled_subst_x_xdot, var=dm._vars)

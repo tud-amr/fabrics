@@ -20,14 +20,14 @@ def initalize_environment(render=True):
     env = gym.make(
         "point-robot-acc-v0", dt=0.01, render=render
     )
-    q0 = np.array([3.3, 0.5])
-    qdot0 = np.array([-0.7, 0.0])
+    q0 = np.array([-2.6, 0.5])
+    qdot0 = np.array([-0.0, 0.0])
     initial_observation = env.reset(pos=q0, vel=qdot0)
     # Definition of the obstacle.
     static_obst_dict = {
         "dim": 2,
         "type": "sphere",
-        "geometry": {"trajectory": ["-3.0", "6 - 0.5 * t"], "radius": 0.6},
+        "geometry": {"trajectory": ["-3.0", "6 - 1.5 * t"], "radius": 0.6},
     }
     obst1 = DynamicSphereObstacle(name="staticObst", contentDict=static_obst_dict)
     static_obst_dict = {
@@ -54,7 +54,7 @@ def initalize_environment(render=True):
     obstacles = (obst1, obst2)
     env.add_goal(goal)
     env.add_obstacle(obst1)
-    env.add_obstacle(obst2)
+    #env.add_obstacle(obst2)
     return (env, obstacles, goal, initial_observation)
 
 
@@ -91,7 +91,7 @@ def set_planner(goal: GoalComposition):
     #     damper=damper,
     # )
     collision_geometry: str = (
-        "-3.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1))  * xdot ** 2"
+        "3.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1))  * xdot ** 2"
     )
     collision_finsler: str = (
         "5.0/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
@@ -103,8 +103,8 @@ def set_planner(goal: GoalComposition):
         degrees_of_freedom,
         robot_type,
         collision_geometry=collision_geometry,
-        collision_finsler=collision_finsler,
-        base_energy=base_energy,
+        #collision_finsler=collision_finsler,
+        #base_energy=base_energy,
     )
     # The planner hides all the logic behind the function set_components.
     collision_links = [1]
@@ -113,9 +113,9 @@ def set_planner(goal: GoalComposition):
     planner.set_components(
         collision_links,
         self_collision_links,
-        goal,
+        None,
         number_obstacles=0,
-        number_dynamic_obstacles=2,
+        number_dynamic_obstacles=1,
         limits=joint_limits
     )
     planner.concretize()

@@ -168,6 +168,10 @@ class ParameterizedFabricPlanner(object):
         pwg1 = weighted_geometry.pull(geometry_map)
         pwg2 = pwg1.dynamic_pull(dynamic_map)
         pwg3 = pwg2.pull(forward_map)
+        g1 = geometry.pull(geometry_map)
+        g2 = g1.dynamic_pull(dynamic_map)
+        g3 = g2.pull(forward_map)
+        __import__('pdb').set_trace()
         self._geometry += pwg3
         #self._variables = self._variables + self._forced_geometry._vars
         #self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
