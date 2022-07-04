@@ -25,14 +25,14 @@ def initalize_environment(render):
     """
     env = gym.make("pointRobotUrdf-acc-v0", dt=0.05, render=render)
     # Set the initial position and velocity of the point mass.
-    pos0 = np.array([0.0, 0.0, 0.0])
+    pos0 = np.array([-2.0, 0.2, 0.0])
     vel0 = np.array([0.0, 0.0, 0.0])
     initial_observation = env.reset(pos=pos0, vel=vel0)
     # Definition of the obstacle.
     static_obst_dict = {
             "dim": 3,
             "type": "sphere",
-            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 0.5},
+            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
     }
     obst1 = SphereObstacle(name="staticObst1", contentDict=static_obst_dict)
     obstacles = (obst1) # Add additional obstacles here.
@@ -40,7 +40,7 @@ def initalize_environment(render):
     goal_dict = {
             "subgoal0": {
                 "m": 2,
-                "w": 2,
+                "w": 1.0,
                 "prime": True,
                 "indices": [0, 1],
                 "parent_link" : 0,
@@ -76,8 +76,8 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 2
     robot_type = "pointRobot"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot * 2) - 0.5)) * xdot ** 2"
-    collision_finsler = "0.1/((x - 0.3)**1) * xdot**2"
+    collision_geometry = "-2.5 / (x ** 1) * (-0.5 * (ca.sign(xdot * 2) - 0.5)) * xdot ** 2"
+    collision_finsler = "1.0/(x**1) * xdot**2"
     planner = ParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
@@ -128,7 +128,7 @@ def run_point_mass_example(n_steps=10000, render=True):
             weight_goal_0=sub_goal_0_weight,
             x_obst_0=obst1_position[0:2],
             radius_obst_0=np.array([obst1.radius()]),
-            radius_body_1=np.array([0.2])
+            radius_body_1=np.array([0.5])
         )
         # One step forward using the action provided by the fabric planner, currently clipped to set minimum and maximum value.
         ob, *_, = env.step(np.clip(action, -2.174, 2.174))
