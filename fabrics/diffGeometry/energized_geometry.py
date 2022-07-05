@@ -5,7 +5,7 @@ from copy import deepcopy
 from fabrics.diffGeometry.spec import Spec, checkCompatability
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.casadi_helpers import outerProduct
 
 from fabrics.helpers.constants import eps
@@ -91,7 +91,7 @@ class WeightedGeometry(Spec):
         le_pulled = self._le.pull(dm)
         return WeightedGeometry(s=spec, le=le_pulled)
 
-    def dynamic_pull(self, dm: DifferentialMap):
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
         spec = super().dynamic_pull(dm)
         le_pulled = self._le.dynamic_pull(dm)
         return WeightedGeometry(s=spec, le=le_pulled)

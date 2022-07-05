@@ -159,22 +159,11 @@ class ParameterizedFabricPlanner(object):
         assert isinstance(dynamic_map, DynamicDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
-        #if not hasattr(self, '_forced_geometry'):
-        #    self._forced_geometry = deepcopy(self._geometry)
-        #self._forced_geometry += WeightedGeometry(
-        #    g=geometry, le=lagrangian
-        #).pull(dynamic_map).pull(forward_map)
         weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian)
         pwg1 = weighted_geometry.pull(geometry_map)
         pwg2 = pwg1.dynamic_pull(dynamic_map)
         pwg3 = pwg2.pull(forward_map)
-        g1 = geometry.pull(geometry_map)
-        g2 = g1.dynamic_pull(dynamic_map)
-        g3 = g2.pull(forward_map)
-        __import__('pdb').set_trace()
         self._geometry += pwg3
-        #self._variables = self._variables + self._forced_geometry._vars
-        #self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
 
     def add_weighted_geometry(
         self, forward_map: DifferentialMap, weighted_geometry: WeightedGeometry
