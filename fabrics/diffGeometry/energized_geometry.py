@@ -35,6 +35,11 @@ class WeightedGeometry(Spec):
         self._xddot_ref_name = "xddot_ref"
         le = kwargs.get("le")
         assert isinstance(le, Lagrangian)
+        if 'ref_names' in kwargs:
+            ref_names = kwargs.get('ref_names')
+            self._x_ref_name = ref_names[0]
+            self._xdot_ref_name = ref_names[1]
+            self._xddot_ref_name = ref_names[2]
         if "g" in kwargs:
             g = kwargs.get("g")
             checkCompatability(le, g)
@@ -49,12 +54,12 @@ class WeightedGeometry(Spec):
             checkCompatability(le, s)
             self._le = le
             refTrajs = joinRefTrajs(le._refTrajs, s._refTrajs)
-            super().__init__(s.M(), f=s.f(), var=s._vars, refTrajs=refTrajs)
+            super().__init__(s.M(), f=s.f(), var=s._vars, refTrajs=refTrajs, ref_names=self.ref_names())
 
     def __add__(self, b):
         spec = super().__add__(b)
         le = self._le + b._le
-        return WeightedGeometry(s=spec, le=le)
+        return WeightedGeometry(s=spec, le=le, ref_names=spec.ref_names())
 
     def computeAlpha(self):
         xdot = self._le.xdot_rel()
@@ -89,12 +94,12 @@ class WeightedGeometry(Spec):
     def pull(self, dm: DifferentialMap):
         spec = super().pull(dm)
         le_pulled = self._le.pull(dm)
-        return WeightedGeometry(s=spec, le=le_pulled)
+        return WeightedGeometry(s=spec, le=le_pulled, ref_names=self.ref_names())
 
     def dynamic_pull(self, dm: DynamicDifferentialMap):
         spec = super().dynamic_pull(dm)
         le_pulled = self._le.dynamic_pull(dm)
-        return WeightedGeometry(s=spec, le=le_pulled)
+        return WeightedGeometry(s=spec, le=le_pulled, ref_names=dm.ref_names())
 
     def x(self):
         return self._le.x()

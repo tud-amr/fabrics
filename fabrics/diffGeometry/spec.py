@@ -17,6 +17,11 @@ class Spec:
         self._x_ref_name = "x_ref"
         self._xdot_ref_name = "xdot_ref"
         self._xddot_ref_name = "xddot_ref"
+        if 'ref_names' in kwargs:
+            ref_names = kwargs.get('ref_names')
+            self._x_ref_name = ref_names[0]
+            self._xdot_ref_name = ref_names[1]
+            self._xddot_ref_name = ref_names[2]
         if 'f' in kwargs:
             f = kwargs.get('f')
             assert isinstance(f, ca.SX)
@@ -52,6 +57,9 @@ class Spec:
             return self._h
         else:
             return ca.mtimes(self.Minv(), self._f)
+
+    def ref_names(self) -> list:
+        return [self._x_ref_name, self._xdot_ref_name, self._xddot_ref_name]
 
     def f(self):
         if hasattr(self, '_f'):
@@ -95,10 +103,17 @@ class Spec:
         assert isinstance(b, Spec)
         checkCompatability(self, b)
         all_vars = self._vars + b._vars
-        if hasattr(self, '_h') and hasattr(b, '_h') and 1 == 2:
-            return Spec(self.M() + b.M(), h=self.h() + b.h(), var=all_vars)
+        ref_names = []
+        if self.is_dynamic():
+            ref_names += self.ref_names()
+        if b.is_dynamic():
+            ref_names += b.ref_names()
+        if len(ref_names) == 0:
+            ref_names = ['x_ref', 'xdot_ref', 'xddot_ref']
+        if hasattr(self, '_h') and hasattr(b, '_h'):
+            return Spec(self.M() + b.M(), h=self.h() + b.h(), var=all_vars, ref_names=ref_names)
         else:
-            return Spec(self.M() + b.M(), f=self.f() + b.f(), var=all_vars)
+            return Spec(self.M() + b.M(), f=self.f() + b.f(), var=all_vars, ref_names=ref_names)
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
@@ -124,9 +139,9 @@ class Spec:
         new_vars = Variables(state_variables=new_state_variables, parameters=new_parameters)
         J_ref = dm._J
         if self.is_dynamic():
-            return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars, J_ref=J_ref)
+            return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars, J_ref=J_ref, ref_names=self.ref_names())
         else:
-            return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars)
+            return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=new_vars, ref_names=self.ref_names())
         """
         if hasattr(dm, '_refTraj'):
             refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
@@ -136,6 +151,7 @@ class Spec:
         """
 
     def is_dynamic(self) -> bool:
+        print(f"{self._x_ref_name}, {self._vars.parameters()}")
         return self._x_ref_name in self._vars.parameters()
 
     def dynamic_pull(self, dm: DynamicDifferentialMap):
@@ -149,4 +165,4 @@ class Spec:
         f_pulled_subst_x_xdot = ca.substitute(
             f_pulled_subst_x, xdot, dm.phidot()
         )
-        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=dm._vars)
+        return Spec(M_pulled_subst_x_xdot, f=f_pulled_subst_x_xdot, var=dm._vars, ref_names=dm.ref_names())

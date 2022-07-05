@@ -77,6 +77,9 @@ class DynamicDifferentialMap(DifferentialMap):
     def xddot_ref(self) -> ca.SX:
         return self._vars.parameter_by_name(self._xddot_ref_name)
 
+    def ref_names(self) -> list:
+        return [self._x_ref_name, self._xdot_ref_name, self._xddot_ref_name]
+
     def phidot(self) -> ca.SX:
         return self._phi_dot
 

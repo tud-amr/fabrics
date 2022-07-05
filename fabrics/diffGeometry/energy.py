@@ -37,6 +37,11 @@ class Lagrangian(object):
             self._vars = kwargs.get('var')
         self._rel = False
         self._refTrajs = []
+        if 'ref_names' in kwargs:
+            ref_names = kwargs.get('ref_names')
+            self._x_ref_name = ref_names[0]
+            self._xdot_ref_name = ref_names[1]
+            self._xddot_ref_name = ref_names[2]
         if 'refTrajs' in kwargs:
             self._refTrajs = kwargs.get('refTrajs')
             self._rel = len(self._refTrajs) > 0
@@ -60,7 +65,7 @@ class Lagrangian(object):
 
     def xdot_rel(self):
         if self.is_dynamic():
-            return self.xdot() - ca.mtimes(self._J_ref_inv, self._vars.parameter_by_name('xdot_ref'))
+            return self.xdot() - ca.mtimes(self._J_ref_inv, self._vars.parameter_by_name(self._xdot_ref_name))
         else:
             return self.xdot()
 
@@ -68,9 +73,17 @@ class Lagrangian(object):
         assert isinstance(b, Lagrangian)
         checkCompatability(self, b)
         refTrajs = joinRefTrajs(self._refTrajs, b._refTrajs)
-        return Lagrangian(self._l + b._l, var=self._vars, refTrajs=refTrajs)
+        ref_names = []
+        if self.is_dynamic():
+            ref_names += self.ref_names()
+        if b.is_dynamic():
+            ref_names += b.ref_names()
+        if len(ref_names) == 0:
+            ref_names = ['x_ref', 'xdot_ref', 'xddot_ref']
+        return Lagrangian(self._l + b._l, var=self._vars, refTrajs=refTrajs, ref_names=ref_names)
 
     def is_dynamic(self) -> bool:
+        print(f"Lagrangian is dynamic: {self._x_ref_name in self._vars.parameters()}")
         return self._x_ref_name in self._vars.parameters()
 
 
@@ -83,9 +96,9 @@ class Lagrangian(object):
         en_rel = np.zeros(1)
 
         if self.is_dynamic():
-            x_ref = self._vars.parameters()['x_ref']
-            xdot_ref = self._vars.parameters()['xdot_ref']
-            xddot_ref = self._vars.parameters()['xddot_ref']
+            x_ref = self._vars.parameters()[self._x_ref_name]
+            xdot_ref = self._vars.parameters()[self._xdot_ref_name]
+            xddot_ref = self._vars.parameters()[self._xddot_ref_name]
             dL_dxpdot = ca.gradient(self._l, xdot_ref)
             d2L_dxdotdxpdot = ca.jacobian(dL_dxdot, xdot_ref)
             d2L_dxdotdxp = ca.jacobian(dL_dxdot, x_ref)
@@ -110,6 +123,9 @@ class Lagrangian(object):
             "funs", var.asDict(), {"H": self._H}
         )
 
+    def ref_names(self) -> list:
+        return [self._x_ref_name, self._xdot_ref_name, self._xddot_ref_name]
+
 
     def evaluate(self, **kwargs):
         funs = self._funs.evaluate(**kwargs)
@@ -132,15 +148,15 @@ class Lagrangian(object):
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
         J_ref = dm._J
         if self.is_dynamic():
-            return Lagrangian(l_subst2, var=new_vars, J_ref=J_ref)
+            return Lagrangian(l_subst2, var=new_vars, J_ref=J_ref, ref_names=self.ref_names())
         else:
-            return Lagrangian(l_subst2, var=new_vars)
+            return Lagrangian(l_subst2, var=new_vars, ref_names=self.ref_names())
 
     def dynamic_pull(self, dm: DynamicDifferentialMap):
         l_pulled = self._l
         l_pulled_subst_x = ca.substitute(l_pulled, self.x(), dm._phi)
         l_pulled_subst_x_xdot = ca.substitute(l_pulled_subst_x, self.xdot(), dm.phidot())
-        return Lagrangian(l_pulled_subst_x_xdot, var=dm._vars)
+        return Lagrangian(l_pulled_subst_x_xdot, var=dm._vars, ref_names=dm.ref_names())
 
 
 class FinslerStructure(Lagrangian):
