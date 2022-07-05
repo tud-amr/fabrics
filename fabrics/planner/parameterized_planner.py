@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict
+import logging
 import casadi as ca
 import numpy as np
 from copy import deepcopy
@@ -159,7 +160,7 @@ class ParameterizedFabricPlanner(object):
         assert isinstance(dynamic_map, DynamicDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
-        weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian)
+        weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian, ref_names=dynamic_map.ref_names())
         pwg1 = weighted_geometry.pull(geometry_map)
         pwg2 = pwg1.dynamic_pull(dynamic_map)
         pwg3 = pwg2.pull(forward_map)
@@ -429,6 +430,10 @@ class ParameterizedFabricPlanner(object):
         """
         evaluations = self._funs.evaluate(**kwargs)
         action = evaluations["xddot"]
+        logging.debug(f"a_ex: {evaluations['a_ex']}")
+        logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
+        logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
+        logging.debug(f"beta : {evaluations['beta']}")
         """
         # avoid to small actions
         if np.linalg.norm(action) < eps:
