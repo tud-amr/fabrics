@@ -1,5 +1,6 @@
 import casadi as ca
 import numpy as np
+import logging
 
 from copy import deepcopy
 
@@ -49,8 +50,7 @@ class Lagrangian(object):
             self._J_ref_inv = np.identity(self.x_ref().size()[0])
         if "J_ref" in kwargs:
             self._J_ref = kwargs.get("J_ref")
-            import warnings
-            warnings.warn("Casadi pseudo inverse is used in Lagrangian")
+            logging.warning("Casadi pseudo inverse is used in Lagrangian")
             self._J_ref_inv = ca.pinv(self._J_ref + np.identity(self.x_ref().size()[0]) * eps)
         self.applyEulerLagrange()
 
@@ -83,7 +83,7 @@ class Lagrangian(object):
         return Lagrangian(self._l + b._l, var=self._vars, refTrajs=refTrajs, ref_names=ref_names)
 
     def is_dynamic(self) -> bool:
-        print(f"Lagrangian is dynamic: {self._x_ref_name in self._vars.parameters()}")
+        logging.debug(f"Lagrangian is dynamic: {self._x_ref_name in self._vars.parameters()}")
         return self._x_ref_name in self._vars.parameters()
 
 

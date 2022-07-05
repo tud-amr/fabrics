@@ -247,7 +247,7 @@ class ParameterizedFabricPlanner(object):
             )
             #self._forced_speed_controlled_geometry.concretize()
         except AttributeError:
-            print("No damping")
+            logging.warning("No damping")
 
     def set_speed_control(self):
         self._geometry.concretize()
@@ -303,7 +303,7 @@ class ParameterizedFabricPlanner(object):
         for collision_link in collision_links:
             fk = self.get_forward_kinematics(collision_link)
             if is_sparse(fk):
-                print(f"Expression {fk} for link {collision_link} is sparse and thus skipped.")
+                logging.warning(f"Expression {fk} for link {collision_link} is sparse and thus skipped.")
                 continue
             for i in range(number_obstacles):
                 obstacle_name = f"obst_{i}"
@@ -323,7 +323,7 @@ class ParameterizedFabricPlanner(object):
                 fk_link = self.get_forward_kinematics(self_collision_link)
                 fk = fk_link - fk_key
                 if is_sparse(fk):
-                    print(f"Expression {fk} for links {self_collision_key} and {self_collision_link} is sparse and thus skipped.")
+                    logging.warning(f"Expression {fk} for links {self_collision_key} and {self_collision_link} is sparse and thus skipped.")
                     continue
                 self_collision_name = f"self_collision_{self_collision_key}_{self_collision_link}"
                 geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
@@ -402,7 +402,7 @@ class ParameterizedFabricPlanner(object):
             )
             #xddot = self._forced_geometry._xddot
         except AttributeError:
-            print("No forcing term, using pure geoemtry")
+            logging.info("No forcing term, using pure geoemtry")
             self._geometry.concretize()
             xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
         self._funs = CasadiFunctionWrapper(
@@ -430,10 +430,11 @@ class ParameterizedFabricPlanner(object):
         """
         evaluations = self._funs.evaluate(**kwargs)
         action = evaluations["xddot"]
-        logging.debug(f"a_ex: {evaluations['a_ex']}")
-        logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
-        logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
-        logging.debug(f"beta : {evaluations['beta']}")
+        # Debugging
+        #logging.debug(f"a_ex: {evaluations['a_ex']}")
+        #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
+        #logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
+        #logging.debug(f"beta : {evaluations['beta']}")
         """
         # avoid to small actions
         if np.linalg.norm(action) < eps:

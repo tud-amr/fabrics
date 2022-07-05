@@ -1,5 +1,6 @@
 import casadi as ca
 import numpy as np
+import logging
 from copy import deepcopy
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
@@ -41,8 +42,7 @@ class Spec:
             self._J_ref_inv = np.identity(self.x_ref().size()[0])
         if "J_ref" in kwargs:
             self._J_ref = kwargs.get("J_ref")
-            import warnings
-            warnings.warn("Casadi pseudo inverse is used in Lagrangian")
+            logging.warning("Casadi pseudo inverse is used in Lagrangian")
             self._J_ref_inv = ca.pinv(self._J_ref + np.identity(self.x_ref().size()[0]) * eps)
         self._xdot_d = np.zeros(self.x().size()[0])
         self._vars.verify()
@@ -71,8 +71,7 @@ class Spec:
         return self._M
 
     def Minv(self):
-        import warnings
-        warnings.warn("Casadi pseudo inverse is used in weighted geometry")
+        logging.warning("Casadi pseudo inverse is used in weighted geometry")
         return ca.pinv(self._M + np.identity(self.x().size()[0]) * eps)
 
     def x(self):
@@ -151,7 +150,7 @@ class Spec:
         """
 
     def is_dynamic(self) -> bool:
-        print(f"{self._x_ref_name}, {self._vars.parameters()}")
+        logging.debug(f"{self._x_ref_name}, {self._vars.parameters()}")
         return self._x_ref_name in self._vars.parameters()
 
     def dynamic_pull(self, dm: DynamicDifferentialMap):

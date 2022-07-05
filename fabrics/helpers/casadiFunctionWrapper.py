@@ -5,6 +5,7 @@ import os
 import pickle
 import _pickle as cPickle
 import bz2
+import logging
 
 
 class InputMissmatchError(Exception):
@@ -84,7 +85,7 @@ class CasadiFunctionWrapper_deserialized(CasadiFunctionWrapper):
 
     def __init__(self, file_name: str):
         if os.path.isfile(file_name):
-            print(f"Initializing casadiFunctionWrapper from {file_name}")
+            logging.info(f"Initializing casadiFunctionWrapper from {file_name}")
             data = bz2.BZ2File(file_name, 'rb')
             self._function = ca.Function().deserialize(cPickle.load(data))
             expression_keys = cPickle.load(data)
