@@ -180,8 +180,8 @@ def test_sum_energization(two_energizations):
     we = we_1 + we_2
     en.concretize()
     we.concretize()
-    x = np.array([0.2, -0.8])
-    xdot = np.array([-0.5, -1.4])
+    x = np.array([0.2, 1.8])
+    xdot = np.array([-0.5, -1.0])
     M_en, f_en, xddot_en = en.evaluate(x=x, xdot=xdot)
     M_we, f_we, xddot_we, alpha_we = we.evaluate(x=x, xdot=xdot)
     xddot_we_alpha = xddot_we - alpha_we * xdot
@@ -189,8 +189,10 @@ def test_sum_energization(two_energizations):
     assert M_en[0, 1] == pytest.approx(M_we[0, 1])
     assert M_en[1, 0] == pytest.approx(M_we[1, 0])
     assert M_en[1, 1] == pytest.approx(M_we[1, 1])
-    assert xddot_we_alpha[0] == pytest.approx(xddot_en[0])
-    assert xddot_we_alpha[1] == pytest.approx(xddot_en[1])
+    # !!! Important individual energization is different from combined energization
+    # only the latter is what we need
+    assert xddot_we_alpha[0] != pytest.approx(xddot_en[0])
+    assert xddot_we_alpha[1] != pytest.approx(xddot_en[1])
 
 
 def test_sum_energization_man_compute_rhs(two_energizations):
