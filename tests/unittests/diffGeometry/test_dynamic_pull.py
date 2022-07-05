@@ -2,7 +2,7 @@ import pytest
 import casadi as ca
 import numpy as np
 from fabrics.diffGeometry.spec import Spec
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
 
 from fabrics.helpers.variables import Variables
@@ -11,86 +11,78 @@ Jdot_sign = -1
 
 @pytest.fixture
 def simple_geometry():
-    x = ca.SX.sym("x", 1)
-    xdot = ca.SX.sym("xdot", 1)
-    var = Variables(state_variables={'x': x, 'xdot': xdot})
-    h = 2 * x
-    return = Geometry(h=h)
+    x_rel = ca.SX.sym("x_rel", 1)
+    xdot_rel = ca.SX.sym("xdot_rel", 1)
+    var = Variables(state_variables={'x_rel': x_rel, 'xdot_rel': xdot_rel})
+    h = 2 * x_rel
+    return Geometry(h=h, var=var)
 
 
 @pytest.fixture
 def simple_spec():
+    x_rel = ca.SX.sym("x_rel", 2)
+    xdot_rel = ca.SX.sym("xdot_rel", 2)
     M1 = ca.SX(np.identity(2))
-    f1 = -0.5 * ca.vertcat(1 / (x[0] ** 2), 1 / (x[1] ** 2))
-    s1 = Spec(M1, f=f1, x=x, xdot=xdot)
+    f1 = -0.5 * ca.vertcat(1 / (x_rel[0] ** 2), 1 / (x_rel[1] ** 2))
+    var = Variables(state_variables={'x_rel': x_rel, 'xdot_rel': xdot_rel})
+    s1 = Spec(M1, f=f1, var=var)
     return s1
 
 
 @pytest.fixture
-def simple_differentialMap():
+def dynamic_map():
     x_ref = ca.SX.sym("x_ref", 1)
     xdot_ref = ca.SX.sym("xdot_ref", 1)
     xddot_ref = ca.SX.sym("xddot_ref", 1)
-    phi = ca.vertcat(q[0] * ca.cos(q[1]), q[0] * ca.sin(q[1]))
-    variables = Variables(state_variables={'q': q, 'qdot': qdot})
-    dm = DifferentialMap(phi, variables, Jdot_sign=Jdot_sign)
-    return dm
+    x = ca.SX.sym("x", 1)
+    xdot = ca.SX.sym("x_dot", 1)
+    variables = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x_ref': x_ref, 'xdot_ref': xdot_ref, 'xddot_ref': xddot_ref})
+    return DynamicDifferentialMap(variables)
+
+@pytest.fixture
+def dynamic_map_2d():
+    x_ref = ca.SX.sym("x_ref", 2)
+    xdot_ref = ca.SX.sym("xdot_ref", 2)
+    xddot_ref = ca.SX.sym("xddot_ref", 2)
+    x = ca.SX.sym("x", 2)
+    xdot = ca.SX.sym("x_dot", 2)
+    variables = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x_ref': x_ref, 'xdot_ref': xdot_ref, 'xddot_ref': xddot_ref})
+    return DynamicDifferentialMap(variables)
 
 
-def test_pullback(simple_spec, simple_differentialMap):
-    s = simple_spec
-    dm = simple_differentialMap
+def test_geometry_pullback(simple_geometry, dynamic_map):
+    g = simple_geometry
+    dm = dynamic_map
     # pull
-    s_pulled = s.pull(dm)
-    s_pulled.concretize()
-    q = np.array([1.7, -np.pi / 3])
-    qdot = np.array([1.2, 1.3])
-    M, f, _ = s_pulled.evaluate(q=q, qdot=qdot)
-    """manually computed result"""
-    cost = np.cos(q[1])
-    sint = np.sin(q[1])
-    r = q[0]
-    x1 = cost * r
-    x2 = sint * r
-    tdot = qdot[1]
-    rdot = qdot[0]
-    Jt = np.array([[cost, sint], [-r * sint, r * cost]])
-    f0 = np.array([-0.5 / (x1 ** 2), -0.5 / (x2 ** 2)])
-    f1 = np.dot(Jt, f0)
-    JtMJdot = Jdot_sign * np.array([[0, -r * tdot], [r * tdot, r * rdot]])
-    f2 = -1 * np.dot(JtMJdot, qdot)
-    assert ca.is_equal(s_pulled.x(), dm.q())
-    assert ca.is_equal(s_pulled.xdot(), dm.qdot())
-    assert M[0, 0] == 1
-    assert M[1, 0] == 0
-    assert M[0, 1] == 0
-    assert M[1, 1] == pytest.approx(q[0] ** 2)
-    assert f[0] == pytest.approx(f1[0] - f2[0])
-    assert f[1] == pytest.approx(f1[1] - f2[1])
+    g_pulled = g.dynamic_pull(dm)
+    g_pulled.concretize()
+    x_np = np.array([1.2])
+    xdot_np = np.array([0.1])
+    x_ref_np = np.array([1.4])
+    xdot_ref_np = np.array([-1.2])
+    xddot_ref_np = np.array([0.2])
+    h, xddot = g_pulled.evaluate(x=x_np, xdot=xdot_np, x_ref=x_ref_np, xdot_ref=xdot_ref_np, xddot_ref=xddot_ref_np)
+    h_test = 2 * (x_np - x_ref_np) - xddot_ref_np
+    assert h[0] == pytest.approx(h_test[0])
+    assert xddot[0] == pytest.approx(-h_test[0])
 
-
-def test_equal_results(simple_spec, simple_differentialMap):
+def test_spec_pullback(simple_spec, dynamic_map_2d):
     s = simple_spec
-    dm = simple_differentialMap
-    dm.concretize()
-    s_pulled = s.pull(dm)
+    dm = dynamic_map_2d
+    # pull
+    s_pulled = s.dynamic_pull(dm)
     s_pulled.concretize()
-    s.concretize()
-    q = np.array([1.7, -np.pi / 3])
-    qdot = np.array([1.2, 1.3])
-    x, J, Jdot = dm.forward(q=q, qdot=qdot)
-    xdot = np.dot(J, qdot)
-    Jt = np.transpose(J)
-    M_q, f_q, qddot = s_pulled.evaluate(q=q, qdot=qdot)
-    M_x, f_x, xddot = s.evaluate(x=x, xdot=xdot)
-    xddot_man = np.dot(J, qddot) + np.dot(Jdot, qdot)
-    f_q_man = np.dot(Jt, f_x) + np.dot(Jt, np.dot(M_x, np.dot(Jdot, qdot)))
-    M_q_man = np.dot(Jt, np.dot(M_x, J))
-    assert M_q[0, 0] == pytest.approx(M_q_man[0, 0])
-    assert M_q[1, 0] == pytest.approx(M_q_man[1, 0])
-    assert M_q[0, 1] == pytest.approx(M_q_man[0, 1])
-    assert M_q[1, 1] == pytest.approx(M_q_man[1, 1])
-    assert xddot_man[0] == pytest.approx(xddot[0], rel=1e-4)
-    assert xddot_man[1] == pytest.approx(xddot[1], rel=1e-4)
-    assert f_q[0] == pytest.approx(f_q_man[0])
-    assert f_q[1] == pytest.approx(f_q_man[1])
+    x_np = np.array([1.2, 0.1])
+    xdot_np = np.array([0.1, 0.2])
+    x_ref_np = np.array([1.4, 0.3])
+    xdot_ref_np = np.array([-1.2, 0.1])
+    xddot_ref_np = np.array([0.2, 0.0])
+    M, f, xddot = s_pulled.evaluate(x=x_np, xdot=xdot_np, x_ref=x_ref_np, xdot_ref=xdot_ref_np, xddot_ref=xddot_ref_np)
+    M_test = np.identity(2)
+    f_test = -0.5 * np.array([1 / ((x_np[0] - x_ref_np[0]) ** 2), 1 / ((x_np[1]  - x_ref_np[1])** 2)]) - np.dot(M_test, xddot_ref_np)
+    assert M[0, 0] == pytest.approx(M_test[0, 0])
+    assert M[0, 1] == pytest.approx(M_test[0, 1])
+    assert M[1, 0] == pytest.approx(M_test[1, 0])
+    assert M[1, 1] == pytest.approx(M_test[1, 1])
+    assert f[0] == pytest.approx(f_test[0])
+    assert f[1] == pytest.approx(f_test[1])
