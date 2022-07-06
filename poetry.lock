@@ -318,7 +318,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.19"
+version = "0.1.20"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -337,7 +337,7 @@ PyYAML = "^6.0"
 type = "git"
 url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
 reference = "main"
-resolved_reference = "0544c65692e4c41671b35202bf8de3ca0b723d62"
+resolved_reference = "c10da8662736cf52f6643ecdb6ab6aa485d578f5"
 
 [[package]]
 name = "mypy-extensions"
@@ -437,9 +437,9 @@ develop = false
 
 [package.dependencies]
 casadi = "3.5.6.pre2"
-forwardkinematics = "1.0.1"
+forwardkinematics = "^1.0.1"
 gym = "^0.21.0"
-motion-planning-scenes = "0.1.19"
+motion-planning-scenes = "^0.1.19"
 numpy = "^1.5.1"
 pyglet = "^1.5.21"
 pylint = "^2.13.3"
@@ -449,7 +449,7 @@ scipy = "^1.5"
 type = "git"
 url = "https://git@github.com/maxspahn/gym_envs_planar.git"
 reference = "master"
-resolved_reference = "c804067238e1decd238c445f3235994c0ea9acf4"
+resolved_reference = "caabf2b7492f176a1423b2e5f60e38bd0649bb36"
 
 [[package]]
 name = "platformdirs"
