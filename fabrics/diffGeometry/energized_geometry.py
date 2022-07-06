@@ -61,15 +61,15 @@ class WeightedGeometry(Spec):
         le = self._le + b._le
         return WeightedGeometry(s=spec, le=le, ref_names=spec.ref_names())
 
-    def computeAlpha(self):
-        xdot = self._le.xdot_rel()
+    def computeAlpha(self, ref_sign: int = 1):
+        xdot = self._le.xdot_rel(ref_sign=ref_sign)
         frac = 1 / (
             eps + ca.dot(xdot, ca.mtimes(self._le._S.M(), xdot))
         )
         self._alpha = -frac * ca.dot(xdot, self.f() - self._le._S.f())
 
-    def concretize(self):
-        self.computeAlpha()
+    def concretize(self, ref_sign: int = 1):
+        self.computeAlpha(ref_sign=ref_sign)
         self._xddot = -self.h()
         var = deepcopy(self._vars)
         for refTraj in self._refTrajs:

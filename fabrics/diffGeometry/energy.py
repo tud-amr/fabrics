@@ -13,7 +13,6 @@ from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 from fabrics.helpers.constants import eps
 
-
 class LagrangianException(Exception):
     def __init__(self, expression, message):
         self._expression = expression
@@ -51,11 +50,15 @@ class Lagrangian(object):
         if "J_ref" in kwargs:
             self._J_ref = kwargs.get("J_ref")
             logging.warning("Casadi pseudo inverse is used in Lagrangian")
-            self._J_ref_inv = ca.pinv(self._J_ref + np.identity(self.x_ref().size()[0]) * eps)
+            self._J_ref_inv = ca.mtimes(ca.transpose(self._J_ref), ca.inv(ca.mtimes(self._J_ref, ca.transpose(self._J_ref)) + np.identity(self.x_ref().size()[0]) * eps))
         self.applyEulerLagrange()
+
 
     def x_ref(self):
         return self._vars.parameter_by_name(self._x_ref_name)
+
+    def xdot_ref(self):
+        return self._vars.parameter_by_name(self._xdot_ref_name)
 
     def x(self):
         return self._vars.position_variable()
@@ -63,9 +66,9 @@ class Lagrangian(object):
     def xdot(self):
         return self._vars.velocity_variable()
 
-    def xdot_rel(self):
+    def xdot_rel(self, ref_sign: int = 1):
         if self.is_dynamic():
-            return self.xdot() - ca.mtimes(self._J_ref_inv, self._vars.parameter_by_name(self._xdot_ref_name))
+            return self.xdot() - ca.mtimes(self._J_ref_inv, self.xdot_ref()) * ref_sign
         else:
             return self.xdot()
 
@@ -76,11 +79,16 @@ class Lagrangian(object):
         ref_names = []
         if self.is_dynamic():
             ref_names += self.ref_names()
+            J_ref = self._J_ref
         if b.is_dynamic():
             ref_names += b.ref_names()
-        if len(ref_names) == 0:
-            ref_names = ['x_ref', 'xdot_ref', 'xddot_ref']
-        return Lagrangian(self._l + b._l, var=self._vars, refTrajs=refTrajs, ref_names=ref_names)
+            J_ref = b._J_ref
+        if len(ref_names) > 0:
+            ref_arguments = {'ref_names': ref_names, 'J_ref': J_ref}
+        else:
+            ref_arguments = {}
+        new_vars = self._vars + b._vars
+        return Lagrangian(self._l + b._l, var=new_vars, **ref_arguments)
 
     def is_dynamic(self) -> bool:
         logging.debug(f"Lagrangian is dynamic: {self._x_ref_name in self._vars.parameters()}")

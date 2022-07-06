@@ -10,7 +10,6 @@ from fabrics.helpers.functions import joinVariables, checkCompatability
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 from fabrics.helpers.variables import Variables
 
-
 class Spec:
     """description"""
 
@@ -39,11 +38,12 @@ class Spec:
         if 'refTrajs' in kwargs:
             self._refTrajs = kwargs.get('refTrajs')
         if self.is_dynamic():
+            self._J_ref = np.identity(self.x_ref().size()[0])
             self._J_ref_inv = np.identity(self.x_ref().size()[0])
         if "J_ref" in kwargs:
             self._J_ref = kwargs.get("J_ref")
             logging.warning("Casadi pseudo inverse is used in Lagrangian")
-            self._J_ref_inv = ca.pinv(self._J_ref + np.identity(self.x_ref().size()[0]) * eps)
+            self._J_ref_inv = ca.mtimes(ca.transpose(self._J_ref), ca.inv(ca.mtimes(self._J_ref, ca.transpose(self._J_ref)) + np.identity(self.x_ref().size()[0]) * eps))
         self._xdot_d = np.zeros(self.x().size()[0])
         self._vars.verify()
         assert isinstance(M, ca.SX)
@@ -109,10 +109,21 @@ class Spec:
             ref_names += b.ref_names()
         if len(ref_names) == 0:
             ref_names = ['x_ref', 'xdot_ref', 'xddot_ref']
-        if hasattr(self, '_h') and hasattr(b, '_h'):
-            return Spec(self.M() + b.M(), h=self.h() + b.h(), var=all_vars, ref_names=ref_names)
+        ref_names = []
+        if self.is_dynamic():
+            ref_names += self.ref_names()
+            J_ref = self._J_ref
+        if b.is_dynamic():
+            ref_names += b.ref_names()
+            J_ref = b._J_ref
+        if len(ref_names) > 0:
+            ref_arguments = {'ref_names': ref_names, 'J_ref': J_ref}
         else:
-            return Spec(self.M() + b.M(), f=self.f() + b.f(), var=all_vars, ref_names=ref_names)
+            ref_arguments = {}
+        if hasattr(self, '_h') and hasattr(b, '_h'):
+            return Spec(self.M() + b.M(), h=self.h() + b.h(), var=all_vars, **ref_arguments)
+        else:
+            return Spec(self.M() + b.M(), f=self.f() + b.f(), var=all_vars, **ref_arguments)
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)

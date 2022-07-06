@@ -111,6 +111,7 @@ class ParameterizedFabricPlanner(object):
         self.initialize_joint_variables()
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
+        self._ref_sign = 1
 
     """ INITIALIZING """
 
@@ -231,6 +232,7 @@ class ParameterizedFabricPlanner(object):
             self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
         self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
+        self._ref_sign = -1
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
         assert isinstance(execution_lagrangian, Lagrangian)
@@ -251,7 +253,7 @@ class ParameterizedFabricPlanner(object):
 
     def set_speed_control(self):
         self._geometry.concretize()
-        self._forced_geometry.concretize()
+        self._forced_geometry.concretize(ref_sign=self._ref_sign)
         alpha_b = self.config.damper["alpha_b"]
         alpha_eta = self.config.damper["alpha_eta"]
         alpha_shift = self.config.damper["alpha_shift"]
