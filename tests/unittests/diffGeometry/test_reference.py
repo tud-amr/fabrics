@@ -3,6 +3,7 @@ import casadi as ca
 import numpy as np
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.helpers.variables import Variables
 
 
 def test_ref_creation():
@@ -25,7 +26,8 @@ def simple_trajectory():
 def simple_map():
     q = ca.SX.sym("q", 3)
     qdot = ca.SX.sym("qdot", 3)
-    dm = DifferentialMap(q[0:2], q=q, qdot=qdot)
+    variables = Variables(state_variables={'q': q, 'qdot': qdot})
+    dm = DifferentialMap(q[0:2], variables)
     return dm
 
 

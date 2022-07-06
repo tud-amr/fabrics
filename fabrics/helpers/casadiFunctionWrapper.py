@@ -1,9 +1,11 @@
+import pdb
 import casadi as ca
 import numpy as np
 import os
 import pickle
 import _pickle as cPickle
 import bz2
+import logging
 
 
 class InputMissmatchError(Exception):
@@ -20,6 +22,7 @@ class CasadiFunctionWrapper(object):
 
     def create_function(self):
         self._input_keys = sorted(tuple(self._inputs.keys()))
+        self._input_sizes = {i: self._inputs[i].size() for i in self._inputs}
         self._list_expressions = [self._expressions[i] for i in sorted(self._expressions.keys())]
         input_expressions = [self._inputs[i] for i in self._input_keys]
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)
@@ -46,14 +49,24 @@ class CasadiFunctionWrapper(object):
                 argument_dictionary.update(radius_dictionary)
             else:
                 argument_dictionary[key] = kwargs[key]
+        input_arrays = []
         try:
+            for i in self._input_keys:
+                """
+                if not argument_dictionary[i].size == self._input_sizes[i][0] * self._input_sizes[i][1]:
+                    raise InputMissmatchError(f"Size of input argument {i} with size {argument_dictionary[i].size} does not match size required {self._input_sizes[i][0]}")
+                """
+                input_arrays.append(argument_dictionary[i])
             input_arrays = [argument_dictionary[i] for i in self._input_keys]
         except KeyError as e:
             msg = f"Key {e} is not contained in the inputs\n"
             msg += f"Possible keys are {self._input_keys}\n"
-            msg += f"You prorvided {list(kwargs.keys())}\n"
+            msg += f"You provided {list(kwargs.keys())}\n"
             raise InputMissmatchError(msg)
-        list_array_outputs = self._function(*input_arrays)
+        try:
+            list_array_outputs = self._function(*input_arrays)
+        except RuntimeError as runtime_error:
+            raise InputMissmatchError(runtime_error.args)
         output_dict = {}
         if isinstance(list_array_outputs, ca.DM):
             return {list(self._expressions.keys())[0]: np.array(list_array_outputs)[:, 0]}
@@ -72,7 +85,7 @@ class CasadiFunctionWrapper_deserialized(CasadiFunctionWrapper):
 
     def __init__(self, file_name: str):
         if os.path.isfile(file_name):
-            print(f"Initializing casadiFunctionWrapper from {file_name}")
+            logging.info(f"Initializing casadiFunctionWrapper from {file_name}")
             data = bz2.BZ2File(file_name, 'rb')
             self._function = ca.Function().deserialize(cPickle.load(data))
             expression_keys = cPickle.load(data)

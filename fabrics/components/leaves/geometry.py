@@ -71,7 +71,7 @@ class LimitLeaf(GenericGeometryLeaf):
         self.set_forward_map()
 
     def set_forward_map(self):
-        self._forward_map = DifferentialMap(self._forward_kinematics, var=self._parent_variables)
+        self._forward_map = DifferentialMap(self._forward_kinematics, self._parent_variables)
 
     def map(self):
         return self._forward_map
@@ -99,7 +99,7 @@ class SelfCollisionLeaf(GenericGeometryLeaf):
             ca.norm_2(self._forward_kinematics)
             / (2 * self_collision_body_radius) - 1
         )
-        self._forward_map = DifferentialMap(phi, var=self._parent_variables)
+        self._forward_map = DifferentialMap(phi, self._parent_variables)
 
     def map(self):
         return self._forward_map

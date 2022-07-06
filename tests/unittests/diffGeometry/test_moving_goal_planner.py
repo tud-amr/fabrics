@@ -2,7 +2,7 @@ import pytest
 import casadi as ca
 import numpy as np
 
-from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
@@ -33,8 +33,9 @@ def movingGoalGeometry():
 
     # define the relative transformation
     refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, var=var_x_ref)
-    dm_rel = RelativeDifferentialMap(var=var_x, refTraj=refTraj)
-    geo = geo_rel.pull(dm_rel)
+    variables_dynamic = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x_ref': x_d, 'xdot_ref': xdot_d, 'xddot_ref': xddot_d})
+    dm_rel = DynamicDifferentialMap(variables_dynamic)
+    geo = geo_rel.dynamic_pull(dm_rel)
     # Define second transform to configuration space
     n = 3
     q = ca.SX.sym("q", n)
@@ -42,7 +43,7 @@ def movingGoalGeometry():
     var_q = Variables(state_variables={'q': q, 'qdot': qdot})
     planarArmFk = PlanarArmFk(n)
     phi_fk = planarArmFk.fk(q, n, positionOnly=True)
-    dm_fk = DifferentialMap(phi_fk, var=var_q)
+    dm_fk = DifferentialMap(phi_fk, var_q)
     geo_fk = geo.pull(dm_fk)
     return geo_rel, geo, geo_fk
 

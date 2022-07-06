@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict
+import logging
 import casadi as ca
 import numpy as np
 from copy import deepcopy
@@ -8,7 +9,7 @@ from fabrics.helpers.exceptions import ExpressionSparseError
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.functions import is_sparse, parse_symbolic_input
 
-from fabrics.diffGeometry.diffMap import DifferentialMap, ParameterizedDifferentialMap, DynamicParameterizedDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
@@ -20,8 +21,8 @@ from fabrics.components.energies.execution_energies import ExecutionLagrangian
 from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
-from fabrics.components.leaves.geometry import GenericGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf
+from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf, GenericGeometryLeaf
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningGoal.subGoal import SubGoal
@@ -110,6 +111,7 @@ class ParameterizedFabricPlanner(object):
         self.initialize_joint_variables()
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
+        self._ref_sign = 1
 
     """ INITIALIZING """
 
@@ -146,6 +148,25 @@ class ParameterizedFabricPlanner(object):
         weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian)
         self.add_weighted_geometry(forward_map, weighted_geometry)
 
+    def add_dynamic_geometry(
+        self,
+        forward_map: DifferentialMap,
+        dynamic_map: DynamicDifferentialMap,
+        geometry_map: DifferentialMap,
+        lagrangian: Lagrangian,
+        geometry: Geometry,
+    ) -> None:
+        assert isinstance(forward_map, DifferentialMap)
+        assert isinstance(geometry_map, DifferentialMap)
+        assert isinstance(dynamic_map, DynamicDifferentialMap)
+        assert isinstance(lagrangian, Lagrangian)
+        assert isinstance(geometry, Geometry)
+        weighted_geometry = WeightedGeometry(g=geometry, le=lagrangian, ref_names=dynamic_map.ref_names())
+        pwg1 = weighted_geometry.pull(geometry_map)
+        pwg2 = pwg1.dynamic_pull(dynamic_map)
+        pwg3 = pwg2.pull(forward_map)
+        self._geometry += pwg3
+
     def add_weighted_geometry(
         self, forward_map: DifferentialMap, weighted_geometry: WeightedGeometry
     ) -> None:
@@ -159,10 +180,12 @@ class ParameterizedFabricPlanner(object):
     def add_leaf(self, leaf: Leaf, prime_leaf: bool= False) -> None:
         if isinstance(leaf, GenericAttractor):
             self.add_forcing_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry(), prime_leaf)
-        if isinstance(leaf, GenericDynamicAttractor):
+        elif isinstance(leaf, GenericDynamicAttractor):
             self.add_dynamic_forcing_geometry(leaf.map(), leaf.dynamic_map(), leaf.lagrangian(), leaf.geometry(), leaf._xdot_ref, prime_leaf)
-        if isinstance(leaf, GenericGeometryLeaf):
+        elif isinstance(leaf, GenericGeometryLeaf):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
+        elif isinstance(leaf, GenericDynamicGeometryLeaf):
+            self.add_dynamic_geometry(leaf.map(), leaf.dynamic_map(), leaf.geometry_map(), leaf.lagrangian(), leaf.geometry())
 
     def add_forcing_geometry(
         self,
@@ -171,7 +194,7 @@ class ParameterizedFabricPlanner(object):
         geometry: Geometry,
         prime_forcing_leaf: bool,
     ) -> None:
-        assert isinstance(forward_map, ParameterizedDifferentialMap)
+        assert isinstance(forward_map, DifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
         if not hasattr(self, '_forced_geometry'):
@@ -194,20 +217,22 @@ class ParameterizedFabricPlanner(object):
         prime_forcing_leaf: bool,
     ) -> None:
         assert isinstance(forward_map, DifferentialMap)
-        assert isinstance(dynamic_map, DynamicParameterizedDifferentialMap)
+        assert isinstance(dynamic_map, DynamicDifferentialMap)
         assert isinstance(lagrangian, Lagrangian)
         assert isinstance(geometry, Geometry)
         assert isinstance(target_velocity, ca.SX)
         if not hasattr(self, '_forced_geometry'):
             self._forced_geometry = deepcopy(self._geometry)
-        self._forced_geometry += WeightedGeometry(
-            g=geometry, le=lagrangian
-        ).pull(dynamic_map).pull(forward_map)
+        wg = WeightedGeometry(g=geometry, le=lagrangian)
+        pwg = wg.dynamic_pull(dynamic_map)
+        ppwg = pwg.pull(forward_map)
+        self._forced_geometry += ppwg
         if prime_forcing_leaf:
             self._forced_variables = geometry._vars
             self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
         self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
+        self._ref_sign = -1
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
         assert isinstance(execution_lagrangian, Lagrangian)
@@ -224,11 +249,11 @@ class ParameterizedFabricPlanner(object):
             )
             #self._forced_speed_controlled_geometry.concretize()
         except AttributeError:
-            print("No damping")
+            logging.warning("No damping")
 
     def set_speed_control(self):
         self._geometry.concretize()
-        self._forced_geometry.concretize()
+        self._forced_geometry.concretize(ref_sign=self._ref_sign)
         alpha_b = self.config.damper["alpha_b"]
         alpha_eta = self.config.damper["alpha_eta"]
         alpha_shift = self.config.damper["alpha_shift"]
@@ -273,17 +298,24 @@ class ParameterizedFabricPlanner(object):
         self_collision_pairs: dict,
         goal: GoalComposition = None,
         limits: list = None,
-        number_obstacles: int = 1
+        number_obstacles: int = 1,
+        number_dynamic_obstacles: int = 0,
     ):
         # Adds default obstacle avoidance
         for collision_link in collision_links:
             fk = self.get_forward_kinematics(collision_link)
             if is_sparse(fk):
-                print(f"Expression {fk} for link {collision_link} is sparse and thus skipped.")
+                logging.warning(f"Expression {fk} for link {collision_link} is sparse and thus skipped.")
                 continue
             for i in range(number_obstacles):
                 obstacle_name = f"obst_{i}"
                 geometry = ObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
+                geometry.set_geometry(self.config.collision_geometry)
+                geometry.set_finsler_structure(self.config.collision_finsler)
+                self.add_leaf(geometry)
+            for i in range(number_dynamic_obstacles):
+                obstacle_name = f"dynamic_obst_{i}"
+                geometry = DynamicObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
@@ -293,7 +325,7 @@ class ParameterizedFabricPlanner(object):
                 fk_link = self.get_forward_kinematics(self_collision_link)
                 fk = fk_link - fk_key
                 if is_sparse(fk):
-                    print(f"Expression {fk} for links {self_collision_key} and {self_collision_link} is sparse and thus skipped.")
+                    logging.warning(f"Expression {fk} for links {self_collision_key} and {self_collision_link} is sparse and thus skipped.")
                     continue
                 self_collision_name = f"self_collision_{self_collision_key}_{self_collision_link}"
                 geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
@@ -372,7 +404,7 @@ class ParameterizedFabricPlanner(object):
             )
             #xddot = self._forced_geometry._xddot
         except AttributeError:
-            print("No forcing term, using pure geoemtry")
+            logging.info("No forcing term, using pure geoemtry")
             self._geometry.concretize()
             xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
         self._funs = CasadiFunctionWrapper(
@@ -400,6 +432,11 @@ class ParameterizedFabricPlanner(object):
         """
         evaluations = self._funs.evaluate(**kwargs)
         action = evaluations["xddot"]
+        # Debugging
+        #logging.debug(f"a_ex: {evaluations['a_ex']}")
+        #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
+        #logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
+        #logging.debug(f"beta : {evaluations['beta']}")
         """
         # avoid to small actions
         if np.linalg.norm(action) < eps:

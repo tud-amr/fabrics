@@ -2,7 +2,7 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energized_geometry import WeightedGeometry
@@ -56,7 +56,10 @@ class FabricPlanner:
         assert isinstance(dm, DifferentialMap)
         assert isinstance(le, Lagrangian)
         assert isinstance(g, Geometry)
-        eg = WeightedGeometry(g=g, le=le).pull(dm)
+        if isinstance(dm, DynamicDifferentialMap):
+            eg = WeightedGeometry(g=g, le=le).dynamic_pull(dm)
+        else:
+            eg = WeightedGeometry(g=g, le=le).pull(dm)
         self._debugVars.append(eg.h())
         self._eg += eg
         self._refTrajs = joinRefTrajs(self._refTrajs, eg._refTrajs)
