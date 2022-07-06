@@ -49,21 +49,21 @@ class GenericDynamicAttractor(DynamicLeaf):
         self._forward_map = DifferentialMap(self._forward_kinematics, self._parent_variables)
 
     def set_potential(self, potential: str) -> None:
-        x = self._x
-        xdot = self._xdot
+        x = self._x_rel
+        xdot = self._xdot_rel
         psi = self._weight * eval(potential)
         h_psi = ca.gradient(psi, x)
-        self._geo = Geometry(h=h_psi, var=self._leaf_variables)
+        self._geo = Geometry(h=h_psi, var=self._relative_variables)
 
     def set_metric(self, attractor_metric: str) -> None:
-        x = self._x
-        xdot = self._xdot
-        x_ref = self._x_ref
-        xdot_ref = self._xdot_ref
-        xddot_ref = self._xddot_ref
+        x = self._x_rel
+        xdot = self._xdot_rel
+        #x_ref = self._x_ref
+        #xdot_ref = self._xdot_ref
+        #xddot_ref = self._xddot_ref
         attractor_metric = eval(attractor_metric)
         lagrangian_psi = ca.dot(xdot, ca.mtimes(attractor_metric, xdot))
-        self._lag = Lagrangian(lagrangian_psi, var=self._leaf_variables)
+        self._lag = Lagrangian(lagrangian_psi, var=self._relative_variables)
 
     def map(self):
         return self._forward_map
