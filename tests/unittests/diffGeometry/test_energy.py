@@ -5,6 +5,8 @@ from fabrics.diffGeometry.spec import Spec
 from fabrics.diffGeometry.energy import Lagrangian, FinslerStructure
 from fabrics.diffGeometry.diffMap import DifferentialMap
 
+from fabrics.helpers.variables import Variables
+
 
 @pytest.fixture
 def simple_lagrangian():
@@ -36,7 +38,8 @@ def two_dimensional_lagrangian():
     l = 0.5 * lam / (ca.norm_2(x)**2) * ca.norm_2(xdot)
     lg = Lagrangian(l, x=x, xdot=xdot)
     phi = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
-    dm = DifferentialMap(phi, q=q, qdot=qdot, Jdot_sign=+1)
+    variables = Variables(state_variables={'q': q, 'qdot': qdot})
+    dm = DifferentialMap(phi, variables, Jdot_sign=+1)
     return lg, dm
 
 

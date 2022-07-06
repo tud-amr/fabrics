@@ -62,4 +62,4 @@ jobs:
       #----------------------------------------------
       # Runs a set of commands using the runners shell
       - name: Test agents
-        run: PYTHONPATH=src/ poetry run python -m pytest gym_agents/
+        run: PYTHONPATH=src/ poetry run python -m pytest examples

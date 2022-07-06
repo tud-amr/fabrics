@@ -26,10 +26,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
     # Definition of the obstacle.
     radius_ring = 0.3
     obstacles = []
-    goal_orientation = [-0.366, 0.0, 0.0, 0.9305]
-    goal_orientation = [0.28888, 0.65109, 0.9165, 0.49848]
-    #goal_orientation = np.random.random(4).tolist()
-    print(goal_orientation)
+    goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
     rotation_matrix = quaternionic.array(goal_orientation).to_rotation_matrix
     whole_position = [0.1, 0.6, 0.8]
     for i in range(obstacle_resolution + 1):
@@ -39,7 +36,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
             radius_ring * np.cos(angle),
             radius_ring * np.sin(angle),
         ]
-        position = np.dot(rotation_matrix, origin_position) + whole_position
+        position = np.dot(np.transpose(rotation_matrix), origin_position) + whole_position
         static_obst_dict = {
             "dim": 3,
             "type": "sphere",
@@ -191,7 +188,7 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
             radius_body_panda_link4=np.array([0.1]),
             radius_body_panda_link6=np.array([0.15]),
             radius_body_panda_hand=np.array([0.1]),
-            angle_goal_1=sub_goal_0_rotation_matrix,
+            angle_goal_1=np.array(sub_goal_0_rotation_matrix),
         )
         ob, *_ = env.step(action)
 
@@ -199,4 +196,4 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
 
 
 if __name__ == "__main__":
-    res = run_panda_ring_example(n_steps=10000)
+    res = run_panda_ring_example(n_steps=10000, serialize = True)

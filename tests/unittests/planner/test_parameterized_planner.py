@@ -28,11 +28,11 @@ def goal():
     goal = GoalComposition(name="goal", contentDict=goal_dict)
     return goal
 
-def test_set_components(planner: ParameterizedFabricPlanner, goal):
+def test_set_components(planner: ParameterizedFabricPlanner, goal: GoalComposition):
     planner.set_components([1], {}, goal)
     planner.concretize()
 
-def test_compute_action(planner: ParameterizedFabricPlanner, goal):
+def test_compute_action(planner: ParameterizedFabricPlanner, goal: GoalComposition):
     planner.set_components([1], {}, goal)
     planner.concretize()
     q = np.zeros(2)

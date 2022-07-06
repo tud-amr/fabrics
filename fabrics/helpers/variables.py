@@ -1,6 +1,9 @@
 import casadi as ca
 from copy import deepcopy
 
+class ParameterNotFoundError(Exception):
+    pass
+
 
 class Variables(object):
     def __init__(self, state_variables=None, parameters=None):
@@ -21,7 +24,7 @@ class Variables(object):
     def add_state_variable(self, name, value):
         self._state_variables[name] = value
 
-    def parameters(self):
+    def parameters(self) -> dict:
         return self._parameters
 
     def add_parameter(self, name: str, value: ca.SX) -> None:
@@ -37,7 +40,10 @@ class Variables(object):
         return self._state_variables[name]
 
     def parameter_by_name(self, name: str) -> ca.SX:
-        return self._parameters[name]
+        try:
+            return self._parameters[name]
+        except KeyError as key_error:
+            raise ParameterNotFoundError(f"Parameter {name} not in variables, available ones are {self._parameters.keys()}")
 
     def position_variable(self) -> ca.SX:
         return self.variable_by_name(self._state_variable_names[0])

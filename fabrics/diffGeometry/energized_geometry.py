@@ -5,7 +5,7 @@ from copy import deepcopy
 from fabrics.diffGeometry.spec import Spec, checkCompatability
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.diffGeometry.diffMap import DifferentialMap, RelativeDifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.casadi_helpers import outerProduct
 
 from fabrics.helpers.constants import eps
@@ -30,12 +30,20 @@ class EnergizedGeometry(Spec):
 
 class WeightedGeometry(Spec):
     def __init__(self, **kwargs):
+        self._x_ref_name = "x_ref"
+        self._xdot_ref_name = "xdot_ref"
+        self._xddot_ref_name = "xddot_ref"
         le = kwargs.get("le")
         assert isinstance(le, Lagrangian)
+        if 'ref_names' in kwargs:
+            ref_names = kwargs.get('ref_names')
+            self._x_ref_name = ref_names[0]
+            self._xdot_ref_name = ref_names[1]
+            self._xddot_ref_name = ref_names[2]
         if "g" in kwargs:
             g = kwargs.get("g")
             checkCompatability(le, g)
-            var = g._vars
+            var = g._vars + le._vars
             self._refTrajs = joinRefTrajs(le._refTrajs, g._refTrajs)
             self._le = le
             self._h = g._h
@@ -46,22 +54,22 @@ class WeightedGeometry(Spec):
             checkCompatability(le, s)
             self._le = le
             refTrajs = joinRefTrajs(le._refTrajs, s._refTrajs)
-            super().__init__(s.M(), f=s.f(), var=s._vars, refTrajs=refTrajs)
+            super().__init__(s.M(), f=s.f(), var=s._vars, refTrajs=refTrajs, ref_names=self.ref_names())
 
     def __add__(self, b):
         spec = super().__add__(b)
         le = self._le + b._le
-        return WeightedGeometry(s=spec, le=le)
+        return WeightedGeometry(s=spec, le=le, ref_names=spec.ref_names())
 
-    def computeAlpha(self):
-        xdot = self._le.xdot_rel()
+    def computeAlpha(self, ref_sign: int = 1):
+        xdot = self._le.xdot_rel(ref_sign=ref_sign)
         frac = 1 / (
             eps + ca.dot(xdot, ca.mtimes(self._le._S.M(), xdot))
         )
         self._alpha = -frac * ca.dot(xdot, self.f() - self._le._S.f())
 
-    def concretize(self):
-        self.computeAlpha()
+    def concretize(self, ref_sign: int = 1):
+        self.computeAlpha(ref_sign=ref_sign)
         self._xddot = -self.h()
         var = deepcopy(self._vars)
         for refTraj in self._refTrajs:
@@ -86,7 +94,12 @@ class WeightedGeometry(Spec):
     def pull(self, dm: DifferentialMap):
         spec = super().pull(dm)
         le_pulled = self._le.pull(dm)
-        return WeightedGeometry(s=spec, le=le_pulled)
+        return WeightedGeometry(s=spec, le=le_pulled, ref_names=self.ref_names())
+
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
+        spec = super().dynamic_pull(dm)
+        le_pulled = self._le.dynamic_pull(dm)
+        return WeightedGeometry(s=spec, le=le_pulled, ref_names=dm.ref_names())
 
     def x(self):
         return self._le.x()

@@ -5,7 +5,7 @@ from fabrics.helpers.variables import Variables
 from fabrics.components.leaves.geometry import GenericGeometryLeaf
 
 
-def test_attractor_generation():
+def test_geometry_generation():
     q = ca.SX.sym("q", 2)
     qdot = ca.SX.sym("qdot", 2)
     var_q = Variables(

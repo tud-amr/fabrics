@@ -21,9 +21,9 @@ def initalize_environment(render=True, obstacle_resolution=8):
     q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
     initial_observation = env.reset(pos=q0)
     # Definition of the obstacle.
-    radius_ring = 0.20
+    radius_ring = 0.25
     obstacles = []
-    whole_position = [0.4, 0.0, 0.7]
+    whole_position = [0.5, 0.0, 0.8]
     for i in range(obstacle_resolution + 1):
         angle = i / obstacle_resolution * 2.0 * np.pi
         position = [
@@ -34,34 +34,35 @@ def initalize_environment(render=True, obstacle_resolution=8):
         static_obst_dict = {
             "dim": 3,
             "type": "sphere",
-            "geometry": {"position": position, "radius": 0.05},
+            "geometry": {"position": position, "radius": 0.08},
         }
         obstacles.append(
             SphereObstacle(name="staticObst", contentDict=static_obst_dict)
         )
     # Definition of the goal.
     goal_position = whole_position
-    goal_position[0] += 0.3
+    goal_position[2] += 0.05
+    goal_position[0] += 0.1
     goal_dict = {
         "subgoal0": {
             "m": 3,
-            "w": 200.0,
+            "w": 3.0,
             "prime": True,
             "indices": [0, 1, 2],
             "parent_link": 0,
             "child_link": 7,
             "desired_position": whole_position,
-            "epsilon": 0.05,
+            "epsilon": 0.02,
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "m": 2,
-            "w": 5000.0,
+            "m": 3,
+            "w": 5.0,
             "prime": False,
-            "indices": [1, 2],
+            "indices": [0, 1, 2],
             "parent_link": 6,
             "child_link": 7,
-            "desired_position": [0.0, 0.0],
+            "desired_position": [0.107, 0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -110,6 +111,7 @@ def run_panda_ring_serialized_example(n_steps=5000, render=True):
     for obst in obstacles:
         obstacle_positions.append(obst.position())
         obstacle_radii.append(np.array(obst.radius()))
+    sub_goal_0_rotation_matrix = np.identity(3)
 
     for _ in range(n_steps):
         action = planner.compute_action(
@@ -119,13 +121,15 @@ def run_panda_ring_serialized_example(n_steps=5000, render=True):
             weight_goal_0=sub_goal_0_weight,
             x_goal_1=sub_goal_1_position,
             weight_goal_1=sub_goal_1_weight,
-            x_obsts=obstacle_positions,
-            radius_obsts=obstacle_radii,
+            x_obsts = obstacle_positions,
+            radius_obsts = obstacle_radii,
+            radius_body_panda_link1=np.array([0.1]),
             radius_body_panda_link4=np.array([0.1]),
-            radius_body_panda_link8=np.array([0.1]),
-            radius_body_panda_vacuum=np.array([0.03]),
-            radius_body_panda_vacuum_2=np.array([0.03]),
+            radius_body_panda_link6=np.array([0.10]),
+            radius_body_panda_hand=np.array([0.10]),
+            angle_goal_1=np.array(sub_goal_0_rotation_matrix),
         )
+ 
         ob, *_ = env.step(action)
     return {}
 
