@@ -1,4 +1,5 @@
 import gym
+import time
 import planarenvs.multi_point_robots
 
 from MotionPlanningGoal.goalComposition import GoalComposition
@@ -7,6 +8,10 @@ from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 
 import numpy as np
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+number_agents = 4
+ignorant_agent = 7
+initial_position_noise = 0.3
 
 
 def initalize_environment(render=True):
@@ -18,14 +23,18 @@ def initalize_environment(render=True):
     """
     env = gym.make(
         "multi-point-robots-acc-v0",
-        dt=0.001,
+        dt=0.01,
         render=render,
-        number_agents=4,
+        number_agents=number_agents,
     )
-    q0 = np.array([-1.5, 0, 1.5, 0, 0, 1.5, 0, -1.5])
-    q0 += np.random.random(8) * 0.3
-    qdot0 = np.array([0.0, 0.0, 0.0, 0.0])
-    qdot0 = np.zeros(8)
+    if number_agents == 4:
+        q0 = np.array([-1.5, 0, 1.5, 0, 0, 1.5, 0, -1.5])
+    if number_agents == 3:
+        q0 = np.array([-1.5, 0, 1.5, 0, 0, 1.5])
+    if number_agents == 2:
+        q0 = np.array([-1.5, 0, 1.5, 0])
+    q0 += np.random.random(2*number_agents) * initial_position_noise
+    qdot0 = np.zeros(2*number_agents)
     initial_observation = env.reset(pos=q0, vel=qdot0)
     # Definition of the obstacle.
     static_obst_dict = {
@@ -35,7 +44,7 @@ def initalize_environment(render=True):
     }
     obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
     # Definition of the goal.
-    weight = 10
+    weight = 2
     goal_dict = {
         "subgoal0": {
             "m": 2,
@@ -93,11 +102,10 @@ def initalize_environment(render=True):
     }
     goal3 = GoalComposition(name="goal", contentDict=goal_dict)
     goals = [goal0, goal1, goal2, goal3]
+    goals = goals[0:number_agents]
     obstacles = [obst1]
-    env.add_goal(goal0)
-    env.add_goal(goal1)
-    env.add_goal(goal2)
-    env.add_goal(goal3)
+    for goal in goals:
+        env.add_goal(goal)
     env.add_obstacle(obst1)
     return (env, obstacles, goals, initial_observation)
 
@@ -143,10 +151,10 @@ def set_planner(goal: GoalComposition):
         "radius_shift": 0.3,
     }
     collision_geometry: str = (
-        "-1.5 / (x ** 2) * xdot ** 2"
+        "-1.5 / (x ** 1) * xdot ** 2"
     )
     collision_finsler: str = (
-        "1.0/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
+        "1.0/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
         # "1.0 * xdot**2"
     )
     base_energy: str = "0.5 * 0.01 * ca.dot(xdot, xdot)"
@@ -155,8 +163,8 @@ def set_planner(goal: GoalComposition):
         robot_type,
         collision_geometry=collision_geometry,
         collision_finsler=collision_finsler,
-        damper=damper,
-        base_energy=base_energy,
+        #damper=damper,
+        #base_energy=base_energy,
     )
     # The planner hides all the logic behind the function set_components.
     collision_links = [1]
@@ -166,7 +174,7 @@ def set_planner(goal: GoalComposition):
         self_collision_links,
         goal,
         number_obstacles=1,
-        number_dynamic_obstacles=3,
+        number_dynamic_obstacles=number_agents-1,
         limits=[[-3, 3], [-3, 3]]
     )
     planner.concretize()
@@ -178,47 +186,49 @@ def compute_action(
 ):
     other_positions = []
     other_velocities = []
-    other_accelerations = [np.zeros(2),]*3
-    for i in range(4):
+    other_accelerations = [np.zeros(2),]*(number_agents - 1)
+    for i in range(number_agents):
         if i == robot_index:
             ego_position = ob['x'][2*i:2*i+2]
             ego_velocity = ob['xdot'][2*i:2*i+2]
         else:
-            other_positions.append(ob['x'][2*i:2*i+2])
-            other_velocities.append(ob['xdot'][2*i:2*i+2])
+            if robot_index == ignorant_agent:
+                other_positions.append(np.ones(2) * 10000)
+                other_velocities.append(np.zeros(2))
+            else:
+                other_positions.append(ob['x'][2*i:2*i+2])
+                other_velocities.append(ob['xdot'][2*i:2*i+2])
             #other_velocities.append(np.zeros(2))
+    arguments = {}
+    for i in range(number_agents-1):
+        arguments[f"x_ref_dynamic_obst_{i}_1_leaf"] = other_positions[i]
+        arguments[f"xdot_ref_dynamic_obst_{i}_1_leaf"] = other_velocities[i]
+        arguments[f"xddot_ref_dynamic_obst_{i}_1_leaf"] = other_accelerations[i]
+        arguments[f"radius_dynamic_obst_{i}"] = np.array([0.05])
     goal = goals[robot_index]
     goal_position = np.array(goal.subGoals()[0].position())
     goal_weight = np.array(goal.subGoals()[0].weight())
 
+    t0 = time.perf_counter()
     action = planner.compute_action(
         q=ego_position,
         qdot=ego_velocity,
         x_goal_0=goal_position,
         weight_goal_0=goal_weight,
-        x_ref_dynamic_obst_0_1_leaf=other_positions[0],
-        xdot_ref_dynamic_obst_0_1_leaf=other_velocities[0],
-        xddot_ref_dynamic_obst_0_1_leaf=other_accelerations[0],
-        x_ref_dynamic_obst_1_1_leaf=other_positions[1],
-        xdot_ref_dynamic_obst_1_1_leaf=other_velocities[1],
-        xddot_ref_dynamic_obst_1_1_leaf=other_accelerations[1],
-        x_ref_dynamic_obst_2_1_leaf=other_positions[2],
-        xdot_ref_dynamic_obst_2_1_leaf=other_velocities[2],
-        xddot_ref_dynamic_obst_2_1_leaf=other_accelerations[2],
-        radius_dynamic_obst_0=np.array([0.15]),
-        radius_dynamic_obst_1=np.array([0.15]),
-        radius_dynamic_obst_2=np.array([0.15]),
-        radius_body_1=np.array([0.20]),
+        radius_body_1=np.array([0.10]),
         x_obst_0=np.array(obst1.position()),
         radius_obst_0=np.array([obst1.radius()]),
+        **arguments
     )
+    t1 = time.perf_counter()
+    print(f"computation time : {(t1-t0)*1e3}")
     action_max = 150
     #action = np.clip(action, np.ones(2) * -action_max, action_max * np.ones(2))
     return action
 
 def compute_all_actions(planner, ob, goals, obst1):
-    actions = np.zeros(8)
-    for i in range(4):
+    actions = np.zeros(2*number_agents)
+    for i in range(number_agents):
         actions[2*i:2*i+2] = compute_action(
             planner,
             i,
