@@ -1,6 +1,7 @@
 import casadi as ca
 import numpy as np
 from copy import deepcopy
+import logging
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.helpers.functions import joinVariables
@@ -15,6 +16,11 @@ class Geometry:
         self._x_ref_name = "x_ref"
         self._xdot_ref_name = "xdot_ref"
         self._xddot_ref_name = "xddot_ref"
+        if 'ref_names' in kwargs:
+            ref_names = kwargs.get('ref_names')
+            self._x_ref_name = ref_names[0]
+            self._xdot_ref_name = ref_names[1]
+            self._xddot_ref_name = ref_names[2]
         if 'x' in kwargs:
             h = kwargs.get("h")
             self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
@@ -38,16 +44,33 @@ class Geometry:
     def xdot(self):
         return self._vars.velocity_variable()
 
+    def is_dynamic(self) -> bool:
+        logging.debug(f"{self._x_ref_name}, {self._vars.parameters()}")
+        return self._x_ref_name in self._vars.parameters()
+
     def __add__(self, b):
         assert isinstance(b, Geometry)
-        # TODO: checkCompatibility()  <24-07-21, mspahn> #
-        nb_vars_a = len(self._vars)
-        nb_vars_b = len(b._vars)
-        if nb_vars_a >= nb_vars_b:
-            var = self._vars
+        all_vars = self._vars + b._vars
+        ref_names = []
+        if self.is_dynamic():
+            ref_names += self.ref_names()
+        if b.is_dynamic():
+            ref_names += b.ref_names()
+        if len(ref_names) == 0:
+            ref_names = ['x_ref', 'xdot_ref', 'xddot_ref']
+        ref_names = []
+        if self.is_dynamic():
+            ref_names += self.ref_names()
+        if b.is_dynamic():
+            ref_names += b.ref_names()
+        if len(ref_names) > 0:
+            ref_arguments = {'ref_names': ref_names}
         else:
-            var = b._vars
-        return Geometry(h=self._h + b._h, var=var)
+            ref_arguments = {}
+        return Geometry(h=self._h + b._h, var=all_vars, *ref_arguments)
+
+    def ref_names(self) -> list:
+        return [self._x_ref_name, self._xdot_ref_name, self._xddot_ref_name]
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
