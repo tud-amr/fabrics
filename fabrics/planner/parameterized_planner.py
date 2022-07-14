@@ -61,10 +61,10 @@ class FabricPlannerConfig:
         "0.1/(x**1) * xdot**2"
     )
     limit_geometry: str = (
-        "-0.01 / (x ** 8) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+        "-0.1 / (x ** 1) * xdot ** 2"
     )
     limit_finsler: str = (
-        "0.01/(x**1) * xdot**2"
+        "0.1/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
     )
     self_collision_geometry: str = (
         "-0.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
