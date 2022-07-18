@@ -12,6 +12,8 @@ class DynamicLeaf(object):
         dim: int = 1,
         dim_ref: int = 1,
     ):
+        self._dim_ref = dim_ref
+        self._dim = dim
         self._parent_variables = parent_variables
         self._x = ca.SX.sym(f"x_{leaf_name}", dim)
         self._xdot = ca.SX.sym(f"xdot_{leaf_name}", dim)

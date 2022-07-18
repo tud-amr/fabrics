@@ -70,8 +70,9 @@ class DynamicObstacleLeaf(GenericDynamicGeometryLeaf):
         obstacle_name: str,
         collision_link: str,
     ):
+        dim_ref = forward_kinematics.size()[0]
         super().__init__(
-            parent_variables, f"{obstacle_name}_{collision_link}_leaf", forward_kinematics, dim = 1, dim_ref = 2
+            parent_variables, f"{obstacle_name}_{collision_link}_leaf", forward_kinematics, dim = 1, dim_ref = dim_ref
         )
         self.set_forward_map(obstacle_name, collision_link)
 
@@ -98,7 +99,7 @@ class DynamicObstacleLeaf(GenericDynamicGeometryLeaf):
         self._geometry_map = ParameterizedObstacleMap(
             self._relative_variables,
             self._relative_variables.position_variable(),
-            np.zeros(2),
+            np.zeros(self._dim_ref),
             radius_variable,
             radius_body_variable,
         )
