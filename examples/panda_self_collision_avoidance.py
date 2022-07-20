@@ -118,8 +118,13 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     collision_links = [f"panda_link{i}" for i in range(0,8)]
     self_collision_pairs = {"panda_hand": ["panda_link2"]}
     panda_limits = [
-            [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973],
-            [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
+            [-2.8973, 2.8973],
+            [-1.7628, 1.7628],
+            [-2.8973, 2.8973],
+            [-3.0718, -0.0698],
+            [-2.8973, 2.8973],
+            [-0.0175, 3.7525],
+            [-2.8973, 2.8973]
         ]
 
     # The planner hides all the logic behind the function set_components.
