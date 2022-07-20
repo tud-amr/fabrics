@@ -1,5 +1,6 @@
 import casadi as ca
 import re
+import numpy as np
 
 from fabrics.helpers.exceptions import SpecException
 from fabrics.helpers.exceptions import ExpressionSparseError
@@ -36,7 +37,10 @@ def parse_symbolic_input(expression: str, x: ca.SX, xdot: ca.SX, name: str = '')
         parameters[i] += name
 
     symbolic_expression = eval(expression)
-    all_variables = ca.symvar(symbolic_expression)
+    if isinstance(symbolic_expression, ca.SX):
+        all_variables = ca.symvar(symbolic_expression)
+    else:
+        all_variables = []
     for variable in all_variables:
         if variable.name() in parameters:
             new_parameters[variable.name()] = variable
