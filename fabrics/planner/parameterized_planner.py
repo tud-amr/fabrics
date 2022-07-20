@@ -262,7 +262,7 @@ class ParameterizedFabricPlanner(object):
         a_le = ca.SX.sym("a_le", 1)
         beta_expression = self.config.damper_beta
         eta_expression = self.config.damper_eta
-        self._damper = Damper(beta_expression, eta_expression, a_ex, a_le, x_psi, dm_psi, exLag._l)
+        self._damper = Damper(beta_expression, eta_expression, x_psi, dm_psi, exLag._l)
         self._variables.add_parameters(self._damper.symbolic_parameters())
 
     def get_forward_kinematics(self, link_name) -> ca.SX:
