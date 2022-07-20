@@ -1,5 +1,6 @@
 import casadi as ca
 import re
+import numpy as np
 
 from fabrics.helpers.exceptions import SpecException
 from fabrics.helpers.exceptions import ExpressionSparseError

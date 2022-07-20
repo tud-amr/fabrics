@@ -6,6 +6,7 @@ from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.components.leaves.leaf import Leaf
 from fabrics.helpers.variables import Variables
+from fabrics.helpers.functions import parse_symbolic_input
 
 
 class GenericAttractor(Leaf):
@@ -54,23 +55,20 @@ class GenericAttractor(Leaf):
             self._parent_variables, self._forward_kinematics, reference_variable
         )
 
-    def set_potential(self, potential: str) -> None:
+    def set_potential(self, potential_expression: str) -> None:
         x = self._x
         xdot = self._xdot
-        psi = self._weight * eval(potential)
-        potential_parameters = ca.symvar(psi)
-        for parameter in potential_parameters:
-            if 'leaf' in parameter.name():
-                continue
-            self._geo_parameters.update({parameter.name(): parameter})
-        self._parent_variables.add_parameters(self._geo_parameters)
+        new_parameters, potential = parse_symbolic_input(potential_expression, x, xdot, name=self._leaf_name)
+        psi = self._weight * potential
+        self._parent_variables.add_parameters(new_parameters)
         h_psi = ca.gradient(psi, x)
         self._geo = Geometry(h=h_psi, var=self._leaf_variables)
 
-    def set_metric(self, attractor_metric: str) -> None:
+    def set_metric(self, attractor_metric_expression: str) -> None:
         x = self._leaf_variables.position_variable()
         xdot = self._leaf_variables.velocity_variable()
-        attractor_metric = eval(attractor_metric)
+        new_parameters, attractor_metric = parse_symbolic_input(attractor_metric_expression, x, xdot, name=self._leaf_name)
+        self._parent_variables.add_parameters(new_parameters)
         lagrangian_psi = ca.dot(xdot, ca.mtimes(attractor_metric, xdot))
         self._lag = Lagrangian(lagrangian_psi, var=self._leaf_variables)
 
