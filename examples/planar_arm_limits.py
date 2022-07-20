@@ -19,7 +19,7 @@ def initalize_environment(degrees_of_freedom=3, render=True):
     env = gym.make(
         "nLink-reacher-acc-v0", dt=0.05, n=degrees_of_freedom, render=render
     )
-    initial_observation = env.reset()
+    initial_observation = env.reset(pos=np.random.random(degrees_of_freedom) * 0.1)
     # Definition of the obstacle.
     static_obst_dict = {
         "dim": 2,
@@ -77,15 +77,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 3, use_limits: 
 
     ## Optional reconfiguration of the planner
     # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
+    # attractor_potential = "sym('k_attractor') * ca.norm_2(x)**4"
     # planner = ParameterizedFabricPlanner(
     #     degrees_of_freedom,
     #     robot_type,
@@ -103,6 +95,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 3, use_limits: 
     planner.set_components(
         collision_links,
         self_collision_links,
+        goal=goal,
         limits=joint_limits,
         number_obstacles=2,
     )
@@ -147,7 +140,7 @@ def run_planar_arm_limits_example(n_steps=5000, render=True, use_limits: bool = 
 
 if __name__ == "__main__":
     arguments = sys.argv
-    if len(arguments) == 1 or arguments[0] == 'dynamic_fabric':
+    if len(arguments) == 1 or arguments[0] == 'use_limits':
         use_limits = True
     else:
         use_limits = False
