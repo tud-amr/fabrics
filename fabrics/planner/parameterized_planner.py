@@ -78,19 +78,20 @@ class FabricPlannerConfig:
     attractor_metric: str = (
         "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x))**2) + 0.3) * ca.SX(np.identity(x.size()[0]))"
     )
-    ex_factor: float = 1.0
-    damper: Dict[str, float] = field(
-        default_factory=lambda: (
-            {
-                "alpha_b": 0.5,
-                "alpha_eta": 0.5,
-                "alpha_shift": 0.5,
-                "beta_distant": 0.01,
-                "beta_close": 6.5,
-                "radius_shift": 0.02,
-            }
-        )
+    damper_beta: str = (
+        "0.5 * (ca.tanh(-0.5 * (ca.norm_2(x) - 0.02)) + 1) * 6.5 + 0.01 + ca.fmax(0, sym('a_ex') - sym('a_le'))"
     )
+    damper_eta: str = (
+        "0.5 * (ca.tanh(-0.5 * sym('ex_lag') * (1 - 1) - 0.5) + 1)"
+    )
+    """
+    damper_beta: str = (
+        "0.5 * (ca.tanh(-sym('alpha_b') * (ca.norm_2(x) - sym('radius_shift'))) + 1) * sym('beta_close') + sym('beta_distant') + ca.fmax(0, sym('a_ex') - sym('a_le'))"
+    )
+    damper_eta: str = (
+        "0.5 * (ca.tanh(-sym('alpha_eta') * sym('ex_lag') * (1 - sym('ex_factor')) - 0.5) + 1)"
+    )
+    """
     urdf: str = None
     root_link: str = 'base_link'
     end_link: str = 'ee_link'
@@ -254,24 +255,15 @@ class ParameterizedFabricPlanner(object):
     def set_speed_control(self):
         self._geometry.concretize()
         self._forced_geometry.concretize(ref_sign=self._ref_sign)
-        alpha_b = self.config.damper["alpha_b"]
-        alpha_eta = self.config.damper["alpha_eta"]
-        alpha_shift = self.config.damper["alpha_shift"]
-        radius_shift = self.config.damper["radius_shift"]
-        beta_distant = self.config.damper["beta_distant"]
-        beta_close = self.config.damper["beta_close"]
-        ex_factor = self.config.ex_factor
         x_psi = self._forced_variables.position_variable()
         dm_psi = self._forced_forward_map
         exLag = self._execution_lagrangian
-        ex_factor = self.config.ex_factor
-        s_beta = 0.5 * (ca.tanh(-alpha_b * (ca.norm_2(x_psi) - radius_shift)) + 1)
         a_ex = ca.SX.sym("a_ex", 1)
         a_le = ca.SX.sym("a_le", 1)
-        beta_fun = s_beta * beta_close + beta_distant + ca.fmax(0, a_ex - a_le)
-        self._beta = Damper(beta_fun, a_ex, a_le, x_psi, dm_psi)
-        l_ex_d = ex_factor * exLag._l
-        self._eta = 0.5 * (ca.tanh(-alpha_eta * (exLag._l - l_ex_d) - alpha_shift) + 1)
+        beta_expression = self.config.damper_beta
+        eta_expression = self.config.damper_eta
+        self._damper = Damper(beta_expression, eta_expression, a_ex, a_le, x_psi, dm_psi, exLag._l)
+        self._variables.add_parameters(self._damper.symbolic_parameters())
 
     def get_forward_kinematics(self, link_name) -> ca.SX:
         if isinstance(link_name, ca.SX):
@@ -393,11 +385,12 @@ class ParameterizedFabricPlanner(object):
 
     def concretize(self):
         try:
+            eta = self._damper.substitute_eta()
             a_ex = (
-                self._eta * self._geometry._alpha
-                + (1 - self._eta) * self._forced_geometry._alpha
+                eta * self._geometry._alpha
+                + (1 - eta) * self._forced_geometry._alpha
             )
-            beta_subst = self._beta.substitute(-a_ex, -self._geometry._alpha)
+            beta_subst = self._damper.substitute_beta(-a_ex, -self._geometry._alpha)
             xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * (
                 self._geometry.xdot()
                 - ca.mtimes(self._forced_geometry.Minv(), self._target_velocity)
