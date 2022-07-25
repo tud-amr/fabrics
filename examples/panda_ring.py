@@ -129,8 +129,13 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         end_link=['panda_vacuum_2', 'panda_vacuum'],
     )
     panda_limits = [
-            [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973],
-            [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
+            [-2.8973, 2.8973],
+            [-1.7628, 1.7628],
+            [-2.8973, 2.8973],
+            [-3.0718, -0.0698],
+            [-2.8973, 2.8973],
+            [-0.0175, 3.7525],
+            [-2.8973, 2.8973]
         ]
     collision_links = ['panda_link1', 'panda_link4', 'panda_link6', 'panda_hand']
     self_collision_pairs = {}

@@ -116,12 +116,22 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     q = planner.variables.position_variable()
     collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
     self_collision_pairs = {}
+    panda_limits = [
+            [-2.8973, 2.8973],
+            [-1.7628, 1.7628],
+            [-2.8973, 2.8973],
+            [-3.0718, -0.0698],
+            [-2.8973, 2.8973],
+            [-0.0175, 3.7525],
+            [-2.8973, 2.8973]
+        ]
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links,
         self_collision_pairs,
         goal,
         number_obstacles=2,
+        limits=panda_limits,
     )
     planner.concretize()
     return planner

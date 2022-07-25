@@ -56,7 +56,7 @@ class LimitLeaf(GenericGeometryLeaf):
         limit: float,
         limit_index: int,
     ):
-        limit_name = f"limit_joint_{joint_index}"
+        limit_name = f"limit_joint_{joint_index}_{limit_index}"
         if limit_index == 0:
             phi = parent_variables.position_variable()[joint_index] - limit
         elif limit_index == 1:
