@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 import urdfenvs.point_robot_urdf
+from urdfenvs.point_robot_urdf.envs.acc import PointRobotAccEnv
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.goalComposition import GoalComposition
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
@@ -23,10 +24,10 @@ def initalize_environment(render):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
-    env = gym.make("pointRobotUrdf-acc-v0", dt=0.05, render=render)
+    env: PointRobotAccEnv = gym.make("pointRobotUrdf-acc-v0", dt=0.05, render=render)
     # Set the initial position and velocity of the point mass.
-    pos0 = np.array([-2.0, 0.2, 0.0])
-    vel0 = np.array([0.0, 0.0, 0.0])
+    pos0 = np.array([-2.0, 0.5, 0.0])
+    vel0 = np.array([0.1, 0.0, 0.0])
     initial_observation = env.reset(pos=pos0, vel=vel0)
     # Definition of the obstacle.
     static_obst_dict = {
@@ -40,7 +41,7 @@ def initalize_environment(render):
     goal_dict = {
             "subgoal0": {
                 "m": 2,
-                "w": 1.0,
+                "w": 0.5,
                 "prime": True,
                 "indices": [0, 1],
                 "parent_link" : 0,
@@ -52,7 +53,7 @@ def initalize_environment(render):
     }
     goal = GoalComposition(name="goal", contentDict=goal_dict)
     # Add walls, the goal and the obstacle to the environment.
-    env.set_walls(limits=[[-5, -5], [5, 5]])
+    env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_goal(goal)
     env.add_obstacle(obst1)
     return (env, obstacles, goal, initial_observation)
@@ -76,8 +77,8 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 2
     robot_type = "pointRobot"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-2.5 / (x ** 1) * (-0.5 * (ca.sign(xdot * 2) - 0.5)) * xdot ** 2"
-    collision_finsler = "1.0/(x**1) * xdot**2"
+    collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
+    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = ParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
@@ -97,7 +98,7 @@ def set_planner(goal: GoalComposition):
     return planner
 
 
-def run_point_mass_example(n_steps=10000, render=True):
+def run_point_robot_urdf(n_steps=10000, render=True):
     """
     Set the gym environment, the planner and run point robot example.
     
@@ -122,19 +123,20 @@ def run_point_mass_example(n_steps=10000, render=True):
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         action[0:2] = planner.compute_action(
-            q=ob["x"][0:2],
-            qdot=ob["xdot"][0:2],
+            q=ob["joint_state"]["position"][0:2],
+            qdot=ob["joint_state"]["velocity"][0:2],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
             x_obst_0=obst1_position[0:2],
             radius_obst_0=np.array([obst1.radius()]),
-            radius_body_1=np.array([0.5])
+            radius_body_1=np.array([0.2])
         )
-        # One step forward using the action provided by the fabric planner, currently clipped to set minimum and maximum value.
-        ob, *_, = env.step(np.clip(action, -2.174, 2.174))
+        ob, *_, = env.step(action)
     return {}
 
 
 if __name__ == "__main__":
-    res = run_point_mass_example(n_steps=10000)
+    res = run_point_robot_urdf(n_steps=10000, render=True)
+
+
 
