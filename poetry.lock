@@ -1,6 +1,6 @@
 [[package]]
 name = "astroid"
-version = "2.11.6"
+version = "2.11.7"
 description = "An abstract syntax tree for Python with inference support."
 category = "main"
 optional = false
@@ -14,7 +14,7 @@ wrapt = ">=1.11,<2"
 
 [[package]]
 name = "atomicwrites"
-version = "1.4.0"
+version = "1.4.1"
 description = "Atomic file writes."
 category = "main"
 optional = false
@@ -112,11 +112,11 @@ python-versions = ">=3.6, <3.7"
 
 [[package]]
 name = "decorator"
-version = "4.4.2"
+version = "5.1.1"
 description = "Decorators for Humans"
 category = "main"
 optional = true
-python-versions = ">=2.6, !=3.0.*, !=3.1.*"
+python-versions = ">=3.5"
 
 [[package]]
 name = "dill"
@@ -135,19 +135,12 @@ version = "1.0.1"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
-python-versions = "^3.6.2,<3.11"
-develop = false
+python-versions = ">=3.6.2,<3.11"
 
 [package.dependencies]
 casadi = "3.5.6.pre2"
-numpy = "^1.15.5"
+numpy = ">=1.15.5,<2.0.0"
 urdf_parser_py = ">=0.0.3"
-
-[package.source]
-type = "git"
-url = "https://git@github.com/maxspahn/forwardKinematics.git"
-reference = "release-1.0"
-resolved_reference = "54f58d81c7fc105527d9d81ea5789b02989d8d63"
 
 [[package]]
 name = "freetype-py"
@@ -318,26 +311,19 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.20"
+version = "0.1.19"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
-python-versions = "^3.6"
-develop = false
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
 casadi = "3.5.6.pre2"
-geomdl = "^5.3.1"
-numpy = "^1.19.0"
-pyquaternion = "^0.9.9"
-pytest = "^6.2.5"
-PyYAML = "^6.0"
-
-[package.source]
-type = "git"
-url = "https://git@github.com/maxspahn/motion_planning_scenes.git"
-reference = "main"
-resolved_reference = "c10da8662736cf52f6643ecdb6ab6aa485d578f5"
+geomdl = ">=5.3.1,<6.0.0"
+numpy = ">=1.19.0,<2.0.0"
+pyquaternion = ">=0.9.9,<0.10.0"
+pytest = ">=6.2.5,<7.0.0"
+PyYAML = ">=6.0,<7.0"
 
 [[package]]
 name = "mypy-extensions"
@@ -349,25 +335,25 @@ python-versions = "*"
 
 [[package]]
 name = "networkx"
-version = "2.5.1"
+version = "2.2"
 description = "Python package for creating and manipulating graphs and networks"
 category = "main"
 optional = true
-python-versions = ">=3.6"
+python-versions = "*"
 
 [package.dependencies]
-decorator = ">=4.3,<5"
+decorator = ">=4.3.0"
 
 [package.extras]
-all = ["numpy", "scipy", "pandas", "matplotlib", "pygraphviz", "pydot", "pyyaml", "lxml", "pytest"]
+all = ["numpy", "scipy", "pandas", "matplotlib", "pygraphviz", "pydot", "pyyaml", "gdal", "lxml", "nose"]
 gdal = ["gdal"]
 lxml = ["lxml"]
 matplotlib = ["matplotlib"]
+nose = ["nose"]
 numpy = ["numpy"]
 pandas = ["pandas"]
 pydot = ["pydot"]
 pygraphviz = ["pygraphviz"]
-pytest = ["pytest"]
 pyyaml = ["pyyaml"]
 scipy = ["scipy"]
 
@@ -432,24 +418,17 @@ version = "1.0.1"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
-python-versions = "^3.6.2,<3.11"
-develop = false
+python-versions = ">=3.6.2,<3.11"
 
 [package.dependencies]
 casadi = "3.5.6.pre2"
-forwardkinematics = "^1.0.1"
-gym = "^0.21.0"
-motion-planning-scenes = "^0.1.19"
-numpy = "^1.5.1"
-pyglet = "^1.5.21"
-pylint = "^2.13.3"
-scipy = "^1.5"
-
-[package.source]
-type = "git"
-url = "https://git@github.com/maxspahn/gym_envs_planar.git"
-reference = "master"
-resolved_reference = "caabf2b7492f176a1423b2e5f60e38bd0649bb36"
+forwardkinematics = "1.0.1"
+gym = ">=0.21.0,<0.22.0"
+motion-planning-scenes = "0.1.19"
+numpy = ">=1.5.1,<2.0.0"
+pyglet = ">=1.5.21,<2.0.0"
+pylint = ">=2.13.3,<3.0.0"
+scipy = ">=1.5,<2.0"
 
 [[package]]
 name = "platformdirs"
@@ -460,8 +439,8 @@ optional = false
 python-versions = ">=3.6"
 
 [package.extras]
-docs = ["Sphinx (>=4)", "furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-autodoc-typehints (>=1.12)"]
-test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
+test = ["pytest-mock (>=3.6)", "pytest-cov (>=2.7)", "pytest (>=6)", "appdirs (==1.4.4)"]
+docs = ["sphinx-autodoc-typehints (>=1.12)", "proselint (>=0.10.2)", "furo (>=2021.7.5b38)", "Sphinx (>=4)"]
 
 [[package]]
 name = "pluggy"
@@ -475,8 +454,8 @@ python-versions = ">=3.6"
 importlib-metadata = {version = ">=0.12", markers = "python_version < \"3.8\""}
 
 [package.extras]
-dev = ["pre-commit", "tox"]
-testing = ["pytest", "pytest-benchmark"]
+testing = ["pytest-benchmark", "pytest"]
+dev = ["tox", "pre-commit"]
 
 [[package]]
 name = "py"
@@ -653,9 +632,9 @@ numpy = ">=1.13,<2.0"
 scipy = ">=1.0,<2.0"
 
 [package.extras]
-mkdocs = ["mkdocs (>=1.1.2)"]
-mktheapidocs = ["mktheapidocs (>=0.2)"]
 pymdown-extensions = ["pymdown-extensions (>=8,<9)"]
+mktheapidocs = ["mktheapidocs (>=0.2)"]
+mkdocs = ["mkdocs (>=1.1.2)"]
 
 [[package]]
 name = "scipy"
@@ -694,7 +673,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "trimesh"
-version = "3.12.7"
+version = "3.12.9"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "main"
 optional = true
@@ -704,9 +683,9 @@ python-versions = "*"
 numpy = "*"
 
 [package.extras]
-all = ["lxml", "glooey", "setuptools", "scipy", "meshio", "triangle", "colorlog", "scikit-image", "xatlas", "xxhash", "msgpack", "mapbox-earcut", "rtree", "jsonschema", "pycollada", "python-fcl", "pyglet", "networkx", "chardet", "pillow", "psutil", "svg.path", "requests", "sympy", "shapely"]
-easy = ["lxml", "rtree", "xxhash", "setuptools", "msgpack", "jsonschema", "scipy", "pycollada", "pyglet", "networkx", "chardet", "pillow", "colorlog", "svg.path", "requests", "sympy", "shapely"]
-test = ["pyinstrument", "ezdxf", "coveralls", "pytest-cov", "pytest"]
+all = ["pycollada", "msgpack", "scikit-image", "xatlas", "networkx", "svg.path", "lxml", "glooey", "pillow", "mapbox-earcut", "triangle", "python-fcl", "sympy", "psutil", "setuptools", "meshio", "xxhash", "requests", "colorlog", "pyglet", "rtree", "shapely", "jsonschema", "chardet", "scipy"]
+easy = ["setuptools", "pycollada", "msgpack", "xxhash", "requests", "networkx", "pyglet", "rtree", "lxml", "svg.path", "colorlog", "shapely", "pillow", "jsonschema", "chardet", "scipy", "sympy"]
+test = ["pytest", "coveralls", "pyinstrument", "pytest-cov", "ezdxf"]
 
 [[package]]
 name = "typed-ast"
@@ -738,31 +717,23 @@ pyyaml = "*"
 
 [[package]]
 name = "urdfenvs"
-version = "0.1.9"
+version = "0.2.2"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "main"
 optional = true
-python-versions = ">=3.6, <3.11"
-develop = false
+python-versions = ">=3.6,<3.11"
 
 [package.dependencies]
-casadi = "^3.5.5"
-gym = "^0.21.0"
-numpy = "^1.10.0"
-pybullet = "^3.2.1"
-pytest = "^6.2.5"
-urdfpy = {git = "https://git@github.com/maxspahn/urdfpy.git", rev = "fix-networkx-dependency"}
+gym = ">=0.21.0,<0.22.0"
+numpy = ">=1.19.0,<2.0.0"
+pybullet = ">=3.2.1,<4.0.0"
+pytest = ">=6.2.5,<7.0.0"
+urdfpy = ">=0.0.22,<0.0.23"
 
 [package.extras]
-scenes = ["motion-planning-scenes (>=0.1.1,<0.2.0)"]
-keyboard = ["pynput (>=1.7.6,<2.0.0)", "multiprocess (>=0.70.12,<0.71.0)"]
-docs = ["Sphinx (==4.2.0)", "sphinx-rtd-theme (==1.0.0)", "sphinxcontrib-napoleon (==0.7)"]
-
-[package.source]
-type = "git"
-url = "https://git@github.com/maxspahn/gym_envs_urdf.git"
-reference = "master"
-resolved_reference = "13830685fb2278e0ac4aee5cb0736cc4489787d1"
+keyboard = ["multiprocess (>=0.70.12,<0.71.0)", "pynput (>=1.7.6,<2.0.0)"]
+scenes = ["motion-planning-scenes (>=0.1.19,<0.2.0)"]
+docs = ["sphinxcontrib-napoleon (==0.7)", "sphinx-rtd-theme (==1.0.0)", "Sphinx (==4.2.0)"]
 
 [[package]]
 name = "urdfpy"
@@ -771,11 +742,10 @@ description = "URDF parser and manipulator for Python"
 category = "main"
 optional = true
 python-versions = "*"
-develop = false
 
 [package.dependencies]
 lxml = "*"
-networkx = ">=2.2"
+networkx = "2.2"
 numpy = "*"
 pillow = "*"
 pycollada = "0.6"
@@ -787,12 +757,6 @@ trimesh = "*"
 [package.extras]
 dev = ["flake8", "pre-commit", "pytest", "pytest-cov", "tox"]
 docs = ["sphinx", "sphinx-rtd-theme", "sphinx-automodapi"]
-
-[package.source]
-type = "git"
-url = "https://git@github.com/maxspahn/urdfpy.git"
-reference = "fix-networkx-dependency"
-resolved_reference = "e49a93acabd4ca1df30967b0d3763aecaefb8853"
 
 [[package]]
 name = "wrapt"
@@ -815,22 +779,21 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-agents = ["gym", "planarenvs", "urdfenvs"]
+agents = ["planarenvs", "urdfenvs"]
 tutorials = ["scipy", "matplotlib"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2,<3.10"
-content-hash = "86d327dc5dff3f0f719beae519855878dd11271ca4c10560ff36cda184ecf339"
+content-hash = "7988c0acf617f72811f46934be5b665dcb042a2c35928977dd5be8609a72b157"
 
 [metadata.files]
 astroid = [
-    {file = "astroid-2.11.6-py3-none-any.whl", hash = "sha256:ba33a82a9a9c06a5ceed98180c5aab16e29c285b828d94696bf32d6015ea82a9"},
-    {file = "astroid-2.11.6.tar.gz", hash = "sha256:4f933d0bf5e408b03a6feb5d23793740c27e07340605f236496cd6ce552043d6"},
+    {file = "astroid-2.11.7-py3-none-any.whl", hash = "sha256:86b0a340a512c65abf4368b80252754cda17c02cdbbd3f587dddf98112233e7b"},
+    {file = "astroid-2.11.7.tar.gz", hash = "sha256:bb24615c77f4837c707669d16907331374ae8a964650a66999da3f5ca68dc946"},
 ]
 atomicwrites = [
-    {file = "atomicwrites-1.4.0-py2.py3-none-any.whl", hash = "sha256:6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197"},
-    {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
+    {file = "atomicwrites-1.4.1.tar.gz", hash = "sha256:81b2c9071a49367a7f770170e5eec8cb66567cfbbc8c73d20ce5ca4a8d71cf11"},
 ]
 attrs = [
     {file = "attrs-21.4.0-py2.py3-none-any.whl", hash = "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4"},
@@ -897,14 +860,17 @@ dataclasses = [
     {file = "dataclasses-0.8.tar.gz", hash = "sha256:8479067f342acf957dc82ec415d355ab5edb7e7646b90dc6e2fd1d96ad084c97"},
 ]
 decorator = [
-    {file = "decorator-4.4.2-py2.py3-none-any.whl", hash = "sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760"},
-    {file = "decorator-4.4.2.tar.gz", hash = "sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7"},
+    {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
+    {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
 dill = [
     {file = "dill-0.3.4-py2.py3-none-any.whl", hash = "sha256:7e40e4a70304fd9ceab3535d36e58791d9c4a776b38ec7f7ec9afc8d3dca4d4f"},
     {file = "dill-0.3.4.zip", hash = "sha256:9f9734205146b2b353ab3fec9af0070237b6ddae78452af83d2fca84d739e675"},
 ]
-forwardkinematics = []
+forwardkinematics = [
+    {file = "forwardkinematics-1.0.1-py3-none-any.whl", hash = "sha256:b0dd4bcf24f59f47d79faf40c2c1839fe0d9c9fbc0bc58be5e5ee139e87e78df"},
+    {file = "forwardkinematics-1.0.1.tar.gz", hash = "sha256:ffe9e0c1f6329a6a7a8ecdf416080e74fd9107d833ff6480b080ec4bd5fba7b3"},
+]
 freetype-py = [
     {file = "freetype-py-2.2.0.zip", hash = "sha256:cf43716bc5246cd54a64b2238b942e8dc80b79eda92f814c720286fa6fab387a"},
     {file = "freetype_py-2.2.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:8059ebad562d465555fa556739906a2429381ba6206989afe2b7c8c87fad19d8"},
@@ -1043,7 +1009,6 @@ lxml = [
     {file = "lxml-4.9.1-cp27-cp27m-win_amd64.whl", hash = "sha256:4cfbe42c686f33944e12f45a27d25a492cc0e43e1dc1da5d6a87cbcaf2e95627"},
     {file = "lxml-4.9.1-cp27-cp27mu-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:dad7b164905d3e534883281c050180afcf1e230c3d4a54e8038aa5cfcf312b84"},
     {file = "lxml-4.9.1-cp27-cp27mu-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:a614e4afed58c14254e67862456d212c4dcceebab2eaa44d627c2ca04bf86837"},
-    {file = "lxml-4.9.1-cp310-cp310-macosx_10_15_universal2.whl", hash = "sha256:49a866923e69bc7da45a0565636243707c22752fc38f6b9d5c8428a86121022c"},
     {file = "lxml-4.9.1-cp310-cp310-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_24_i686.whl", hash = "sha256:f9ced82717c7ec65a67667bb05865ffe38af0e835cdd78728f1209c8fffe0cad"},
     {file = "lxml-4.9.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_24_aarch64.whl", hash = "sha256:d9fc0bf3ff86c17348dfc5d322f627d78273eba545db865c3cd14b3f19e57fa5"},
     {file = "lxml-4.9.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:e5f66bdf0976ec667fc4594d2812a00b07ed14d1b44259d19a41ae3fff99f2b8"},
@@ -1139,14 +1104,16 @@ mccabe = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
-motion-planning-scenes = []
+motion-planning-scenes = [
+    {file = "motion_planning_scenes-0.1.19-py3-none-any.whl", hash = "sha256:2d3cab0461d583c7cad41062d38215dba8f237b255d3f63e749d96ec73fc3690"},
+    {file = "motion_planning_scenes-0.1.19.tar.gz", hash = "sha256:bbc3c43ce48e2a3fc991d59f4dc07d467190901e3092035b3d014efa980cbdb8"},
+]
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 networkx = [
-    {file = "networkx-2.5.1-py3-none-any.whl", hash = "sha256:0635858ed7e989f4c574c2328380b452df892ae85084144c73d8cd819f0c4e06"},
-    {file = "networkx-2.5.1.tar.gz", hash = "sha256:109cd585cac41297f71103c3c42ac6ef7379f29788eb54cb751be5a663bb235a"},
+    {file = "networkx-2.2.zip", hash = "sha256:45e56f7ab6fe81652fb4bc9f44faddb0e9025f469f602df14e3b2551c2ea5c8b"},
 ]
 numba = [
     {file = "numba-0.53.1-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:b23de6b6837c132087d06b8b92d343edb54b885873b824a037967fbd5272ebb7"},
@@ -1261,7 +1228,10 @@ pillow = [
     {file = "Pillow-8.4.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:244cf3b97802c34c41905d22810846802a3329ddcb93ccc432870243211c79fc"},
     {file = "Pillow-8.4.0.tar.gz", hash = "sha256:b8e2f83c56e141920c39464b852de3719dfbfb6e3c99a2d8da0edf4fb33176ed"},
 ]
-planarenvs = []
+planarenvs = [
+    {file = "planarenvs-1.0.1-py3-none-any.whl", hash = "sha256:bd26a9525bebb1b0fcdce071df42158f29332130d850c0f93e2718f1b302a7ca"},
+    {file = "planarenvs-1.0.1.tar.gz", hash = "sha256:a740d0a1d0b318e8b8deb376752d0535e91c9f3e203599a79d4de70be5ee48a6"},
+]
 platformdirs = [
     {file = "platformdirs-2.4.0-py3-none-any.whl", hash = "sha256:8868bbe3c3c80d42f20156f22e7131d2fb321f5bc86a2a345375c6481a67021d"},
     {file = "platformdirs-2.4.0.tar.gz", hash = "sha256:367a5e80b3d04d2428ffa76d33f124cf11e8fff2acdaa9b43d545f5c7d661ef2"},
@@ -1400,8 +1370,8 @@ tomli = [
     {file = "tomli-1.2.3.tar.gz", hash = "sha256:05b6166bff487dc068d322585c7ea4ef78deed501cc124060e0f238e89a9231f"},
 ]
 trimesh = [
-    {file = "trimesh-3.12.7-py3-none-any.whl", hash = "sha256:15e6cf4d3a7dd4560cb90f4eeadfa58f96b9dac38a01173ab40d15f2ab1b863a"},
-    {file = "trimesh-3.12.7.tar.gz", hash = "sha256:4b1bafd1035c44b5679d3845c6f0d027ca55dab8607580a5eced76a3f5096d42"},
+    {file = "trimesh-3.12.9-py3-none-any.whl", hash = "sha256:f1e239845e0d800f77e72956dafe8b853bc8c3a4b587083026980c2c2b921996"},
+    {file = "trimesh-3.12.9.tar.gz", hash = "sha256:ac458c3cad3b02a14477fe5ac7f908878f504a56d8aa3952c430d2e90e5968b5"},
 ]
 typed-ast = [
     {file = "typed_ast-1.5.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:669dd0c4167f6f2cd9f57041e03c3c2ebf9063d0757dc89f79ba1daa2bfca9d4"},
@@ -1436,8 +1406,14 @@ typing-extensions = [
 urdf-parser-py = [
     {file = "urdf_parser_py-0.0.4.tar.gz", hash = "sha256:e983f637145fded67bcff6a542302069bb975b2edf1b18318c093abba1b794cc"},
 ]
-urdfenvs = []
-urdfpy = []
+urdfenvs = [
+    {file = "urdfenvs-0.2.2-py3-none-any.whl", hash = "sha256:3654b97a1baf883c7d7f1851a648bbb52167cc6741d787c9095e024b941cf084"},
+    {file = "urdfenvs-0.2.2.tar.gz", hash = "sha256:18b3ed61808bc1aa58f875bbf94bae8eadc70908c0e7b9a90ec72a94b531eb11"},
+]
+urdfpy = [
+    {file = "urdfpy-0.0.22-py3-none-any.whl", hash = "sha256:ec9d944bd8a28fe0914b6038e8119ebd53905bc4c507744e35b46a3fa02529bd"},
+    {file = "urdfpy-0.0.22.tar.gz", hash = "sha256:9dc30ebd8f26f1812d2adb9f542dffeb4537963fa2588d14d98e2f6b862d798f"},
+]
 wrapt = [
     {file = "wrapt-1.14.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:1b376b3f4896e7930f1f772ac4b064ac12598d1c38d04907e696cc4d794b43d3"},
     {file = "wrapt-1.14.1-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:903500616422a40a98a5a3c4ff4ed9d0066f3b4c951fa286018ecdf0750194ef"},

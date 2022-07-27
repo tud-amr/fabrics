@@ -156,8 +156,8 @@ def run_panda_example(n_steps=5000, render=True):
     obst2_position = np.array(obst2.position())
     for _ in range(n_steps):
         action = planner.compute_action(
-            q=ob["x"],
-            qdot=ob["xdot"],
+            q=ob["joint_state"]["position"],
+            qdot=ob["joint_state"]["velocity"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
             x_goal_1=sub_goal_1_position,

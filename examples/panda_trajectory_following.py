@@ -117,8 +117,8 @@ def run_panda_trajectory_example(n_steps=5000, render=True, dynamic_fabric: bool
             sub_goal_0_velocity *= 0
             sub_goal_0_acceleration *= 0
         action = planner.compute_action(
-            q=ob["x"],
-            qdot=ob["xdot"],
+            q=ob["joint_state"]["position"],
+            qdot=ob["joint_state"]["velocity"],
             x_ref_goal_0_leaf=sub_goal_0_position,
             xdot_ref_goal_0_leaf=sub_goal_0_velocity,
             xddot_ref_goal_0_leaf=sub_goal_0_acceleration,

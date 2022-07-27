@@ -107,8 +107,8 @@ def run_panda_joint_space(n_steps=5000, render=True):
     sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
     for _ in range(n_steps):
         action = planner.compute_action(
-            q=ob["x"],
-            qdot=ob["xdot"],
+            q=ob["joint_state"]["position"],
+            qdot=ob["joint_state"]["velocity"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
         )
