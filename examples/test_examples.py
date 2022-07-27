@@ -10,6 +10,7 @@ from panda_ring import run_panda_ring_example
 from panda_ring_serialized import run_panda_ring_serialized_example
 from panda_self_collision_avoidance import run_panda_self_collision
 from panda_joint_space import run_panda_joint_space
+from point_robot_urdf import run_point_robot_urdf
 
 def test_panda_example():
     res = run_panda_example(10, render=False)
@@ -58,6 +59,10 @@ def test_serialization_example():
 
 def test_panda_joint_space():
     res = run_panda_joint_space(10, render=False)
+    assert isinstance(res, dict)
+
+def test_point_robot_urdf_example():
+    res = run_point_robot_urdf(10, render=False)
     assert isinstance(res, dict)
 
 
