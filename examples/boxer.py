@@ -1,0 +1,165 @@
+import pdb
+import gym
+import numpy as np
+import urdfenvs.boxer_robot
+import logging
+from urdfenvs.boxer_robot.envs.acc import BoxerRobotAccEnv
+from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from MotionPlanningGoal.goalComposition import GoalComposition
+from fabrics.planner.non_holonomic_parameterized_planner import NonHolonomicParameterizedFabricPlanner
+
+logging.basicConfig(level=logging.INFO)
+"""
+Fabrics example for the boxer robot.
+"""
+
+def initalize_environment(render):
+    """
+    Initializes the simulation environment.
+
+    Adds an obstacle and goal visualizaion to the environment and
+    steps the simulation once.
+    
+    Params
+    ----------
+    render
+        Boolean toggle to set rendering on (True) or off (False).
+    """
+    env: BoxerRobotAccEnv = gym.make("boxer-robot-acc-v0", dt=0.05, render=render)
+    # Set the initial position and velocity of the point mass.
+    pos0 = np.array([-2.0, 0.4, 0.0])
+    vel0 = np.array([0.0, 0.0])
+    initial_observation = env.reset(pos=pos0, vel=vel0)
+    # Definition of the obstacle.
+    static_obst_dict = {
+            "dim": 3,
+            "type": "sphere",
+            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
+    }
+    obst1 = SphereObstacle(name="staticObst1", contentDict=static_obst_dict)
+    obstacles = (obst1) # Add additional obstacles here.
+    # Definition of the goal.
+    goal_dict = {
+            "subgoal0": {
+                "m": 2,
+                "w": 0.5,
+                "prime": True,
+                "indices": [0, 1],
+                "parent_link" : 'origin',
+                "child_link" : 'ee_link',
+                "desired_position": [3.5, 0.0],
+                "epsilon" : 0.1,
+                "type": "staticSubGoal"
+            }
+    }
+    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    # Add walls, the goal and the obstacle to the environment.
+    #env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
+    env.add_goal(goal)
+    env.add_obstacle(obst1)
+    return (env, obstacles, goal, initial_observation)
+
+
+def set_planner(goal: GoalComposition):
+    """
+    Initializes the fabric planner for the point robot.
+
+    This function defines the forward kinematics for collision avoidance,
+    and goal reaching. These components are fed into the fabrics planner.
+
+    In the top section of this function, an example for optional reconfiguration
+    can be found. Commented by default.
+
+    Params
+    ----------
+    goal: StaticSubGoal
+        The goal to the motion planning problem.
+    """
+    degrees_of_freedom = 3
+    robot_type = "boxer"
+    # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
+    collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
+    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
+    planner = NonHolonomicParameterizedFabricPlanner(
+            degrees_of_freedom,
+            robot_type,
+            collision_geometry=collision_geometry,
+            collision_finsler=collision_finsler
+    )
+    collision_links = ["ee_link"]
+    self_collision_links = {}
+    # The planner hides all the logic behind the function set_components.
+    planner.set_components(
+        collision_links,
+        self_collision_links,
+        goal,
+        number_obstacles=1,
+    )
+    planner.concretize()
+    return planner
+
+
+def run_point_robot_urdf(n_steps=10000, render=True):
+    """
+    Set the gym environment, the planner and run point robot example.
+    
+    Params
+    ----------
+    n_steps
+        Total number of simulation steps.
+    render
+        Boolean toggle to set rendering on (True) or off (False).
+    """
+    (env, obstacles, goal, initial_observation) = initalize_environment(render)
+    ob = initial_observation
+    obst1 = obstacles
+    print(f"Initial observation : {ob}")
+    planner = set_planner(goal)
+    # Start the simulation.
+    print("Starting simulation")
+    sub_goal_0_position = np.array(goal.subGoals()[0].position())
+    sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
+    obst1_position = np.array(obst1.position())
+    extra_term_functions = planner.extra_terms_function()
+    for _ in range(n_steps):
+        # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
+        qudot = np.array([ob['joint_state']['forward_velocity'][0], ob['joint_state']['velocity'][2]])
+        extra_terms = extra_term_functions.evaluate(
+            q=ob["joint_state"]["position"],
+            qdot=ob["joint_state"]["velocity"],
+            qudot=qudot,
+            x_goal_0=sub_goal_0_position,
+            weight_goal_0=sub_goal_0_weight,
+            x_obst_0=obst1_position,
+            radius_body_ee_link=np.array([0.2]),
+            radius_obst_0=np.array([obst1.radius()]),
+        )
+        J_nh = extra_terms['J_nh']
+        f_extra = extra_terms["f_extra"]
+        qdot_forward = np.dot(J_nh, qudot)
+        qdot = ob['joint_state']['velocity']
+        logging.debug(f" theta : {ob['joint_state']['position'][2]}")
+        logging.debug(f"J_nh {J_nh}")
+        logging.debug(f"qudot {qudot}")
+        logging.debug(f"qdot_forward {qdot_forward}")
+        logging.debug(f"qdot {qdot}")
+        #logging.info(f"ob {ob}")
+        action = planner.compute_action(
+            q=ob["joint_state"]["position"],
+            qdot=ob["joint_state"]["velocity"],
+            qudot=qudot,
+            x_goal_0=sub_goal_0_position,
+            weight_goal_0=sub_goal_0_weight,
+            x_obst_0=obst1_position,
+            radius_obst_0=np.array([obst1.radius()]),
+            radius_body_ee_link=np.array([0.2]),
+        )
+        ob, *_, = env.step(action)
+    return {}
+
+
+if __name__ == "__main__":
+    res = run_point_robot_urdf(n_steps=10000, render=True)
+
+
+
