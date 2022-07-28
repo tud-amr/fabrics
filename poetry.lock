@@ -1,4 +1,12 @@
 [[package]]
+name = "antlr4-python3-runtime"
+version = "4.9.3"
+description = "ANTLR 4.9.3 runtime for Python 3.7"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "astroid"
 version = "2.11.7"
 description = "An abstract syntax tree for Python with inference support."
@@ -60,7 +68,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "casadi"
-version = "3.5.6.pre2"
+version = "3.5.5"
 description = "CasADi -- framework for algorithmic differentiation and numeric optimization"
 category = "main"
 optional = false
@@ -131,15 +139,15 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "forwardkinematics"
-version = "1.0.1"
+version = "1.0.3"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
-python-versions = ">=3.6.2,<3.11"
+python-versions = ">=3.6.2,<3.10"
 
 [package.dependencies]
-casadi = "3.5.6.pre2"
-numpy = ">=1.15.5,<2.0.0"
+casadi = ">=3.5.4,<3.5.5.post1 || >3.5.5.post1,<3.5.5.post2 || >3.5.5.post2,<4.0.0"
+numpy = ">=1.15.3,<2.0.0"
 urdf_parser_py = ">=0.0.3"
 
 [[package]]
@@ -311,16 +319,18 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.19"
+version = "0.1.21"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.6,<3.10"
 
 [package.dependencies]
-casadi = "3.5.6.pre2"
+casadi = ">=3.5.4,<3.5.5.post1 || >3.5.5.post1,<3.5.5.post2 || >3.5.5.post2,<4.0.0"
+dataclasses = {version = ">=0.8,<0.9", markers = "python_version < \"3.7\""}
 geomdl = ">=5.3.1,<6.0.0"
 numpy = ">=1.19.0,<2.0.0"
+omegaconf = ">=2.2.2,<3.0.0"
 pyquaternion = ">=0.9.9,<0.10.0"
 pytest = ">=6.2.5,<7.0.0"
 PyYAML = ">=6.0,<7.0"
@@ -378,6 +388,19 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "omegaconf"
+version = "2.2.2"
+description = "A flexible configuration library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+antlr4-python3-runtime = ">=4.9.0,<4.10.0"
+dataclasses = {version = "*", markers = "python_version == \"3.6\""}
+PyYAML = ">=5.1.0"
+
+[[package]]
 name = "packaging"
 version = "21.3"
 description = "Core utilities for Python packages"
@@ -414,17 +437,16 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "planarenvs"
-version = "1.0.1"
+version = "1.0.3"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "main"
 optional = true
 python-versions = ">=3.6.2,<3.11"
 
 [package.dependencies]
-casadi = "3.5.6.pre2"
-forwardkinematics = "1.0.1"
+forwardkinematics = ">=1.0.3,<2.0.0"
 gym = ">=0.21.0,<0.22.0"
-motion-planning-scenes = "0.1.19"
+motion-planning-scenes = ">=0.1.19,<0.2.0"
 numpy = ">=1.5.1,<2.0.0"
 pyglet = ">=1.5.21,<2.0.0"
 pylint = ">=2.13.3,<3.0.0"
@@ -788,6 +810,9 @@ python-versions = "^3.6.2,<3.10"
 content-hash = "7988c0acf617f72811f46934be5b665dcb042a2c35928977dd5be8609a72b157"
 
 [metadata.files]
+antlr4-python3-runtime = [
+    {file = "antlr4-python3-runtime-4.9.3.tar.gz", hash = "sha256:f224469b4168294902bb1efa80a8bf7855f24c99aef99cbefc1bcd3cce77881b"},
+]
 astroid = [
     {file = "astroid-2.11.7-py3-none-any.whl", hash = "sha256:86b0a340a512c65abf4368b80252754cda17c02cdbbd3f587dddf98112233e7b"},
     {file = "astroid-2.11.7.tar.gz", hash = "sha256:bb24615c77f4837c707669d16907331374ae8a964650a66999da3f5ca68dc946"},
@@ -825,19 +850,44 @@ black = [
     {file = "black-22.6.0.tar.gz", hash = "sha256:6c6d39e28aed379aec40da1c65434c77d75e65bb59a1e1c283de545fb4e7c6c9"},
 ]
 casadi = [
-    {file = "casadi-3.5.6.pre2-cp310-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:5f231311fd768bc7bcb3fdfd2e96bcf3f3964de52b2d8a1bc496340d67711728"},
-    {file = "casadi-3.5.6.pre2-cp310-none-manylinux_2_5_x86_64.whl", hash = "sha256:3f772526eabebf44a9e1ea59ba056a5dbdc15b7526d29c7d9f2f7e5e2713c6a1"},
-    {file = "casadi-3.5.6.pre2-cp310-none-win_amd64.whl", hash = "sha256:e8821dc203ad273023f565e6cc972f738f2e04fa8fed6ec2f9589271c6aeed1f"},
-    {file = "casadi-3.5.6.pre2-cp36-none-manylinux_2_5_x86_64.whl", hash = "sha256:710cc30fbaa4bf597fe002e1a9c1e6238459882192663e5a0ed553fe87e2cd12"},
-    {file = "casadi-3.5.6.pre2-cp37-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:4a521f224d3bf80a7df58eb77ac72321b36d5b512edabfc2dffaa39b4272a4fc"},
-    {file = "casadi-3.5.6.pre2-cp37-none-manylinux_2_5_x86_64.whl", hash = "sha256:755cb9740299d60afcfe29873f88b51a3492f7b724392a4f73423b1305557041"},
-    {file = "casadi-3.5.6.pre2-cp37-none-win_amd64.whl", hash = "sha256:132846c6005e109ba7ded56f190a91f9fd49ef34b5203f7fe8026ed81359cf33"},
-    {file = "casadi-3.5.6.pre2-cp38-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:838575a383ed33ce3720e5fc7dec2f4a209bd458651a4954e69fe0f966fa9821"},
-    {file = "casadi-3.5.6.pre2-cp38-none-manylinux_2_5_x86_64.whl", hash = "sha256:6aa5141bb3f42807865209086cea1f4e7ae26def9c29095e58e573e41fa1dda8"},
-    {file = "casadi-3.5.6.pre2-cp38-none-win_amd64.whl", hash = "sha256:adbfcde2de2f20ad172c91178dec6b0e02004b11308337423d0e5e1a7585f7b2"},
-    {file = "casadi-3.5.6.pre2-cp39-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:0e62f8ebc7cbc089c57d04c99891aca96c646593646d6b478f7a89ff422c51ca"},
-    {file = "casadi-3.5.6.pre2-cp39-none-manylinux_2_5_x86_64.whl", hash = "sha256:9f2e2e4357d0a8cf9e4f5e3ca0ff25b9b75a0b6e3488e02cdd8232443c47910d"},
-    {file = "casadi-3.5.6.pre2-cp39-none-win_amd64.whl", hash = "sha256:4b67be15652d9e5a5499092a4af19886752f71c058b9ad21009f865fe3c856aa"},
+    {file = "casadi-3.5.5-cp27-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:d4e49cb46404cef61f83b30bb20ec9597c50ae7f55cfd6b89c17facc74675437"},
+    {file = "casadi-3.5.5-cp27-none-manylinux1_i686.whl", hash = "sha256:f08a99e98b0a15083f06b1e221f064a29b3ed9e20617dc55aa8e823f2f732ace"},
+    {file = "casadi-3.5.5-cp27-none-manylinux1_x86_64.whl", hash = "sha256:09e103bb597d46aa338fc57bc49270068a1f07be35f9494c9f796dea4b801aeb"},
+    {file = "casadi-3.5.5-cp27-none-win32.whl", hash = "sha256:a4ce51e988570160af9ccfbbb1b9679546cbb1865d3a74ef0276f37fd94d91d9"},
+    {file = "casadi-3.5.5-cp27-none-win_amd64.whl", hash = "sha256:54d89442058271007ae8573dfa33360bea10e26603545481090b45e8b90c9d10"},
+    {file = "casadi-3.5.5-cp34-none-manylinux1_x86_64.whl", hash = "sha256:4143803af909f284400c02f59de4d97e5ba9319de28366215ef55ef261914f9a"},
+    {file = "casadi-3.5.5-cp34-none-win32.whl", hash = "sha256:7a624d40c7b5ded7916f6cc65998af4585b4557c9ea65dc1e3a6273ebb2313ec"},
+    {file = "casadi-3.5.5-cp34-none-win_amd64.whl", hash = "sha256:3aec6737c282e7fb5be41f6c7d0649e52ce49efb3508f30bada707e809bbbb5f"},
+    {file = "casadi-3.5.5-cp35-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:6192e2ed81c15a7dab2554f5f69b134df8d1a982f8d9f13e57bdef93364d2120"},
+    {file = "casadi-3.5.5-cp35-none-manylinux1_i686.whl", hash = "sha256:49a8b713f0ff0bbc2f2af2e71c515cdced238786e25ef504f5982618c84c67a7"},
+    {file = "casadi-3.5.5-cp35-none-manylinux1_x86_64.whl", hash = "sha256:13277151efc76b221de8ca6b5ab7b8bbdd2b0e139f282866840adf88dfe53bc9"},
+    {file = "casadi-3.5.5-cp35-none-manylinux2014_aarch64.whl", hash = "sha256:253569c85f881a6a8fe5e1c0758858edb1ecb4c3d8bce4aee4b52e5dc59fc091"},
+    {file = "casadi-3.5.5-cp35-none-win32.whl", hash = "sha256:5de5c3c1381ac303e71fdef75dace34af6e1d50b46ac081051cd209b8b933837"},
+    {file = "casadi-3.5.5-cp35-none-win_amd64.whl", hash = "sha256:4932b2b5361013420189dbc8d30e970672d036b37cb382f1c09c3b6cfe651a37"},
+    {file = "casadi-3.5.5-cp36-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:2322748a8d5e88750fd2fc0abcdc56cfbad1a8cd538fe0e7d7b6d8ce0cb3fa62"},
+    {file = "casadi-3.5.5-cp36-none-manylinux1_i686.whl", hash = "sha256:ab6a600a9b2ea27453d56fd4464ad0db0ae69f5cea42595fcbdaabcd40396440"},
+    {file = "casadi-3.5.5-cp36-none-manylinux1_x86_64.whl", hash = "sha256:5f6eb8de31735c14ecc777e3ad77b57767b5f2dbea29265909ef696f51e8be92"},
+    {file = "casadi-3.5.5-cp36-none-manylinux2014_aarch64.whl", hash = "sha256:adf20c34ba2cec1840a026023d93cc6d9b3581dfda6a044f434fc75b50c9a2ce"},
+    {file = "casadi-3.5.5-cp36-none-win32.whl", hash = "sha256:7309a75b27c57f09b00a61815fb38c40da8e62e3004598e55ea1b8f713d96221"},
+    {file = "casadi-3.5.5-cp36-none-win_amd64.whl", hash = "sha256:ab85c7cf772ba54f2718ebe366b836fffff868443f7c0c02389ed0a288cbde1f"},
+    {file = "casadi-3.5.5-cp37-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:ec26244f9d9047f1bb401f1b86ff4775e1ddf638f4b4992bbc362a27a6f56673"},
+    {file = "casadi-3.5.5-cp37-none-manylinux1_i686.whl", hash = "sha256:1c451a07b2440c00d552e040b6285b6e79b677d2978212368b28b86f5d267669"},
+    {file = "casadi-3.5.5-cp37-none-manylinux1_x86_64.whl", hash = "sha256:24fbac649ee26572884029dcd0e108b4a2412cad003a84ed915c4e44a94ecae7"},
+    {file = "casadi-3.5.5-cp37-none-manylinux2014_aarch64.whl", hash = "sha256:a06c0b96eb9d3bc88c627eec6e465726934ca0394347dc33efc742b8c91db83d"},
+    {file = "casadi-3.5.5-cp37-none-win32.whl", hash = "sha256:36db4c84d8f3aad328faaeaeaa454a633c95a854d78ea188791b147888379342"},
+    {file = "casadi-3.5.5-cp37-none-win_amd64.whl", hash = "sha256:643e48f92eaf65eb82964816bb7e7064ddb8239959210fa6168e8bce6fe6ef94"},
+    {file = "casadi-3.5.5-cp38-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:6ce7ac8a301a145f98d46db0bfd13bc8b3831a5bb92e8054d531a1f233bb4b93"},
+    {file = "casadi-3.5.5-cp38-none-manylinux1_i686.whl", hash = "sha256:473bb86fa64ac9703d74a474514703b4665fa9a384221ced620b5025e64532a7"},
+    {file = "casadi-3.5.5-cp38-none-manylinux1_x86_64.whl", hash = "sha256:292e2768280393bad406256e0ef9c30ddcd4867dbd42148b36f9d92a32d9e199"},
+    {file = "casadi-3.5.5-cp38-none-manylinux2014_aarch64.whl", hash = "sha256:353a79e50aa84ac5e0d9f04bc3b2d78a2cc8edae3b842d757756449682778944"},
+    {file = "casadi-3.5.5-cp38-none-win32.whl", hash = "sha256:77f33cb95be6a49b93d8d6b81f05193676ae09857699cedf8f1a14a4285d077e"},
+    {file = "casadi-3.5.5-cp38-none-win_amd64.whl", hash = "sha256:fbf39dcd63f1d3b63c300fce59b7ea678bd5ea1d014e1e090a5226600a4132cb"},
+    {file = "casadi-3.5.5-cp39-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:4086669280b2335d235c664373db46dcd7f6485dba4663ce1944ea01753c5e8b"},
+    {file = "casadi-3.5.5-cp39-none-manylinux1_i686.whl", hash = "sha256:c3440c90c31b61ae1df82f6c784643393f723354dc08013f9d5cedf25507c67c"},
+    {file = "casadi-3.5.5-cp39-none-manylinux1_x86_64.whl", hash = "sha256:bd94048388b602fc30fdac2fecb986c034110ed8d2d17af7fd13b0de45c58bd7"},
+    {file = "casadi-3.5.5-cp39-none-manylinux2014_aarch64.whl", hash = "sha256:cd630a2e6ec6df6a4977af63080fa8d63a0053ff8c06ea0200959b47ae75201c"},
+    {file = "casadi-3.5.5-cp39-none-win32.whl", hash = "sha256:ac45b91616e9b8afbe266ca08e80770b28e9e6d7a5852e3677fb37e42bde2047"},
+    {file = "casadi-3.5.5-cp39-none-win_amd64.whl", hash = "sha256:55df534d003efdd120c4ebfeb6b252c443d273cdc4b97a394eb0268367477795"},
 ]
 click = [
     {file = "click-8.0.4-py3-none-any.whl", hash = "sha256:6a7a62563bbfabfda3a38f3023a1db4a35978c0abd76f6c9605ecd6554d6d9b1"},
@@ -868,8 +918,8 @@ dill = [
     {file = "dill-0.3.4.zip", hash = "sha256:9f9734205146b2b353ab3fec9af0070237b6ddae78452af83d2fca84d739e675"},
 ]
 forwardkinematics = [
-    {file = "forwardkinematics-1.0.1-py3-none-any.whl", hash = "sha256:b0dd4bcf24f59f47d79faf40c2c1839fe0d9c9fbc0bc58be5e5ee139e87e78df"},
-    {file = "forwardkinematics-1.0.1.tar.gz", hash = "sha256:ffe9e0c1f6329a6a7a8ecdf416080e74fd9107d833ff6480b080ec4bd5fba7b3"},
+    {file = "forwardkinematics-1.0.3-py3-none-any.whl", hash = "sha256:5053eb6cfec480f63356249a817982f29300c99ca10bdefe6df630b811ff5aff"},
+    {file = "forwardkinematics-1.0.3.tar.gz", hash = "sha256:11bde1d072201bc471c84faa2ff2251ab68dd50e6d120262cf35de1fe956aeb6"},
 ]
 freetype-py = [
     {file = "freetype-py-2.2.0.zip", hash = "sha256:cf43716bc5246cd54a64b2238b942e8dc80b79eda92f814c720286fa6fab387a"},
@@ -1105,8 +1155,8 @@ mccabe = [
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
 motion-planning-scenes = [
-    {file = "motion_planning_scenes-0.1.19-py3-none-any.whl", hash = "sha256:2d3cab0461d583c7cad41062d38215dba8f237b255d3f63e749d96ec73fc3690"},
-    {file = "motion_planning_scenes-0.1.19.tar.gz", hash = "sha256:bbc3c43ce48e2a3fc991d59f4dc07d467190901e3092035b3d014efa980cbdb8"},
+    {file = "motion_planning_scenes-0.1.21-py3-none-any.whl", hash = "sha256:dc788588ada8b6d6cc339810003a4f14da5e9664a5d189c70e9146b0ceaba52c"},
+    {file = "motion_planning_scenes-0.1.21.tar.gz", hash = "sha256:fefe917443fad756bba499f5610a4bd901d8e6b746581df81b9db493368c4ecb"},
 ]
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
@@ -1174,6 +1224,10 @@ numpy = [
     {file = "numpy-1.19.5-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:a0d53e51a6cb6f0d9082decb7a4cb6dfb33055308c4c44f53103c073f649af73"},
     {file = "numpy-1.19.5.zip", hash = "sha256:a76f502430dd98d7546e1ea2250a7360c065a5fdea52b2dffe8ae7180909b6f4"},
 ]
+omegaconf = [
+    {file = "omegaconf-2.2.2-py3-none-any.whl", hash = "sha256:556917181487fb66fe832d3c7b324f51b2f4c8adc373dd5091be921501b7d420"},
+    {file = "omegaconf-2.2.2.tar.gz", hash = "sha256:65c85b2a84669a570c70f2df00de3cebcd9b47a8587d3c53b1aa5766bb096f77"},
+]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
@@ -1229,8 +1283,8 @@ pillow = [
     {file = "Pillow-8.4.0.tar.gz", hash = "sha256:b8e2f83c56e141920c39464b852de3719dfbfb6e3c99a2d8da0edf4fb33176ed"},
 ]
 planarenvs = [
-    {file = "planarenvs-1.0.1-py3-none-any.whl", hash = "sha256:bd26a9525bebb1b0fcdce071df42158f29332130d850c0f93e2718f1b302a7ca"},
-    {file = "planarenvs-1.0.1.tar.gz", hash = "sha256:a740d0a1d0b318e8b8deb376752d0535e91c9f3e203599a79d4de70be5ee48a6"},
+    {file = "planarenvs-1.0.3-py3-none-any.whl", hash = "sha256:86a879e8f5b0fa4e4a0ee8aa8a9bd29ef8f6a2dd00933f3aff5d4b9d093ed6da"},
+    {file = "planarenvs-1.0.3.tar.gz", hash = "sha256:0cbb2dcf9a1951ed031761a79625e25e17d6a351ef6b6a5452872aed170dbee1"},
 ]
 platformdirs = [
     {file = "platformdirs-2.4.0-py3-none-any.whl", hash = "sha256:8868bbe3c3c80d42f20156f22e7131d2fb321f5bc86a2a345375c6481a67021d"},
