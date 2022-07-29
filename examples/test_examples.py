@@ -12,6 +12,8 @@ from panda_self_collision_avoidance import run_panda_self_collision
 from panda_joint_space import run_panda_joint_space
 from point_robot_urdf import run_point_robot_urdf
 from tiago_arm import run_tiago_example
+from boxer import run_boxer_example
+from albert import run_albert_reacher_example
 
 def test_panda_example():
     res = run_panda_example(10, render=False)
@@ -68,6 +70,14 @@ def test_point_robot_urdf_example():
 
 def test_tiago_example():
     res = run_tiago_example(10, render=False)
+    assert isinstance(res, dict)
+
+def test_boxer_example():
+    res = run_boxer_example(10, render=False)
+    assert isinstance(res, dict)
+
+def test_albert_example():
+    res = run_albert_reacher_example(10, render=False)
     assert isinstance(res, dict)
 
 

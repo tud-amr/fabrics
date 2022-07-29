@@ -100,7 +100,7 @@ def set_planner(goal: GoalComposition):
     return planner
 
 
-def run_point_robot_urdf(n_steps=10000, render=True):
+def run_boxer_example(n_steps=10000, render=True):
     """
     Set the gym environment, the planner and run point robot example.
     
@@ -142,7 +142,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_point_robot_urdf(n_steps=10000, render=True)
+    res = run_boxer_example(n_steps=10000, render=True)
 
 
 

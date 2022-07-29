@@ -151,17 +151,17 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     return planner
 
 
-def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
+def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=None):
     obstacle_resolution_ring = 10
     (env, obstacles, goal, initial_observation) = initalize_environment(
         render=render, obstacle_resolution=obstacle_resolution_ring
     )
     ob = initial_observation
-    planner = set_planner(goal, obstacle_resolution= obstacle_resolution_ring)
-
-    # Serializing the planner is optional
-    if serialize:
-        planner.serialize('serialized_10.pbz2')
+    if not planner:
+        planner = set_planner(goal, obstacle_resolution = obstacle_resolution_ring)
+        # Serializing the planner is optional
+        if serialize:
+            planner.serialize('serialized_10.pbz2')
 
     # Start the simulation
     print("Starting simulation")
