@@ -1,4 +1,4 @@
-import pdb
+from dataclasses import dataclass
 import casadi as ca
 import numpy as np
 import logging
@@ -6,14 +6,22 @@ import logging
 from forwardkinematics.fksCommon.fk_creator import FkCreator
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner, FabricPlannerConfig
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+from fabrics.helpers.functions import parse_symbolic_input
 
 
+@dataclass
 class NonHolonomicFabricPlannerConfig(FabricPlannerConfig):
     l_offset: float = 0.2
-    m_arm: float = 1.0
-    m_base: float= 1.0
-    m_rot: float = 1.0
+    M_base_energy: str = (
+        "ca.SX(np.array([[sym('m_base_x'), 0, 0], [0, sym('m_base_y'), 0], [0, 0, sym('m_rot')]]))"
+    )
+    M_arm_energy: str = (
+        "sym('m_arm') * np.identity(x.size()[0] - 3)"
+    )
 
 class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
     def __init__(
@@ -30,14 +38,10 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
         self._ref_sign = 1
 
-        M = np.identity(self._dof)
-        M[0:2, 0:2] *= self._config.m_base
-        M[2, 2] *= self._config.m_rot
-        M[3:self._dof, 3:self._dof] *= self._config.m_arm
+        # Additional terms introducted by the non-holonomic base
         q = self._variables.position_variable()
         qudot = ca.SX.sym("qudot", self._dof - 1)
         J_nh = ca.SX(np.zeros((self._dof, self._dof-1)))
-
         J_nh[0, 0] = ca.cos(q[2])
         J_nh[0, 1] = -self._config.l_offset * ca.sin(q[2])
         J_nh[1, 0] = ca.sin(q[2])
@@ -48,9 +52,23 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         f_extra[0] = qudot[0] * qudot[1] * -ca.sin(q[2]) - self._config.l_offset * ca.cos(q[2]) * qudot[1]**2
         f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) - self._config.l_offset * ca.sin(q[2]) * qudot[1]**2
         self._J_nh = J_nh
+        self._f_extra = f_extra
         self._qudot = qudot
         self._variables.add_state_variable('qudot', qudot)
-        self._f_extra = f_extra
+
+    def set_base_geometry(self):
+        q = self._variables.position_variable()
+        qdot = self._variables.velocity_variable()
+        new_parameters, M_base_energy =  parse_symbolic_input(self._config.M_base_energy, q, qdot)
+        self._variables.add_parameters(new_parameters)
+        new_parameters, M_arm_energy =  parse_symbolic_input(self._config.M_arm_energy, q, qdot)
+        M_base = ca.SX(np.identity(q.size()[0]))
+        M_base[0:3,0:3] = M_base_energy
+        M_base[3:q.size()[0],3:q.size()[0]] = M_arm_energy
+        base_energy = 0.5 * ca.dot(qdot, ca.mtimes(M_base, qdot))
+        base_geometry = Geometry(h=ca.SX(np.zeros(self._dof)), var=self.variables)
+        base_lagrangian = Lagrangian(base_energy, var=self._variables)
+        self._geometry = WeightedGeometry(g=base_geometry, le=base_lagrangian)
 
     def extra_terms_function(self):
         extra_terms_functions = CasadiFunctionWrapper("extra_terms", self._variables.asDict(), {"J_nh": self._J_nh, "f_extra": self._f_extra})

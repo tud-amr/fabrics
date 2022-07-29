@@ -42,19 +42,19 @@ def initalize_environment(render):
     goal_dict = {
             "subgoal0": {
                 "m": 2,
-                "w": 0.5,
+                "w": 1.0,
                 "prime": True,
                 "indices": [0, 1],
                 "parent_link" : 'origin',
                 "child_link" : 'ee_link',
-                "desired_position": [3.5, 0.0],
+                "desired_position": [4.0, -0.2],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
             }
     }
     goal = GoalComposition(name="goal", contentDict=goal_dict)
     # Add walls, the goal and the obstacle to the environment.
-    #env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
+    env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_goal(goal)
     env.add_obstacle(obst1)
     return (env, obstacles, goal, initial_observation)
@@ -79,12 +79,13 @@ def set_planner(goal: GoalComposition):
     robot_type = "boxer"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
-    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
             collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler
+            collision_finsler=collision_finsler,
+            l_offset=0.2,
     )
     collision_links = ["ee_link"]
     self_collision_links = {}
@@ -120,39 +121,21 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     sub_goal_0_position = np.array(goal.subGoals()[0].position())
     sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
     obst1_position = np.array(obst1.position())
-    extra_term_functions = planner.extra_terms_function()
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         qudot = np.array([ob['joint_state']['forward_velocity'][0], ob['joint_state']['velocity'][2]])
-        extra_terms = extra_term_functions.evaluate(
-            q=ob["joint_state"]["position"],
-            qdot=ob["joint_state"]["velocity"],
-            qudot=qudot,
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst1_position,
-            radius_body_ee_link=np.array([0.2]),
-            radius_obst_0=np.array([obst1.radius()]),
-        )
-        J_nh = extra_terms['J_nh']
-        f_extra = extra_terms["f_extra"]
-        qdot_forward = np.dot(J_nh, qudot)
-        qdot = ob['joint_state']['velocity']
-        logging.debug(f" theta : {ob['joint_state']['position'][2]}")
-        logging.debug(f"J_nh {J_nh}")
-        logging.debug(f"qudot {qudot}")
-        logging.debug(f"qdot_forward {qdot_forward}")
-        logging.debug(f"qdot {qdot}")
-        #logging.info(f"ob {ob}")
         action = planner.compute_action(
             q=ob["joint_state"]["position"],
             qdot=ob["joint_state"]["velocity"],
             qudot=qudot,
             x_goal_0=sub_goal_0_position,
+            m_rot=np.array([0.2]),
+            m_base_x=np.array([1.5]),
+            m_base_y=np.array([1.5]),
             weight_goal_0=sub_goal_0_weight,
             x_obst_0=obst1_position,
             radius_obst_0=np.array([obst1.radius()]),
-            radius_body_ee_link=np.array([0.2]),
+            radius_body_ee_link=np.array([0.3]),
         )
         ob, *_, = env.step(action)
     return {}
