@@ -139,7 +139,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "forwardkinematics"
-version = "1.0.3"
+version = "1.0.4"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
@@ -150,6 +150,9 @@ casadi = ">=3.5.4,<3.5.5.post1 || >3.5.5.post1,<3.5.5.post2 || >3.5.5.post2,<4.0
 numpy = ">=1.15.3,<2.0.0"
 urdf_parser_py = ">=0.0.3"
 
+[package.source]
+type = "url"
+url = "https://files.pythonhosted.org/packages/dc/16/907b1f326103502889541d360127a0c5fc847f5601ed67fe28bfe84b77e4/forwardkinematics-1.0.4.tar.gz"
 [[package]]
 name = "freetype-py"
 version = "2.2.0"
@@ -807,7 +810,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2,<3.10"
-content-hash = "7988c0acf617f72811f46934be5b665dcb042a2c35928977dd5be8609a72b157"
+content-hash = "46cbc87a3c7ed7a55713e4341a672b9a17dc408b23d475bb63185d7e040f518e"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -917,10 +920,7 @@ dill = [
     {file = "dill-0.3.4-py2.py3-none-any.whl", hash = "sha256:7e40e4a70304fd9ceab3535d36e58791d9c4a776b38ec7f7ec9afc8d3dca4d4f"},
     {file = "dill-0.3.4.zip", hash = "sha256:9f9734205146b2b353ab3fec9af0070237b6ddae78452af83d2fca84d739e675"},
 ]
-forwardkinematics = [
-    {file = "forwardkinematics-1.0.3-py3-none-any.whl", hash = "sha256:5053eb6cfec480f63356249a817982f29300c99ca10bdefe6df630b811ff5aff"},
-    {file = "forwardkinematics-1.0.3.tar.gz", hash = "sha256:11bde1d072201bc471c84faa2ff2251ab68dd50e6d120262cf35de1fe956aeb6"},
-]
+forwardkinematics = []
 freetype-py = [
     {file = "freetype-py-2.2.0.zip", hash = "sha256:cf43716bc5246cd54a64b2238b942e8dc80b79eda92f814c720286fa6fab387a"},
     {file = "freetype_py-2.2.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:8059ebad562d465555fa556739906a2429381ba6206989afe2b7c8c87fad19d8"},
