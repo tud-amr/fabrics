@@ -62,6 +62,7 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         new_parameters, M_base_energy =  parse_symbolic_input(self._config.M_base_energy, q, qdot)
         self._variables.add_parameters(new_parameters)
         new_parameters, M_arm_energy =  parse_symbolic_input(self._config.M_arm_energy, q, qdot)
+        self._variables.add_parameters(new_parameters)
         M_base = ca.SX(np.identity(q.size()[0]))
         M_base[0:3,0:3] = M_base_energy
         M_base[3:q.size()[0],3:q.size()[0]] = M_arm_energy

@@ -36,7 +36,7 @@ class CasadiFunctionWrapper(object):
     def evaluate(self, **kwargs):
         argument_dictionary = {}
         for key in kwargs:
-            assert isinstance(kwargs[key], np.ndarray) or isinstance(kwargs[key], list)
+            assert isinstance(kwargs[key], np.ndarray) or isinstance(kwargs[key], list) or isinstance(kwargs[key], float)
             if key == 'x_obst' or key == 'x_obsts':
                 obstacle_dictionary = {}
                 for j, x_obst_j in enumerate(kwargs[key]):
