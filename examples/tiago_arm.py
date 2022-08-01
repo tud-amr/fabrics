@@ -1,5 +1,6 @@
 import gym
 import urdfenvs.tiago_reacher #pylint: disable=unused-import
+from urdfenvs.tiago_reacher.envs.acc import TiagoReacherAccEnv
 import os
 import logging
 from copy import deepcopy
@@ -12,7 +13,7 @@ import numpy as np
 import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 root_link = 'torso_lift_link'
 arm = 'left'
@@ -26,7 +27,12 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    env = gym.make("tiago-reacher-acc-v0", dt=0.05, render=render)
+    env: TiagoReacherAccEnv = gym.make("tiago-reacher-acc-v0", dt=0.05, render=render)
+    env.reset()
+    if arm == 'left':
+        limits = env.env._robot._limit_pos_j.transpose()[6:13]
+    elif arm == 'right':
+        limits = env.env._robot._limit_pos_j.transpose()[13:20]
     pos0 = np.zeros(20)
     pos0[0] = 0.0
     # base
@@ -34,10 +40,6 @@ def initalize_environment(render=True):
     # torso
     pos0[3] = 0.1
     # Set joint values to center position
-    if arm == 'left':
-        limits = env.env._robot._limit_pos_j.transpose()[6:13]
-    elif arm == 'right':
-        limits = env.env._robot._limit_pos_j.transpose()[13:20]
     pos0[13:20] = (limits[:, 0] + limits[:, 1]) / 2.0
     pos0[6:13] = (limits[:, 0] + limits[:, 1]) / 2.0
     initial_observation = env.reset(pos=pos0)
@@ -179,11 +181,11 @@ def run_tiago_example(n_steps=5000, render=True):
         body_arguments[f'radius_body_arm_{arm}_{i}_link'] =np.array([0.1])
     for _ in range(n_steps):
         if arm == 'left':
-            q = ob['x'][6:13]
-            qdot = ob['xdot'][6:13]
+            q = ob['joint_state']['position'][6:13]
+            qdot = ob['joint_state']['velocity'][6:13]
         elif arm == 'right':
-            q = ob['x'][13:20]
-            qdot = ob['xdot'][13:20]
+            q = ob['joint_state']['position'][13:20]
+            qdot = ob['joint_state']['velocity'][13:20]
         logging.debug(f"q[0]: {q[0]}")
         action = planner.compute_action(
             q=q,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.3.4"
+version = "0.3.5"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
@@ -11,7 +11,6 @@ casadi = "^3.5.4,!=3.5.5.post1,!=3.5.5.post1"
 numpy = "^1.15.3"
 geomdl = "^5.3.1"
 motion_planning_scenes = "^0.1"
-forwardkinematics = "^1.0.1"
 pyquaternion = "^0.9.9"
 pickle-mixin = "^1.0.2"
 quaternionic = "^1.0.0"
@@ -19,6 +18,7 @@ planarenvs = {version = "^1.0.0", optional = true}
 urdfenvs = {version = "^0.2.2", optional = true}
 scipy = {version = "^1.5.1", optional = true}
 matplotlib = {version = "^3.3.1", optional = true}
+forwardkinematics = {url = "https://files.pythonhosted.org/packages/dc/16/907b1f326103502889541d360127a0c5fc847f5601ed67fe28bfe84b77e4/forwardkinematics-1.0.4.tar.gz"}
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.4"

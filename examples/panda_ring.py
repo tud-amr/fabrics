@@ -40,7 +40,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         static_obst_dict = {
             "dim": 3,
             "type": "sphere",
-            "geometry": {"position": position, "radius": 0.1},
+            "geometry": {"position": position.tolist(), "radius": 0.1},
         }
         obstacles.append(SphereObstacle(name="staticObst", contentDict=static_obst_dict))
     # Definition of the goal.
@@ -151,24 +151,24 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     return planner
 
 
-def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
+def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=None):
     obstacle_resolution_ring = 10
     (env, obstacles, goal, initial_observation) = initalize_environment(
         render=render, obstacle_resolution=obstacle_resolution_ring
     )
     ob = initial_observation
-    planner = set_planner(goal, obstacle_resolution= obstacle_resolution_ring)
-
-    # Serializing the planner is optional
-    if serialize:
-        planner.serialize('serialized_10.pbz2')
+    if not planner:
+        planner = set_planner(goal, obstacle_resolution = obstacle_resolution_ring)
+        # Serializing the planner is optional
+        if serialize:
+            planner.serialize('serialized_10.pbz2')
 
     # Start the simulation
     print("Starting simulation")
     sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_weight = goal.subGoals()[0].weight()
     sub_goal_1_position = np.array(goal.subGoals()[1].position())
-    sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
+    sub_goal_1_weight= goal.subGoals()[1].weight()
     obstacle_positions = []
     obstacle_radii = []
     for obst in obstacles:
@@ -189,10 +189,10 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False):
             weight_goal_1=sub_goal_1_weight,
             x_obsts = obstacle_positions,
             radius_obsts = obstacle_radii,
-            radius_body_panda_link1=np.array([0.1]),
-            radius_body_panda_link4=np.array([0.1]),
-            radius_body_panda_link6=np.array([0.15]),
-            radius_body_panda_hand=np.array([0.1]),
+            radius_body_panda_link1=0.1,
+            radius_body_panda_link4=0.1,
+            radius_body_panda_link6=0.15,
+            radius_body_panda_hand=0.1,
             angle_goal_1=np.array(sub_goal_0_rotation_matrix),
         )
         ob, *_ = env.step(action)
