@@ -150,9 +150,6 @@ casadi = ">=3.5.4,<3.5.5.post1 || >3.5.5.post1,<3.5.5.post2 || >3.5.5.post2,<4.0
 numpy = ">=1.15.3,<2.0.0"
 urdf_parser_py = ">=0.0.3"
 
-[package.source]
-type = "url"
-url = "https://files.pythonhosted.org/packages/dc/16/907b1f326103502889541d360127a0c5fc847f5601ed67fe28bfe84b77e4/forwardkinematics-1.0.4.tar.gz"
 [[package]]
 name = "freetype-py"
 version = "2.2.0"
@@ -810,7 +807,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2,<3.10"
-content-hash = "46cbc87a3c7ed7a55713e4341a672b9a17dc408b23d475bb63185d7e040f518e"
+content-hash = "c2d1159c0d2b92f2e7bef7be2316a0a31d6f8627a23b64207420a66c76986632"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -920,7 +917,10 @@ dill = [
     {file = "dill-0.3.4-py2.py3-none-any.whl", hash = "sha256:7e40e4a70304fd9ceab3535d36e58791d9c4a776b38ec7f7ec9afc8d3dca4d4f"},
     {file = "dill-0.3.4.zip", hash = "sha256:9f9734205146b2b353ab3fec9af0070237b6ddae78452af83d2fca84d739e675"},
 ]
-forwardkinematics = []
+forwardkinematics = [
+    {file = "forwardkinematics-1.0.4-py3-none-any.whl", hash = "sha256:6a7313cb29e8920aadf03394615d9f9154c3c075601c2c2f5ac890b8d03f78b0"},
+    {file = "forwardkinematics-1.0.4.tar.gz", hash = "sha256:fe88f3e5bacf9b593137597594c526938fa5d145c0129f1c4a2b188eff059d89"},
+]
 freetype-py = [
     {file = "freetype-py-2.2.0.zip", hash = "sha256:cf43716bc5246cd54a64b2238b942e8dc80b79eda92f814c720286fa6fab387a"},
     {file = "freetype_py-2.2.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:8059ebad562d465555fa556739906a2429381ba6206989afe2b7c8c87fad19d8"},
