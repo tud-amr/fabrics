@@ -4,6 +4,7 @@ import numpy as np
 import logging
 
 from forwardkinematics.fksCommon.fk_creator import FkCreator
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner, FabricPlannerConfig
 from fabrics.diffGeometry.energy import Lagrangian
@@ -32,7 +33,14 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
     ):
         self._dof = dof
         self._config = NonHolonomicFabricPlannerConfig(**kwargs)
-        self._forward_kinematics = FkCreator(robot_type).fk()
+        if self._config.urdf:
+            self._forward_kinematics = GenericURDFFk(
+                self._config.urdf,
+                rootLink=self._config.root_link,
+                end_link=self._config.end_link,
+            )
+        else:
+            self._forward_kinematics = FkCreator(robot_type).fk()
         self.initialize_joint_variables()
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
