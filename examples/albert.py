@@ -93,7 +93,7 @@ def set_planner(goal: GoalComposition):
             robot_type,
             collision_geometry=collision_geometry,
             collision_finsler=collision_finsler,
-            l_offset=0.5,
+            l_offset="0.5",
     )
     collision_links = ["base_link", "base_tip_link", 'panda_link1', 'panda_link4', 'panda_link6', 'panda_hand']
     self_collision_pairs = {}

@@ -85,7 +85,7 @@ def set_planner(goal: GoalComposition):
             robot_type,
             collision_geometry=collision_geometry,
             collision_finsler=collision_finsler,
-            l_offset=0.2,
+            l_offset="0.1/ca.norm_2(xdot)",
     )
     collision_links = ["ee_link"]
     self_collision_links = {}
