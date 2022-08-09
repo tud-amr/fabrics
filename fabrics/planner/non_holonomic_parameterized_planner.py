@@ -15,7 +15,7 @@ from fabrics.helpers.functions import parse_symbolic_input
 
 @dataclass
 class NonHolonomicFabricPlannerConfig(FabricPlannerConfig):
-    l_offset: float = 0.2
+    l_offset: str = "0.2"
     M_base_energy: str = (
         "ca.SX(np.array([[sym('m_base_x'), 0, 0], [0, sym('m_base_y'), 0], [0, 0, sym('m_rot')]]))"
     )
@@ -40,17 +40,20 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
 
         # Additional terms introducted by the non-holonomic base
         q = self._variables.position_variable()
+        qdot = self._variables.velocity_variable()
         qudot = ca.SX.sym("qudot", self._dof - 1)
+        new_parameters, l_offset = parse_symbolic_input(self._config.l_offset, q, qdot)
+        self._variables.add_parameters(new_parameters)
         J_nh = ca.SX(np.zeros((self._dof, self._dof-1)))
         J_nh[0, 0] = ca.cos(q[2])
-        J_nh[0, 1] = -self._config.l_offset * ca.sin(q[2])
+        J_nh[0, 1] = -l_offset * ca.sin(q[2])
         J_nh[1, 0] = ca.sin(q[2])
-        J_nh[1, 1] = self._config.l_offset * ca.cos(q[2])
+        J_nh[1, 1] = l_offset * ca.cos(q[2])
         for i in range(2, self._dof):
             J_nh[i, i-1] = 1
         f_extra = ca.SX(np.zeros((self._dof, 1)))
-        f_extra[0] = qudot[0] * qudot[1] * -ca.sin(q[2]) - self._config.l_offset * ca.cos(q[2]) * qudot[1]**2
-        f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) - self._config.l_offset * ca.sin(q[2]) * qudot[1]**2
+        f_extra[0] = qudot[0] * qudot[1] * -ca.sin(q[2]) - l_offset * ca.cos(q[2]) * qudot[1]**2
+        f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) - l_offset * ca.sin(q[2]) * qudot[1]**2
         self._J_nh = J_nh
         self._f_extra = f_extra
         self._qudot = qudot
