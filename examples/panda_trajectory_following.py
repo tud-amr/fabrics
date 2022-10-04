@@ -20,20 +20,45 @@ def initalize_environment(render=True):
     env = gym.make("panda-reacher-acc-v0", dt=0.05, render=render)
     initial_observation = env.reset()
     # Definition of the goal.
-    goal_dict = {
-        "subgoal0": {
-            "m": 3,
-            "w": 0.4,
-            "prime": True,
-            "indices": [0, 1, 2],
-            "parent_link": "panda_link0",
-            "child_link": "panda_hand",
-            "trajectory": ["0.5 + 0.1 * ca.cos(0.2 * t)", "-0.6 * ca.sin(0.2 * t)", "0.4"],
-            "epsilon": 0.02,
-            "type": "analyticSubGoal",
-        },
-    }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    spline_goal = True
+    if spline_goal:
+        goal_dict = {
+            "subgoal0": {
+                "weight": 0.4,
+                "is_primary_goal": True,
+                "indices": [0, 1, 2],
+                "parent_link": "panda_link0",
+                "child_link": "panda_hand",
+                "trajectory": {
+                    "controlPoints": [[0.5, 0.5, 0.9], [0.5, 0.0, 0.7], [0.5, -0.5, 0.6]], 
+                    "degree": 2,
+                    "duration": 10,
+                    "low": {
+                        "controlPoints": [[0.2, 0.2, 0.5], [0.2, 0.1, 0.5], [0.2, -0.7, 0.5]],
+                    },
+                    "high": {
+                        "controlPoints": [[0.7, 0.7, 0.9], [0.7, -0.1, 0.9], [0.7, -0.2, 0.9]],
+                    },
+                },
+                "epsilon": 0.02,
+                "type": "splineSubGoal",
+            },
+        }
+    else:
+        goal_dict = {
+            "subgoal0": {
+                "weight": 0.4,
+                "is_primary_goal": True,
+                "indices": [0, 1, 2],
+                "parent_link": "panda_link0",
+                "child_link": "panda_hand",
+                "trajectory": ["0.5 + 0.1 * ca.cos(0.2 * t)", "-0.6 * ca.sin(0.2 * t)", "0.4"],
+                "epsilon": 0.02,
+                "type": "analyticSubGoal",
+            },
+        }
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
+    goal.shuffle()
     env.add_goal(goal)
     return (env, goal, initial_observation)
 
@@ -87,12 +112,22 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     )
     # The planner hides all the logic behind the function set_components.
     collision_links = ['panda_link9', 'panda_link8', 'panda_link4']
+    panda_limits = [
+            [-2.8973, 2.8973],
+            [-1.7628, 1.7628],
+            [-2.8973, 2.8973],
+            [-3.0718, -0.0698],
+            [-2.8973, 2.8973],
+            [-0.0175, 3.7525],
+            [-2.8973, 2.8973]
+        ]
     self_collision_pairs = {}
     planner.set_components(
         collision_links,
         self_collision_pairs,
         goal,
         number_obstacles=0,
+        limits=panda_limits,
     )
     planner.concretize()
     return planner
@@ -108,11 +143,11 @@ def run_panda_trajectory_example(n_steps=5000, render=True, dynamic_fabric: bool
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     for _ in range(n_steps):
-        sub_goal_0_position = np.array(goal.subGoals()[0].position(t=env.t()))
-        sub_goal_0_velocity = np.array(goal.subGoals()[0].velocity(t=env.t()))
-        sub_goal_0_acceleration = np.array(goal.subGoals()[0].acceleration(t=env.t()))
+        sub_goal_0_position = np.array(goal.sub_goals()[0].position(t=env.t()))
+        sub_goal_0_velocity = np.array(goal.sub_goals()[0].velocity(t=env.t()))
+        sub_goal_0_acceleration = np.array(goal.sub_goals()[0].acceleration(t=env.t()))
         if not dynamic_fabric:
             sub_goal_0_velocity *= 0
             sub_goal_0_acceleration *= 0

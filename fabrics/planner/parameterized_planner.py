@@ -348,8 +348,8 @@ class ParameterizedFabricPlanner(object):
         if sub_goal.type() == 'staticJointSpaceSubGoal':
             return self._variables.position_variable()[sub_goal.indices()]
         else:
-            fk_child = self.get_forward_kinematics(sub_goal.childLink())
-            fk_parent = self.get_forward_kinematics(sub_goal.parentLink())
+            fk_child = self.get_forward_kinematics(sub_goal.child_link())
+            fk_parent = self.get_forward_kinematics(sub_goal.parent_link())
             angles = sub_goal.angle()
             if angles and isinstance(angles, list) and len(angles) == 4:
                 angles = ca.SX.sym(f"angle_goal_{sub_goal_index}", 3, 3)
@@ -368,19 +368,19 @@ class ParameterizedFabricPlanner(object):
 
     def set_goal_component(self, goal: GoalComposition):
             # Adds default attractor
-            for j, sub_goal in enumerate(goal.subGoals()):
+            for j, sub_goal in enumerate(goal.sub_goals()):
                 fk_sub_goal = self.get_differential_map(j, sub_goal)
-                goal_dimension = sub_goal.m()
+                goal_dimension = sub_goal.dimension()
                 if is_sparse(fk_sub_goal):
                     raise ExpressionSparseError()
-                if sub_goal.type() == 'analyticSubGoal':
+                if sub_goal.type() in ['analyticSubGoal', 'splineSubGoal']:
                     attractor = GenericDynamicAttractor(self._variables, fk_sub_goal, f"goal_{j}")
                 else:
                     self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
                     attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
                 attractor.set_potential(self.config.attractor_potential)
                 attractor.set_metric(self.config.attractor_metric)
-                self.add_leaf(attractor, prime_leaf=sub_goal.isPrimeGoal())
+                self.add_leaf(attractor, prime_leaf=sub_goal.is_primary_goal())
 
 
     def concretize(self):

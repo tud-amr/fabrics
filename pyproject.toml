@@ -1,24 +1,23 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.3.7"
+version = "0.3.8"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 
 [tool.poetry.dependencies]
-python = "^3.6.2,<3.10"
+python = "^3.6.5,<3.10"
 dataclasses = { version = "^0.8", python = "<3.7" }
 casadi = "^3.5.4,!=3.5.5.post1,!=3.5.5.post1"
 numpy = "^1.15.3"
 geomdl = "^5.3.1"
-motion_planning_scenes = "^0.1"
 pyquaternion = "^0.9.9"
 pickle-mixin = "^1.0.2"
 quaternionic = "^1.0.0"
 forwardkinematics = "^1.0.4"
-planarenvs = {version = "^1.0.0", optional = true}
-urdfenvs = {version = "^0.2.2", optional = true}
 scipy = {version = "^1.5.1", optional = true}
 matplotlib = {version = "^3.3.1", optional = true}
+planarenvs = {version = ">=1.0.1", optional = true}
+urdfenvs = {path = "../gym/env/urdfEnvs", optional = true}
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.4"

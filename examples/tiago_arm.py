@@ -45,11 +45,10 @@ def initalize_environment(render=True):
     initial_observation = env.reset(pos=pos0)
     # Definition of the obstacle.
     static_obst_dict = {
-        "dim": 3,
         "type": "sphere",
         "geometry": {"position": [0.8, 0.1, 0.7], "radius": 0.1},
     }
-    obst = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
     if arm == 'left':
         high_goal_limits = [0.4, 1.0, 1.3]
@@ -59,9 +58,8 @@ def initalize_environment(render=True):
         low_goal_limits = [-0.4, -0.5, 0.4]
     goal_dict = {
         "subgoal0": {
-            "m": 3,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": root_link,
             "child_link": child_link,
@@ -73,21 +71,21 @@ def initalize_environment(render=True):
         },
     }
     # Transform goal and obst into world frame
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     #goal.shuffle()
 
     goal_transformed_dict = deepcopy(goal_dict)
-    desired_position = deepcopy(goal.primeGoal().position())
+    desired_position = deepcopy(goal.primary_goal().position())
     desired_position[2] -= 0.99
     desired_position[0] += 0.242
     goal_transformed_dict['subgoal0']['desired_position'] = desired_position
-    goal_transformed = GoalComposition(name="goal", contentDict=goal_transformed_dict)
+    goal_transformed = GoalComposition(name="goal", content_dict=goal_transformed_dict)
     obst_transformed_dict = deepcopy(static_obst_dict)
     desired_position = deepcopy(obst.position())
     desired_position[2] -= 0.99
     desired_position[0] += 0.242
     obst_transformed_dict['geometry']['position'] = desired_position
-    obst_transformed = SphereObstacle(name="obst", contentDict=obst_transformed_dict)
+    obst_transformed = SphereObstacle(name="obst", content_dict=obst_transformed_dict)
     obstacles = [obst_transformed]
     env.add_goal(goal)
     env.add_obstacle(obst)
@@ -172,8 +170,8 @@ def run_tiago_example(n_steps=5000, render=True):
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
     augmented_action = np.zeros(19)
     body_arguments = {}

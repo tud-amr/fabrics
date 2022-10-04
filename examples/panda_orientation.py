@@ -20,23 +20,20 @@ def initalize_environment(render=True):
     initial_observation = env.reset()
     # Definition of the obstacle.
     static_obst_dict = {
-        "dim": 3,
         "type": "sphere",
         "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
     }
-    obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
-        "dim": 3,
         "type": "sphere",
         "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
     }
-    obst2 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 3,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": 0,
             "child_link": 7,
@@ -45,9 +42,8 @@ def initalize_environment(render=True):
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "m": 2,
-            "w": 20.0,
-            "prime": False,
+            "weight": 20.0,
+            "is_primary_goal": False,
             "indices": [0, 1],
             "parent_link": 6,
             "child_link": 7,
@@ -57,7 +53,7 @@ def initalize_environment(render=True):
             "type": "staticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     obstacles = (obst1, obst2)
     env.add_goal(goal)
     env.add_obstacle(obst1)
@@ -128,13 +124,13 @@ def run_panda_orientation_example(n_steps=5000, render=True):
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
-    sub_goal_1_position = np.array(goal.subGoals()[1].position())
-    sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
+    sub_goal_1_position = np.array(goal.sub_goals()[1].position())
+    sub_goal_1_weight= np.array(goal.sub_goals()[1].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
-    sub_goal_1_angles = Quaternion(goal.subGoals()[1].angle()).rotation_matrix
+    sub_goal_1_angles = Quaternion(goal.sub_goals()[1].angle()).rotation_matrix
     for _ in range(n_steps):
         action = planner.compute_action(
             q=ob["joint_state"]["position"],

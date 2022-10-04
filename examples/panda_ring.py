@@ -38,18 +38,16 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         ]
         position = np.dot(np.transpose(rotation_matrix), origin_position) + whole_position
         static_obst_dict = {
-            "dim": 3,
             "type": "sphere",
             "geometry": {"position": position.tolist(), "radius": 0.1},
         }
-        obstacles.append(SphereObstacle(name="staticObst", contentDict=static_obst_dict))
+        obstacles.append(SphereObstacle(name="staticObst", content_dict=static_obst_dict))
     # Definition of the goal.
     goal_position = whole_position
     goal_dict = {
         "subgoal0": {
-            "m": 3,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_hand",
@@ -58,9 +56,8 @@ def initalize_environment(render=True, obstacle_resolution = 8):
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "m": 3,
-            "w": 3.0,
-            "prime": False,
+            "weight": 3.0,
+            "is_primary_goal": False,
             "indices": [0, 1, 2],
             "parent_link": "panda_link7",
             "child_link": "panda_hand",
@@ -70,7 +67,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
             "type": "staticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     env.add_goal(goal)
     for obst in obstacles:
         env.add_obstacle(obst)
@@ -165,17 +162,17 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight = goal.subGoals()[0].weight()
-    sub_goal_1_position = np.array(goal.subGoals()[1].position())
-    sub_goal_1_weight= goal.subGoals()[1].weight()
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight = goal.sub_goals()[0].weight()
+    sub_goal_1_position = np.array(goal.sub_goals()[1].position())
+    sub_goal_1_weight= goal.sub_goals()[1].weight()
     obstacle_positions = []
     obstacle_radii = []
     for obst in obstacles:
         obstacle_positions.append(obst.position())
         obstacle_radii.append(np.array(obst.radius()))
 
-    sub_goal_0_quaternion = quaternionic.array(goal.subGoals()[1].angle())
+    sub_goal_0_quaternion = quaternionic.array(goal.sub_goals()[1].angle())
     sub_goal_0_rotation_matrix = sub_goal_0_quaternion.to_rotation_matrix
 
     for i in range(n_steps):

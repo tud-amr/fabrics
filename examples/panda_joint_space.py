@@ -21,16 +21,15 @@ def initalize_environment(render=True):
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 7,
-            "w": 0.5,
-            "prime": True,
+            "weight": 0.5,
+            "is_primary_goal": True,
             "indices": list(range(0,7)),
             "desired_position": [-1.0, 0.7, 0.5, -1.501, 0.0, 1.8675, 0.0],
             "epsilon": 0.05,
             "type": "staticJointSpaceSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     env.add_goal(goal)
     return (env, (), goal, initial_observation)
 
@@ -103,8 +102,8 @@ def run_panda_joint_space(n_steps=5000, render=True):
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     for _ in range(n_steps):
         action = planner.compute_action(
             q=ob["joint_state"]["position"],

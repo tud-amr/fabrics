@@ -31,18 +31,16 @@ def initalize_environment(render):
     initial_observation = env.reset(pos=pos0, vel=vel0)
     # Definition of the obstacle.
     static_obst_dict = {
-            "dim": 3,
             "type": "sphere",
             "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
     }
-    obst1 = SphereObstacle(name="staticObst1", contentDict=static_obst_dict)
+    obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
     obstacles = (obst1) # Add additional obstacles here.
     # Definition of the goal.
     goal_dict = {
             "subgoal0": {
-                "m": 2,
-                "w": 0.5,
-                "prime": True,
+                "weight": 0.5,
+                "is_primary_goal": True,
                 "indices": [0, 1],
                 "parent_link" : 0,
                 "child_link" : 1,
@@ -51,7 +49,7 @@ def initalize_environment(render):
                 "type": "staticSubGoal"
             }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     # Add walls, the goal and the obstacle to the environment.
     env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_goal(goal)
@@ -117,8 +115,8 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     planner = set_planner(goal)
     # Start the simulation.
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
