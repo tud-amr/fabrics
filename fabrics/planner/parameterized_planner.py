@@ -373,7 +373,7 @@ class ParameterizedFabricPlanner(object):
             fk_sub_goal = self.get_differential_map(j, sub_goal)
             if is_sparse(fk_sub_goal):
                 raise ExpressionSparseError()
-            if sub_goal.type() == "analyticSubGoal":
+            if sub_goal.type() in ["analyticSubGoal", "splineSubGoal"]:
                 attractor = GenericDynamicAttractor(self._variables, fk_sub_goal, f"goal_{j}")
             else:
                 self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', sub_goal.dimension()))
