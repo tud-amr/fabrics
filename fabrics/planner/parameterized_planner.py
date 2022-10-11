@@ -7,6 +7,7 @@ from copy import deepcopy
 from fabrics.helpers.exceptions import ExpressionSparseError
 
 from fabrics.helpers.variables import Variables
+from fabrics.helpers.constants import eps
 from fabrics.helpers.functions import is_sparse, parse_symbolic_input
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
@@ -348,8 +349,8 @@ class ParameterizedFabricPlanner(object):
         if sub_goal.type() == 'staticJointSpaceSubGoal':
             return self._variables.position_variable()[sub_goal.indices()]
         else:
-            fk_child = self.get_forward_kinematics(sub_goal.childLink())
-            fk_parent = self.get_forward_kinematics(sub_goal.parentLink())
+            fk_child = self.get_forward_kinematics(sub_goal.child_link())
+            fk_parent = self.get_forward_kinematics(sub_goal.parent_link())
             angles = sub_goal.angle()
             if angles and isinstance(angles, list) and len(angles) == 4:
                 angles = ca.SX.sym(f"angle_goal_{sub_goal_index}", 3, 3)
@@ -367,20 +368,19 @@ class ParameterizedFabricPlanner(object):
 
 
     def set_goal_component(self, goal: GoalComposition):
-            # Adds default attractor
-            for j, sub_goal in enumerate(goal.subGoals()):
-                fk_sub_goal = self.get_differential_map(j, sub_goal)
-                goal_dimension = sub_goal.m()
-                if is_sparse(fk_sub_goal):
-                    raise ExpressionSparseError()
-                if sub_goal.type() == 'analyticSubGoal':
-                    attractor = GenericDynamicAttractor(self._variables, fk_sub_goal, f"goal_{j}")
-                else:
-                    self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', goal_dimension))
-                    attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
-                attractor.set_potential(self.config.attractor_potential)
-                attractor.set_metric(self.config.attractor_metric)
-                self.add_leaf(attractor, prime_leaf=sub_goal.isPrimeGoal())
+        # Adds default attractor
+        for j, sub_goal in enumerate(goal.sub_goals()):
+            fk_sub_goal = self.get_differential_map(j, sub_goal)
+            if is_sparse(fk_sub_goal):
+                raise ExpressionSparseError()
+            if sub_goal.type() == "analyticSubGoal":
+                attractor = GenericDynamicAttractor(self._variables, fk_sub_goal, f"goal_{j}")
+            else:
+                self._variables.add_parameter(f'x_goal_{j}', ca.SX.sym(f'x_goal_{j}', sub_goal.dimension()))
+                attractor = GenericAttractor(self._variables, fk_sub_goal, f"goal_{j}")
+            attractor.set_potential(self.config.attractor_potential)
+            attractor.set_metric(self.config.attractor_metric)
+            self.add_leaf(attractor, prime_leaf=sub_goal.is_primary_goal())
 
 
     def concretize(self):
@@ -422,6 +422,7 @@ class ParameterizedFabricPlanner(object):
         Computes action based on the states passed.
 
         The variables passed are the joint states, and the goal position.
+        The action is nullified if its magnitude is very large or very small.
         """
         evaluations = self._funs.evaluate(**kwargs)
         action = evaluations["xddot"]
@@ -430,11 +431,13 @@ class ParameterizedFabricPlanner(object):
         #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
         #logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
         #logging.debug(f"beta : {evaluations['beta']}")
-        """
-        # avoid to small actions
-        if np.linalg.norm(action) < eps:
-            action = np.zeros(self._n)
-        """
+        action_magnitude = np.linalg.norm(action)
+        if action_magnitude < eps:
+            logging.warning(f"Fabrics: Avoiding small action with magnitude {action_magnitude}")
+            action *= 0.0
+        elif action_magnitude > 1/eps:
+            logging.warning(f"Fabrics: Avoiding large action with magnitude {action_magnitude}")
+            action *= 0.0
         return action
 
     """

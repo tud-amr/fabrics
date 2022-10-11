@@ -1,5 +1,6 @@
 import gym
-import urdfenvs.panda_reacher  #pylint: disable=unused-import
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 import os
 
 from MotionPlanningGoal.goalComposition import GoalComposition
@@ -16,21 +17,26 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    env = gym.make("panda-reacher-acc-v0", dt=0.05, render=render)
+    robots = [
+        GenericUrdfReacher(urdf="panda.urdf", mode="acc"),
+    ]
+    env: UrdfEnv  = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
     initial_observation = env.reset()
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 7,
-            "w": 0.5,
-            "prime": True,
+            "weight": 0.5,
+            "is_primary_goal": True,
             "indices": list(range(0,7)),
             "desired_position": [-1.0, 0.7, 0.5, -1.501, 0.0, 1.8675, 0.0],
             "epsilon": 0.05,
             "type": "staticJointSpaceSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     env.add_goal(goal)
     return (env, (), goal, initial_observation)
 
@@ -72,7 +78,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda.urdf", "r") as file:
+    with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
         urdf = file.read()
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -103,12 +109,12 @@ def run_panda_joint_space(n_steps=5000, render=True):
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     for _ in range(n_steps):
         action = planner.compute_action(
-            q=ob["joint_state"]["position"],
-            qdot=ob["joint_state"]["velocity"],
+            q=ob["robot_0"]["joint_state"]["position"],
+            qdot=ob["robot_0"]["joint_state"]["velocity"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
         )

@@ -1,7 +1,7 @@
 import gym
 import numpy as np
-import urdfenvs.point_robot_urdf
-from urdfenvs.point_robot_urdf.envs.acc import PointRobotAccEnv
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.goalComposition import GoalComposition
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
@@ -24,34 +24,38 @@ def initalize_environment(render):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
-    env: PointRobotAccEnv = gym.make("pointRobotUrdf-acc-v0", dt=0.05, render=render)
+    robots = [
+        GenericUrdfReacher(urdf="pointRobot.urdf", mode="acc"),
+    ]
+    env: UrdfEnv  = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.1, 0.0, 0.0])
     initial_observation = env.reset(pos=pos0, vel=vel0)
     # Definition of the obstacle.
     static_obst_dict = {
-            "dim": 3,
             "type": "sphere",
             "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
     }
-    obst1 = SphereObstacle(name="staticObst1", contentDict=static_obst_dict)
+    obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
     obstacles = (obst1) # Add additional obstacles here.
     # Definition of the goal.
     goal_dict = {
             "subgoal0": {
-                "m": 2,
-                "w": 0.5,
-                "prime": True,
+                "weight": 0.5,
+                "is_primary_goal": True,
                 "indices": [0, 1],
                 "parent_link" : 0,
                 "child_link" : 1,
-                "desired_position": [3.5, 0.0],
+                "desired_position": [3.5, 0.5],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
             }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     # Add walls, the goal and the obstacle to the environment.
     env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_goal(goal)
@@ -117,14 +121,14 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     planner = set_planner(goal)
     # Start the simulation.
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         action[0:2] = planner.compute_action(
-            q=ob["joint_state"]["position"][0:2],
-            qdot=ob["joint_state"]["velocity"][0:2],
+            q=ob["robot_0"]["joint_state"]["position"][0:2],
+            qdot=ob["robot_0"]["joint_state"]["velocity"][0:2],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
             x_obst_0=obst1_position[0:2],

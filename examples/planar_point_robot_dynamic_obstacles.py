@@ -31,23 +31,20 @@ def initalize_environment(render=True):
     initial_observation = env.reset(pos=q0, vel=qdot0)
     # Definition of the obstacle.
     static_obst_dict = {
-        "dim": 2,
         "type": "sphere",
         "geometry": {"trajectory": ["-3.0", "3.5 - 1.3 * t"], "radius": 0.6},
     }
-    obst1 = DynamicSphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst1 = DynamicSphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
-        "dim": 2,
         "type": "analyticSphere",
         "geometry": {"trajectory": ["-3 + 0.5 * t + 0.1 * t**2", "0.0"], "radius": 0.4},
     }
-    obst2 = DynamicSphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst2 = DynamicSphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 2,
-            "w": 2.5,
-            "prime": True,
+            "weight": 2.5,
+            "is_primary_goal": True,
             "indices": [0, 1],
             "parent_link": 0,
             "child_link": 2,
@@ -56,7 +53,7 @@ def initalize_environment(render=True):
             "type": "staticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     obstacles = (obst1, obst2)
     env.add_goal(goal)
     env.add_obstacle(obst1)
@@ -145,9 +142,9 @@ def run_point_robot_example(n_steps=5000, render=True, dynamic_fabric=True):
     # Start the simulation
     print("Starting simulation")
     x = 1
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    #sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight = np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    #sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
     for _ in range(n_steps):
         obst1_position = np.array(obst1.position(t=env.t()))
         obst1_velocity = np.array(obst1.velocity(t=env.t()))
@@ -161,8 +158,8 @@ def run_point_robot_example(n_steps=5000, render=True, dynamic_fabric=True):
             obst2_velocity *= 0
             obst2_acceleration *= 0
         action = planner.compute_action(
-            q=ob["x"],
-            qdot=ob["xdot"],
+            q=ob["joint_state"]["position"],
+            qdot=ob["joint_state"]["velocity"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
             radius_dynamic_obst_0=np.array([obst1.radius()]),
@@ -176,7 +173,7 @@ def run_point_robot_example(n_steps=5000, render=True, dynamic_fabric=True):
             radius_body_1=np.array([0.1]),
         )
         ob, *_ = env.step(action)
-        if np.isnan(ob['x'][0]) or np.linalg.norm(action) > 1e6:
+        if np.isnan(ob["joint_state"]["position"][0]) or np.linalg.norm(action) > 1e6:
             break
     return {}
 

@@ -1,5 +1,6 @@
 import gym
-import urdfenvs.panda_reacher  #pylint: disable=unused-import
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 import os
 
 from MotionPlanningGoal.goalComposition import GoalComposition
@@ -17,27 +18,30 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    env = gym.make("panda-reacher-acc-v0", dt=0.05, render=render)
+    robots = [
+        GenericUrdfReacher(urdf="panda.urdf", mode="acc"),
+    ]
+    env: UrdfEnv  = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
     initial_observation = env.reset()
     # Definition of the obstacle.
     static_obst_dict = {
-        "dim": 3,
         "type": "sphere",
         "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
     }
-    obst1 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
-        "dim": 3,
         "type": "sphere",
         "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
     }
-    obst2 = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 3,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_hand",
@@ -46,9 +50,8 @@ def initalize_environment(render=True):
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "m": 2,
-            "w": 5.0,
-            "prime": False,
+            "weight": 5.0,
+            "is_primary_goal": False,
             "indices": [1, 2],
             "parent_link": "panda_link7",
             "child_link": "panda_hand",
@@ -57,7 +60,7 @@ def initalize_environment(render=True):
             "type": "staticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     obstacles = (obst1, obst2)
     env.add_goal(goal)
     env.add_obstacle(obst1)
@@ -104,7 +107,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda.urdf", "r") as file:
+    with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
         urdf = file.read()
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -130,7 +133,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         collision_links,
         self_collision_pairs,
         goal,
-        number_obstacles=2,
+        number_obstacles=0,
         limits=panda_limits,
     )
     planner.concretize()
@@ -148,16 +151,16 @@ def run_panda_example(n_steps=5000, render=True):
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
-    sub_goal_1_position = np.array(goal.subGoals()[1].position())
-    sub_goal_1_weight= np.array(goal.subGoals()[1].weight())
-    obst1_position = np.array(obst1.position())
-    obst2_position = np.array(obst2.position())
+    sub_goal_0_position = goal.sub_goals()[0].position()
+    sub_goal_0_weight= goal.sub_goals()[0].weight()
+    sub_goal_1_position = goal.sub_goals()[1].position()
+    sub_goal_1_weight= goal.sub_goals()[1].weight()
+    obst1_position = obst1.position()
+    obst2_position = obst2.position()
     for _ in range(n_steps):
         action = planner.compute_action(
-            q=ob["joint_state"]["position"],
-            qdot=ob["joint_state"]["velocity"],
+            q=ob["robot_0"]["joint_state"]["position"],
+            qdot=ob["robot_0"]["joint_state"]["velocity"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
             x_goal_1=sub_goal_1_position,
