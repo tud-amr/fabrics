@@ -17,9 +17,8 @@ from MotionPlanningGoal.goalComposition import GoalComposition
 def goal_1d():
     goal_dict = {
         "subgoal0": {
-            "m": 1,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0],
             "parent_link": 0,
             "child_link": 2,
@@ -28,16 +27,15 @@ def goal_1d():
             "type": "staticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     return goal
 
 @pytest.fixture
 def goal_2d():
     goal_dict = {
         "subgoal0": {
-            "m": 2,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1],
             "parent_link": 0,
             "child_link": 2,
@@ -46,7 +44,7 @@ def goal_2d():
             "type": "staticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     return goal
 
 @pytest.fixture

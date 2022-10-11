@@ -14,9 +14,8 @@ def planner():
 def goal():
     goal_dict = {
         "subgoal0": {
-            "m": 2,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1],
             "parent_link": 0,
             "child_link": 2,
@@ -25,7 +24,7 @@ def goal():
             "type": "analyticSubGoal",
         }
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     return goal
 
 def test_set_components(planner: ParameterizedFabricPlanner, goal):

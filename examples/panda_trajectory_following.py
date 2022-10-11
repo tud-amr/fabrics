@@ -1,7 +1,8 @@
 import gym
 import sys
 import os
-import urdfenvs.panda_reacher  #pylint: disable=unused-import
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
@@ -17,14 +18,19 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    env = gym.make("panda-reacher-acc-v0", dt=0.05, render=render)
+    robots = [
+        GenericUrdfReacher(urdf="panda.urdf", mode="acc"),
+    ]
+    env: UrdfEnv  = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
     initial_observation = env.reset()
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "m": 3,
-            "w": 0.4,
-            "prime": True,
+            "weight": 0.4,
+            "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_hand",
@@ -33,7 +39,7 @@ def initalize_environment(render=True):
             "type": "analyticSubGoal",
         },
     }
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     env.add_goal(goal)
     return (env, goal, initial_observation)
 
@@ -76,7 +82,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda.urdf", "r") as file:
+    with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
         urdf = file.read()
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -108,17 +114,17 @@ def run_panda_trajectory_example(n_steps=5000, render=True, dynamic_fabric: bool
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     for _ in range(n_steps):
-        sub_goal_0_position = np.array(goal.subGoals()[0].position(t=env.t()))
-        sub_goal_0_velocity = np.array(goal.subGoals()[0].velocity(t=env.t()))
-        sub_goal_0_acceleration = np.array(goal.subGoals()[0].acceleration(t=env.t()))
+        sub_goal_0_position = np.array(goal.sub_goals()[0].position(t=env.t()))
+        sub_goal_0_velocity = np.array(goal.sub_goals()[0].velocity(t=env.t()))
+        sub_goal_0_acceleration = np.array(goal.sub_goals()[0].acceleration(t=env.t()))
         if not dynamic_fabric:
             sub_goal_0_velocity *= 0
             sub_goal_0_acceleration *= 0
         action = planner.compute_action(
-            q=ob["joint_state"]["position"],
-            qdot=ob["joint_state"]["velocity"],
+            q=ob["robot_0"]["joint_state"]["position"],
+            qdot=ob["robot_0"]["joint_state"]["velocity"],
             x_ref_goal_0_leaf=sub_goal_0_position,
             xdot_ref_goal_0_leaf=sub_goal_0_velocity,
             xddot_ref_goal_0_leaf=sub_goal_0_acceleration,

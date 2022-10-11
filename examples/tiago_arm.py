@@ -1,7 +1,8 @@
 import gym
-import urdfenvs.tiago_reacher #pylint: disable=unused-import
-from urdfenvs.tiago_reacher.envs.acc import TiagoReacherAccEnv
 import os
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+from urdfenvs.robots.tiago import TiagoRobot
 import logging
 from copy import deepcopy
 from pyquaternion import Quaternion
@@ -27,12 +28,18 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    env: TiagoReacherAccEnv = gym.make("tiago-reacher-acc-v0", dt=0.05, render=render)
+    robots = [
+        TiagoRobot(mode="acc"),
+    ]
+    env: UrdfEnv  = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
     env.reset()
     if arm == 'left':
-        limits = env.env._robot._limit_pos_j.transpose()[6:13]
+        limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
     elif arm == 'right':
-        limits = env.env._robot._limit_pos_j.transpose()[13:20]
+        limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
     pos0 = np.zeros(20)
     pos0[0] = 0.0
     # base
@@ -45,11 +52,10 @@ def initalize_environment(render=True):
     initial_observation = env.reset(pos=pos0)
     # Definition of the obstacle.
     static_obst_dict = {
-        "dim": 3,
         "type": "sphere",
         "geometry": {"position": [0.8, 0.1, 0.7], "radius": 0.1},
     }
-    obst = SphereObstacle(name="staticObst", contentDict=static_obst_dict)
+    obst = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
     if arm == 'left':
         high_goal_limits = [0.4, 1.0, 1.3]
@@ -59,9 +65,8 @@ def initalize_environment(render=True):
         low_goal_limits = [-0.4, -0.5, 0.4]
     goal_dict = {
         "subgoal0": {
-            "m": 3,
-            "w": 1.0,
-            "prime": True,
+            "weight": 1.0,
+            "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": root_link,
             "child_link": child_link,
@@ -73,21 +78,21 @@ def initalize_environment(render=True):
         },
     }
     # Transform goal and obst into world frame
-    goal = GoalComposition(name="goal", contentDict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=goal_dict)
     #goal.shuffle()
 
     goal_transformed_dict = deepcopy(goal_dict)
-    desired_position = deepcopy(goal.primeGoal().position())
+    desired_position = deepcopy(goal.primary_goal().position().tolist())
     desired_position[2] -= 0.99
     desired_position[0] += 0.242
     goal_transformed_dict['subgoal0']['desired_position'] = desired_position
-    goal_transformed = GoalComposition(name="goal", contentDict=goal_transformed_dict)
+    goal_transformed = GoalComposition(name="goal", content_dict=goal_transformed_dict)
     obst_transformed_dict = deepcopy(static_obst_dict)
-    desired_position = deepcopy(obst.position())
+    desired_position = deepcopy(obst.position().tolist())
     desired_position[2] -= 0.99
     desired_position[0] += 0.242
     obst_transformed_dict['geometry']['position'] = desired_position
-    obst_transformed = SphereObstacle(name="obst", contentDict=obst_transformed_dict)
+    obst_transformed = SphereObstacle(name="obst", content_dict=obst_transformed_dict)
     obstacles = [obst_transformed]
     env.add_goal(goal)
     env.add_obstacle(obst)
@@ -165,15 +170,15 @@ def run_tiago_example(n_steps=5000, render=True):
     ob = initial_observation
     obst1 = obstacles[0]
     if arm == 'left':
-        limits = env.env._robot._limit_pos_j.transpose()[6:13]
+        limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
     elif arm == 'right':
-        limits = env.env._robot._limit_pos_j.transpose()[13:20]
+        limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
     planner = set_planner(goal, limits)
 
     # Start the simulation
     print("Starting simulation")
-    sub_goal_0_position = np.array(goal.subGoals()[0].position())
-    sub_goal_0_weight= np.array(goal.subGoals()[0].weight())
+    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
+    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
     augmented_action = np.zeros(19)
     body_arguments = {}
@@ -181,11 +186,11 @@ def run_tiago_example(n_steps=5000, render=True):
         body_arguments[f'radius_body_arm_{arm}_{i}_link'] =np.array([0.1])
     for _ in range(n_steps):
         if arm == 'left':
-            q = ob['joint_state']['position'][6:13]
-            qdot = ob['joint_state']['velocity'][6:13]
+            q = ob["robot_0"]['joint_state']['position'][6:13]
+            qdot = ob["robot_0"]['joint_state']['velocity'][6:13]
         elif arm == 'right':
-            q = ob['joint_state']['position'][13:20]
-            qdot = ob['joint_state']['velocity'][13:20]
+            q = ob["robot_0"]['joint_state']['position'][13:20]
+            qdot = ob["robot_0"]['joint_state']['velocity'][13:20]
         logging.debug(f"q[0]: {q[0]}")
         action = planner.compute_action(
             q=q,
