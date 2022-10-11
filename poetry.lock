@@ -746,22 +746,17 @@ version = "0.3.0"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "main"
 optional = true
-python-versions = "^3.6.5, <3.10"
-develop = false
+python-versions = ">=3.6.5,<3.10"
 
 [package.dependencies]
-gym = "^0.21.0"
-numpy = "^1.19.0"
-pybullet = "^3.2.1"
-urdfpy = "^0.0.22"
+gym = ">=0.21.0,<0.22.0"
+numpy = ">=1.19.0,<2.0.0"
+pybullet = ">=3.2.1,<4.0.0"
+urdfpy = ">=0.0.22,<0.0.23"
 
 [package.extras]
 scenes = ["motion-planning-scenes (>=0.3.0,<0.4.0)"]
-keyboard = ["pynput (>=1.7.6,<2.0.0)", "multiprocess (>=0.70.12,<0.71.0)"]
-
-[package.source]
-type = "directory"
-url = "../gym/env/urdfEnvs"
+keyboard = ["multiprocess (>=0.70.12,<0.71.0)", "pynput (>=1.7.6,<2.0.0)"]
 
 [[package]]
 name = "urdfpy"
@@ -813,7 +808,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.5,<3.10"
-content-hash = "aeb3ca475b3ff1d511a6ff75678789d93d571e93431324a554a1f644757b2626"
+content-hash = "5e5ff94b1450e2e33e25953cd159619740b7e06536043e0568086a2bbc18b1b5"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -1466,7 +1461,10 @@ typing-extensions = [
 urdf-parser-py = [
     {file = "urdf_parser_py-0.0.4.tar.gz", hash = "sha256:e983f637145fded67bcff6a542302069bb975b2edf1b18318c093abba1b794cc"},
 ]
-urdfenvs = []
+urdfenvs = [
+    {file = "urdfenvs-0.3.0-py3-none-any.whl", hash = "sha256:d06f692c3e5e4d8995a0bf06dcfbf932a94507352a161816d47a1838cbd9a420"},
+    {file = "urdfenvs-0.3.0.tar.gz", hash = "sha256:6b34e7449cb0178fa5a5996cc58cde812cac815bda8eb056c4326f9bfc77e939"},
+]
 urdfpy = [
     {file = "urdfpy-0.0.22-py3-none-any.whl", hash = "sha256:ec9d944bd8a28fe0914b6038e8119ebd53905bc4c507744e35b46a3fa02529bd"},
     {file = "urdfpy-0.0.22.tar.gz", hash = "sha256:9dc30ebd8f26f1812d2adb9f542dffeb4537963fa2588d14d98e2f6b862d798f"},
