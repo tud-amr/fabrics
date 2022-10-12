@@ -1,5 +1,7 @@
+import pdb
 import gym
 import planarenvs.point_robot  # pylint: disable=unused-import
+import matplotlib.pyplot as plt
 
 from MotionPlanningGoal.goalComposition import GoalComposition
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
@@ -16,15 +18,15 @@ def initalize_environment(render=True):
     steps the simulation once.
     """
     env = gym.make(
-        "point-robot-acc-v0", dt=0.05, render=render
+        "point-robot-acc-v0", dt=0.005, render=render
     )
-    q0 = np.array([4.3, 1.0])
+    q0 = np.array([4.0, 0.2])
     qdot0 = np.array([-1.0, 0.0])
     initial_observation = env.reset(pos=q0, vel=qdot0)
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [0.0, 3.5], "radius": 0.6},
+        "geometry": {"position": [0.0, 0.0], "radius": 0.6},
     }
     obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
@@ -92,8 +94,8 @@ def set_planner(goal: GoalComposition):
     planner.set_components(
         collision_links,
         self_collision_links,
-        goal,
-        number_obstacles=2,
+        None, 
+        number_obstacles=1,
     )
     planner.concretize()
     return planner
@@ -116,6 +118,7 @@ def run_point_robot_example(n_steps=5000, render=True):
     sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
+    vel_mags = []
     for _ in range(n_steps):
         action = planner.compute_action(
             q=ob["joint_state"]["position"],
@@ -128,9 +131,15 @@ def run_point_robot_example(n_steps=5000, render=True):
             radius_obst_1=np.array([obst2.radius()]),
             radius_body_1=np.array([0.02]),
         )
-        ob, *_ = env.step(action)
+        ob, *_, = env.step(action)
+        vel_mag = np.linalg.norm(ob['joint_state']['velocity'][0:2])
+        vel_mags.append(vel_mag)
+        #print(f"Velocity magnitude at {env.t()}: {np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])}")
+    plt.plot(vel_mags)
+    plt.show()
     return {}
 
 
 if __name__ == "__main__":
-    res = run_point_robot_example(n_steps=5000)
+    import sys
+    res = run_point_robot_example(n_steps=5000, render=bool(int(sys.argv[1])))
