@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-from urdfenvs.robots.boxer import BoxerRobot
+from urdfenvs.robots.jackal import JackalRobot
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 import logging
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
@@ -9,7 +9,7 @@ from fabrics.planner.non_holonomic_parameterized_planner import NonHolonomicPara
 
 logging.basicConfig(level=logging.INFO)
 """
-Fabrics example for the boxer robot.
+Fabrics example for the jackal robot.
 """
 
 def initalize_environment(render):
@@ -25,7 +25,7 @@ def initalize_environment(render):
         Boolean toggle to set rendering on (True) or off (False).
     """
     robots = [
-        BoxerRobot(mode="acc"),
+        JackalRobot(mode="acc"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
@@ -38,7 +38,7 @@ def initalize_environment(render):
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
-            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
+            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 0.5},
     }
     obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
     obstacles = (obst1) # Add additional obstacles here.
@@ -50,7 +50,7 @@ def initalize_environment(render):
                 "indices": [0, 1],
                 "parent_link" : 'origin',
                 "child_link" : 'ee_link',
-                "desired_position": [4.0, -0.2],
+                "desired_position": [4.0, -0.0],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
             }
@@ -79,7 +79,7 @@ def set_planner(goal: GoalComposition):
         The goal to the motion planning problem.
     """
     degrees_of_freedom = 3
-    robot_type = "boxer"
+    robot_type = "jackal"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
@@ -103,7 +103,7 @@ def set_planner(goal: GoalComposition):
     return planner
 
 
-def run_boxer_example(n_steps=10000, render=True):
+def run_jackal_example(n_steps=10000, render=True):
     """
     Set the gym environment, the planner and run point robot example.
     
@@ -149,7 +149,7 @@ def run_boxer_example(n_steps=10000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_boxer_example(n_steps=10000, render=True)
+    res = run_jackal_example(n_steps=10000, render=True)
 
 
 

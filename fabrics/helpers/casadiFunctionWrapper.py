@@ -1,4 +1,3 @@
-import pdb
 import casadi as ca
 import numpy as np
 import os

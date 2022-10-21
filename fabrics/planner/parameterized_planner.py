@@ -100,6 +100,7 @@ class FabricPlannerConfig:
 
 class ParameterizedFabricPlanner(object):
     def __init__(self, dof: int, robot_type: str, **kwargs):
+        self._robot_type = robot_type
         self._dof = dof
         self._config = FabricPlannerConfig(**kwargs)
         if self._config.urdf:
@@ -282,6 +283,8 @@ class ParameterizedFabricPlanner(object):
                 link_name,
                 positionOnly=True
             )
+        if self._robot_type in ['boxer', 'jackal']:
+            fk = fk[0:2]
         return fk
 
     """ DEFAULT COMPOSITION """

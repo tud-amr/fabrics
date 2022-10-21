@@ -3,6 +3,7 @@ import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 from MotionPlanningGoal.goalComposition import GoalComposition
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 """
@@ -40,8 +41,13 @@ def initalize_environment(render):
             "type": "sphere",
             "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
     }
-    obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
-    obstacles = (obst1) # Add additional obstacles here.
+    static_obst = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
+    dynamic_obst_dict = {
+        "type": "analyticSphere",
+        "geometry": {"trajectory": ["3 - 0.0 * t", "2.0 * ca.sin(1 * t)"], "radius": 0.4},
+    }
+    dynamic_obst = DynamicSphereObstacle(name="staticObst", content_dict=dynamic_obst_dict)
+    obstacles = (static_obst, dynamic_obst) # Add additional obstacles here.
     # Definition of the goal.
     goal_dict = {
             "subgoal0": {
@@ -57,9 +63,10 @@ def initalize_environment(render):
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     # Add walls, the goal and the obstacle to the environment.
-    env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
+    #env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_goal(goal)
-    env.add_obstacle(obst1)
+    env.add_obstacle(static_obst)
+    env.add_obstacle(dynamic_obst)
     return (env, obstacles, goal, initial_observation)
 
 
@@ -97,6 +104,7 @@ def set_planner(goal: GoalComposition):
         self_collision_links,
         goal,
         number_obstacles=1,
+        number_dynamic_obstacles=1,
     )
     planner.concretize()
     return planner
@@ -115,7 +123,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     """
     (env, obstacles, goal, initial_observation) = initalize_environment(render)
     ob = initial_observation
-    obst1 = obstacles
+    obst1, dynamic_obstacle = obstacles
     print(f"Initial observation : {ob}")
     action = np.array([0.0, 0.0, 0.0])
     planner = set_planner(goal)
@@ -124,8 +132,12 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     sub_goal_0_position = np.array(goal.sub_goals()[0].position())
     sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
+    input("Wait to start")
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
+        position_dynamic_obstacle = dynamic_obstacle.position(t=env.t())
+        velocity_dynamic_obstacle = dynamic_obstacle.velocity(t=env.t())
+        acceleration_dynamic_obstacle = dynamic_obstacle.acceleration(t=env.t()) * 0
         action[0:2] = planner.compute_action(
             q=ob["robot_0"]["joint_state"]["position"][0:2],
             qdot=ob["robot_0"]["joint_state"]["velocity"][0:2],
@@ -133,7 +145,11 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             weight_goal_0=sub_goal_0_weight,
             x_obst_0=obst1_position[0:2],
             radius_obst_0=np.array([obst1.radius()]),
-            radius_body_1=np.array([0.2])
+            radius_body_1=np.array([0.2]),
+            radius_dynamic_obst_0=dynamic_obstacle.radius(),
+            x_ref_dynamic_obst_0_1_leaf=position_dynamic_obstacle,
+            xdot_ref_dynamic_obst_0_1_leaf=velocity_dynamic_obstacle,
+            xddot_ref_dynamic_obst_0_1_leaf=acceleration_dynamic_obstacle,
         )
         ob, *_, = env.step(action)
     return {}

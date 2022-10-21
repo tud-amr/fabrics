@@ -1,15 +1,16 @@
 import gym
 import numpy as np
-from urdfenvs.robots.boxer import BoxerRobot
+from urdfenvs.robots.jackal import JackalRobot
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 import logging
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from MotionPlanningEnv.dynamicSphereObstacle import DynamicSphereObstacle
 from MotionPlanningGoal.goalComposition import GoalComposition
 from fabrics.planner.non_holonomic_parameterized_planner import NonHolonomicParameterizedFabricPlanner
 
 logging.basicConfig(level=logging.INFO)
 """
-Fabrics example for the boxer robot.
+Fabrics example for the jackal robot.
 """
 
 def initalize_environment(render):
@@ -25,7 +26,7 @@ def initalize_environment(render):
         Boolean toggle to set rendering on (True) or off (False).
     """
     robots = [
-        BoxerRobot(mode="acc"),
+        JackalRobot(mode="acc"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
@@ -38,10 +39,15 @@ def initalize_environment(render):
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
-            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
+            "geometry": {"position": [1.5, 0.0, 0.0], "radius": 1.0},
     }
-    obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
-    obstacles = (obst1) # Add additional obstacles here.
+    static_obst = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
+    dynamic_obst_dict = {
+        "type": "analyticSphere",
+        "geometry": {"trajectory": ["3 - 0.0 * t", "2.0 * ca.sin(0.5 * t)"], "radius": 0.4},
+    }
+    dynamic_obst = DynamicSphereObstacle(name="staticObst", content_dict=dynamic_obst_dict)
+    obstacles = (static_obst, dynamic_obst) # Add additional obstacles here.
     # Definition of the goal.
     goal_dict = {
             "subgoal0": {
@@ -50,16 +56,17 @@ def initalize_environment(render):
                 "indices": [0, 1],
                 "parent_link" : 'origin',
                 "child_link" : 'ee_link',
-                "desired_position": [4.0, -0.2],
+                "desired_position": [3.2, -0.0],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
             }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     # Add walls, the goal and the obstacle to the environment.
-    env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
+    #env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_goal(goal)
-    env.add_obstacle(obst1)
+    env.add_obstacle(static_obst)
+    env.add_obstacle(dynamic_obst)
     return (env, obstacles, goal, initial_observation)
 
 
@@ -79,10 +86,10 @@ def set_planner(goal: GoalComposition):
         The goal to the motion planning problem.
     """
     degrees_of_freedom = 3
-    robot_type = "boxer"
+    robot_type = "jackal"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
-    collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_finsler = "5.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
@@ -98,12 +105,13 @@ def set_planner(goal: GoalComposition):
         self_collision_links,
         goal,
         number_obstacles=1,
+        number_dynamic_obstacles=1,
     )
     planner.concretize()
     return planner
 
 
-def run_boxer_example(n_steps=10000, render=True):
+def run_dynamic_jackal_example(n_steps=10000, render=True):
     """
     Set the gym environment, the planner and run point robot example.
     
@@ -116,14 +124,14 @@ def run_boxer_example(n_steps=10000, render=True):
     """
     (env, obstacles, goal, initial_observation) = initalize_environment(render)
     ob = initial_observation
-    obst1 = obstacles
+    static_obstacle, dynamic_obstacle = obstacles
     print(f"Initial observation : {ob}")
     planner = set_planner(goal)
     # Start the simulation.
     print("Starting simulation")
     sub_goal_0_position = np.array(goal.sub_goals()[0].position())
     sub_goal_0_weight = goal.sub_goals()[0].weight()
-    obst1_position = np.array(obst1.position()[0:2])
+    input("Wait to start.")
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         qudot = np.array([
@@ -135,13 +143,17 @@ def run_boxer_example(n_steps=10000, render=True):
             qdot=ob["robot_0"]["joint_state"]["velocity"],
             qudot=qudot,
             x_goal_0=sub_goal_0_position,
-            m_rot=0.2,
-            m_base_x=1.5,
-            m_base_y=1.5,
+            m_rot=0.3,
+            m_base_x=1.0,
+            m_base_y=1.0,
             weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst1_position,
-            radius_obst_0=np.array([obst1.radius()]),
-            radius_body_ee_link=0.3,
+            x_obst_0=static_obstacle.position()[0:2],
+            radius_obst_0=static_obstacle.radius(),
+            radius_dynamic_obst_0=dynamic_obstacle.radius(),
+            x_ref_dynamic_obst_0_ee_link_leaf=dynamic_obstacle.position(t=env.t()),
+            xdot_ref_dynamic_obst_0_ee_link_leaf=dynamic_obstacle.velocity(t=env.t()),
+            xddot_ref_dynamic_obst_0_ee_link_leaf=dynamic_obstacle.acceleration(t=env.t()),
+            radius_body_ee_link=0.5,
         )
 
         ob, *_, = env.step(action)
@@ -149,7 +161,7 @@ def run_boxer_example(n_steps=10000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_boxer_example(n_steps=10000, render=True)
+    res = run_dynamic_jackal_example(n_steps=10000, render=True)
 
 
 
