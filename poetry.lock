@@ -91,7 +91,7 @@ name = "cloudpickle"
 version = "2.2.0"
 description = "Extended pickling support for Python objects"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
@@ -123,7 +123,7 @@ name = "decorator"
 version = "5.1.1"
 description = "Decorators for Humans"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [[package]]
@@ -139,7 +139,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "forwardkinematics"
-version = "1.0.6"
+version = "1.0.8"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
@@ -155,7 +155,7 @@ name = "freetype-py"
 version = "2.2.0"
 description = "Freetype python bindings"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
@@ -171,7 +171,7 @@ name = "gym"
 version = "0.21.0"
 description = "Gym: A universal API for reinforcement learning environments."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -196,7 +196,7 @@ name = "imageio"
 version = "2.15.0"
 description = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
@@ -351,7 +351,7 @@ name = "networkx"
 version = "2.2"
 description = "Python package for creating and manipulating graphs and networks"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -495,7 +495,7 @@ name = "pybullet"
 version = "3.2.5"
 description = "Official Python Interface for the Bullet Physics SDK specialized for Robotics Simulation and Reinforcement Learning"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -503,7 +503,7 @@ name = "pycollada"
 version = "0.6"
 description = "python library for reading and writing collada documents"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -518,7 +518,7 @@ name = "pyglet"
 version = "1.5.27"
 description = "Cross-platform windowing and multimedia library"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -547,7 +547,7 @@ name = "pyopengl"
 version = "3.1.0"
 description = "Standard OpenGL bindings for Python"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -581,7 +581,7 @@ name = "pyrender"
 version = "0.1.45"
 description = "Easy-to-use Python renderer for 3D visualization"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -701,7 +701,7 @@ name = "trimesh"
 version = "3.15.3"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -742,28 +742,33 @@ pyyaml = "*"
 
 [[package]]
 name = "urdfenvs"
-version = "0.3.0"
+version = "0.4.2"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "main"
-optional = true
-python-versions = ">=3.6.5,<3.10"
+optional = false
+python-versions = "^3.6.5, <3.10"
+develop = false
 
 [package.dependencies]
-gym = ">=0.21.0,<0.22.0"
-numpy = ">=1.19.0,<2.0.0"
-pybullet = ">=3.2.1,<4.0.0"
-urdfpy = ">=0.0.22,<0.0.23"
+gym = "^0.21.0"
+numpy = "^1.19.0"
+pybullet = "^3.2.1"
+urdfpy = "^0.0.22"
 
 [package.extras]
-scenes = ["motion-planning-scenes (>=0.3.0,<0.4.0)"]
-keyboard = ["multiprocess (>=0.70.12,<0.71.0)", "pynput (>=1.7.6,<2.0.0)"]
+scenes = ["motion-planning-scenes (>=0.3.4,<0.4.0)"]
+keyboard = ["pynput (>=1.7.6,<2.0.0)", "multiprocess (>=0.70.12,<0.71.0)"]
+
+[package.source]
+type = "directory"
+url = "../gym/env/urdfEnvs"
 
 [[package]]
 name = "urdfpy"
 version = "0.0.22"
 description = "URDF parser and manipulator for Python"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -808,7 +813,7 @@ tutorials = ["scipy", "matplotlib"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.5,<3.10"
-content-hash = "6c14e54cf10e28604ac1464d2fc65840752690391428df5cba2002bd54512557"
+content-hash = "52dd2a70f72144bb8f20e31f10118df2b0fff5142ea9ee7c9ff0119108531c64"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -919,8 +924,8 @@ dill = [
     {file = "dill-0.3.4.zip", hash = "sha256:9f9734205146b2b353ab3fec9af0070237b6ddae78452af83d2fca84d739e675"},
 ]
 forwardkinematics = [
-    {file = "forwardkinematics-1.0.6-py3-none-any.whl", hash = "sha256:b046653ebd85925a0483d97bbb258156f6abc5c3d43b0e0bfc99c83e50906b97"},
-    {file = "forwardkinematics-1.0.6.tar.gz", hash = "sha256:f7992cf7781a983981657d638ac1acf1540df3c586f3afac9dc8daa43c4ac7aa"},
+    {file = "forwardkinematics-1.0.8-py3-none-any.whl", hash = "sha256:830bbe8c37577fdc530043415a3963992567a34e430e2cd59dc2aacb72d479b1"},
+    {file = "forwardkinematics-1.0.8.tar.gz", hash = "sha256:a25fa3e266995b1ed796f4260c1cfbe9d4ca56029fa04f16d283489aa97bb9b2"},
 ]
 freetype-py = [
     {file = "freetype-py-2.2.0.zip", hash = "sha256:cf43716bc5246cd54a64b2238b942e8dc80b79eda92f814c720286fa6fab387a"},
@@ -1461,10 +1466,7 @@ typing-extensions = [
 urdf-parser-py = [
     {file = "urdf_parser_py-0.0.4.tar.gz", hash = "sha256:e983f637145fded67bcff6a542302069bb975b2edf1b18318c093abba1b794cc"},
 ]
-urdfenvs = [
-    {file = "urdfenvs-0.3.0-py3-none-any.whl", hash = "sha256:d06f692c3e5e4d8995a0bf06dcfbf932a94507352a161816d47a1838cbd9a420"},
-    {file = "urdfenvs-0.3.0.tar.gz", hash = "sha256:6b34e7449cb0178fa5a5996cc58cde812cac815bda8eb056c4326f9bfc77e939"},
-]
+urdfenvs = []
 urdfpy = [
     {file = "urdfpy-0.0.22-py3-none-any.whl", hash = "sha256:ec9d944bd8a28fe0914b6038e8119ebd53905bc4c507744e35b46a3fa02529bd"},
     {file = "urdfpy-0.0.22.tar.gz", hash = "sha256:9dc30ebd8f26f1812d2adb9f542dffeb4537963fa2588d14d98e2f6b862d798f"},
