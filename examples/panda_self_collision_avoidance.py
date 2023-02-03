@@ -3,9 +3,10 @@ import os
 
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+from urdfenvs.sensors.full_sensor import FullSensor
 
-from MotionPlanningGoal.goalComposition import GoalComposition
-from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from mpscenes.goals.goal_composition import GoalComposition
+from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 import numpy as np
 import os
@@ -26,7 +27,7 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    initial_observation = env.reset()
+    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -63,10 +64,13 @@ def initalize_environment(render=True):
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     obstacles = (obst1, obst2)
-    env.add_goal(goal)
-    env.add_obstacle(obst1)
-    env.add_obstacle(obst2)
-    return (env, obstacles, goal, initial_observation)
+    env.reset()
+    env.add_sensor(full_sensor, [0])
+    for obst in obstacles:
+        env.add_obstacle(obst)
+    for sub_goal in goal.sub_goals():
+        env.add_goal(sub_goal)
+    return (env, goal)
 
 
 def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
@@ -144,34 +148,24 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
 
 
 def run_panda_self_collision(n_steps=5000, render=True):
-    (env, obstacles, goal, initial_observation) = initalize_environment(
-        render=render
-    )
-    ob = initial_observation
-    obst1 = obstacles[0]
-    obst2 = obstacles[1]
+    (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
+    action = np.zeros(7)
+    ob, *_ = env.step(action)
 
-    # Start the simulation
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
-    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
-    sub_goal_1_position = np.array(goal.sub_goals()[1].position())
-    sub_goal_1_weight= np.array(goal.sub_goals()[1].weight())
-    obst1_position = np.array(obst1.position())
-    obst2_position = np.array(obst2.position())
     for _ in range(n_steps):
+        ob_robot = ob['robot_0']
         action = planner.compute_action(
-            q=ob["robot_0"]["joint_state"]["position"],
-            qdot=ob["robot_0"]["joint_state"]["velocity"],
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_goal_1=sub_goal_1_position,
-            weight_goal_1=sub_goal_1_weight,
-            x_obst_0=obst2_position,
-            x_obst_1=obst1_position,
-            radius_obst_0=np.array([obst1.radius()]),
-            radius_obst_1=np.array([obst2.radius()]),
+            q=ob_robot["joint_state"]["position"],
+            qdot=ob_robot["joint_state"]["velocity"],
+            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
+            weight_goal_0=goal.sub_goals()[0].weight(),
+            x_goal_1=ob_robot['FullSensor']['goals'][1][0][0:2],
+            weight_goal_1=goal.sub_goals()[1].weight(),
+            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
             radius_body_panda_link3=np.array([0.02]),
             radius_body_panda_link4=np.array([0.02]),
             radius_body_panda_link5=np.array([0.02]),

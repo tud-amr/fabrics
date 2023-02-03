@@ -2,7 +2,6 @@ import pytest
 import casadi as ca
 import numpy as np
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
-from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 from fabrics.helpers.variables import Variables
 
 Jdot_sign = +1

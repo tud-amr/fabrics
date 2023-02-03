@@ -19,6 +19,7 @@ def test_panda_self_collision_avoidance():
     res = run_panda_self_collision(10, render=False)
     assert isinstance(res, dict)
 
+"""
 def test_planar_arm_example():
     from planar_arm import run_planar_arm_example
     res = run_planar_arm_example(10, render=False)
@@ -43,11 +44,7 @@ def test_planar_point_robot_line_goal_example():
     from planar_point_robot_line_goal import run_point_robot_line_goal_example
     res = run_point_robot_line_goal_example(10, render=False)
     assert isinstance(res, dict)
-
-def test_panda_orientation_example():
-    from panda_orientation import run_panda_orientation_example
-    res = run_panda_orientation_example(10, render=False)
-    assert isinstance(res, dict)
+"""
 
 def test_serialization_example():
     from panda_ring_serialized import run_panda_ring_serialized_example

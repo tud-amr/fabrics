@@ -1,10 +1,10 @@
 import gym
+import logging
 import numpy as np
 from urdfenvs.robots.boxer import BoxerRobot
-from urdfenvs.robots.generic_urdf import GenericUrdfReacher
-import logging
-from MotionPlanningEnv.sphereObstacle import SphereObstacle
-from MotionPlanningGoal.goalComposition import GoalComposition
+from urdfenvs.sensors.full_sensor import FullSensor
+from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+from mpscenes.goals.goal_composition import GoalComposition
 from fabrics.planner.non_holonomic_parameterized_planner import NonHolonomicParameterizedFabricPlanner
 
 logging.basicConfig(level=logging.INFO)
@@ -31,17 +31,14 @@ def initalize_environment(render):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    # Set the initial position and velocity of the point mass.
-    pos0 = np.array([-2.0, 0.4, 0.0])
-    vel0 = np.array([0.0, 0.0])
-    initial_observation = env.reset(pos=pos0, vel=vel0)
+    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
             "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
     }
     obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
-    obstacles = (obst1) # Add additional obstacles here.
+    obstacles = [obst1] # Add additional obstacles here.
     # Definition of the goal.
     goal_dict = {
             "subgoal0": {
@@ -56,11 +53,18 @@ def initalize_environment(render):
             }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    # Add walls, the goal and the obstacle to the environment.
+
+    pos0 = np.array([-2.0, 0.4, 0.0])
+    vel0 = np.array([0.0, 0.0])
+    env.reset(pos=pos0, vel=vel0)
     env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
-    env.add_goal(goal)
-    env.add_obstacle(obst1)
-    return (env, obstacles, goal, initial_observation)
+    env.add_sensor(full_sensor, [0])
+    for obst in obstacles:
+        env.add_obstacle(obst)
+    for sub_goal in goal.sub_goals():
+        env.add_goal(sub_goal)
+    return (env, goal)
+
 
 
 def set_planner(goal: GoalComposition):
@@ -114,33 +118,28 @@ def run_boxer_example(n_steps=10000, render=True):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
-    (env, obstacles, goal, initial_observation) = initalize_environment(render)
-    ob = initial_observation
-    obst1 = obstacles
-    print(f"Initial observation : {ob}")
+    (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
-    # Start the simulation.
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
-    sub_goal_0_weight = goal.sub_goals()[0].weight()
-    obst1_position = np.array(obst1.position())
+    action = np.zeros(7)
+    ob, *_ = env.step(action)
+
     for _ in range(n_steps):
-        # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
+        ob_robot = ob['robot_0']
         qudot = np.array([
-            ob["robot_0"]['joint_state']['forward_velocity'][0],
-            ob["robot_0"]['joint_state']['velocity'][2]
+            ob_robot['joint_state']['forward_velocity'][0],
+            ob_robot['joint_state']['velocity'][2]
         ])
         action = planner.compute_action(
-            q=ob["robot_0"]["joint_state"]["position"],
-            qdot=ob["robot_0"]["joint_state"]["velocity"],
+            q=ob_robot["joint_state"]["position"],
+            qdot=ob_robot["joint_state"]["velocity"],
             qudot=qudot,
-            x_goal_0=sub_goal_0_position,
+            x_goal_0=ob_robot['FullSensor']['goals'][0][0][0:2],
+            weight_goal_0=goal.sub_goals()[0].weight(),
             m_rot=0.2,
             m_base_x=1.5,
             m_base_y=1.5,
-            weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst1_position,
-            radius_obst_0=np.array([obst1.radius()]),
+            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
             radius_body_ee_link=0.3,
         )
 

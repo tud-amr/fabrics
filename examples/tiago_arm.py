@@ -3,12 +3,13 @@ import os
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.robots.tiago import TiagoRobot
+from urdfenvs.sensors.full_sensor import FullSensor
 import logging
 from copy import deepcopy
 from pyquaternion import Quaternion
 
-from MotionPlanningGoal.goalComposition import GoalComposition
-from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from mpscenes.goals.goal_composition import GoalComposition
+from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 import numpy as np
 import os
@@ -35,7 +36,7 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    env.reset()
+    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     if arm == 'left':
         limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
     elif arm == 'right':
@@ -49,7 +50,6 @@ def initalize_environment(render=True):
     # Set joint values to center position
     pos0[13:20] = (limits[:, 0] + limits[:, 1]) / 2.0
     pos0[6:13] = (limits[:, 0] + limits[:, 1]) / 2.0
-    initial_observation = env.reset(pos=pos0)
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -94,9 +94,18 @@ def initalize_environment(render=True):
     obst_transformed_dict['geometry']['position'] = desired_position
     obst_transformed = SphereObstacle(name="obst", content_dict=obst_transformed_dict)
     obstacles = [obst_transformed]
-    env.add_goal(goal)
+    env.reset(pos=pos0)
+    env.add_sensor(full_sensor, [0])
+    for obst in obstacles:
+        env.add_obstacle(obst)
+    for sub_goal in goal_transformed.sub_goals():
+        env.add_goal(sub_goal)
+    # Ugly workaround as sub_goals and obstacles are visualized in the wrong
+    # frame otherwise
+    for sub_goal in goal.sub_goals():
+        env.add_goal(sub_goal)
     env.add_obstacle(obst)
-    return (env, obstacles, goal_transformed, initial_observation)
+    return (env, goal_transformed)
 
 
 def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: int = 7):
@@ -164,61 +173,46 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
 
 
 def run_tiago_example(n_steps=5000, render=True):
-    (env, obstacles, goal, initial_observation) = initalize_environment(
-        render=render
-    )
-    ob = initial_observation
-    obst1 = obstacles[0]
+    (env, goal) = initalize_environment(render)
     if arm == 'left':
         limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
     elif arm == 'right':
         limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
+    action = np.zeros(19)
+    ob, *_ = env.step(action)
     planner = set_planner(goal, limits)
 
-    # Start the simulation
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
-    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
-    obst1_position = np.array(obst1.position())
+    # Initializing actions and joint states
     augmented_action = np.zeros(19)
+    q = np.zeros(7)
+    qdot = np.zeros(7)
     body_arguments = {}
     for i in [3, 4, 5, 6, 7]:
         body_arguments[f'radius_body_arm_{arm}_{i}_link'] =np.array([0.1])
+
     for _ in range(n_steps):
+        ob_robot = ob['robot_0']
         if arm == 'left':
-            q = ob["robot_0"]['joint_state']['position'][6:13]
-            qdot = ob["robot_0"]['joint_state']['velocity'][6:13]
+            q = ob_robot['joint_state']['position'][6:13]
+            qdot = ob_robot['joint_state']['velocity'][6:13]
         elif arm == 'right':
-            q = ob["robot_0"]['joint_state']['position'][13:20]
-            qdot = ob["robot_0"]['joint_state']['velocity'][13:20]
-        logging.debug(f"q[0]: {q[0]}")
+            q = ob_robot['joint_state']['position'][13:20]
+            qdot = ob_robot['joint_state']['velocity'][13:20]
         action = planner.compute_action(
             q=q,
             qdot=qdot,
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst1_position,
-            radius_obst_0=np.array([obst1.radius()]),
+            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
+            weight_goal_0=goal.sub_goals()[0].weight(),
+            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
             **body_arguments
         )
-        fk = compute_fk(planner._forward_kinematics.fk, q)
-        logging.debug(f"fk : {fk}")
-        #logging.debug(f"action : {action}")
         if arm == 'left':
             augmented_action[5:12] = action
         elif arm == 'right':
             augmented_action[12:19] = action
         ob, *_ = env.step(augmented_action)
     return {}
-
-def compute_fk(fk_fun, q):
-    return fk_fun(
-        q,
-        root_link,
-        child_link,
-        positionOnly=True
-    )
-
 
 if __name__ == "__main__":
     res = run_tiago_example(n_steps=5000)

@@ -26,7 +26,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -56,11 +56,11 @@ jobs:
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: poetry install --no-interaction
+        run: poetry install --with dev --no-interaction
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
       # Runs a set of commands using the runners shell
       - name: Run pytest
-        run: PYTHONPATH=src/ poetry run python -m pytest tests/
+        run: PYTHONPATH=src/ poetry run python -m pytest --cov fabrics --cov-fail-under=80 tests/
 

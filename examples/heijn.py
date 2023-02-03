@@ -3,8 +3,9 @@ import os
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
-from MotionPlanningEnv.sphereObstacle import SphereObstacle
-from MotionPlanningGoal.goalComposition import GoalComposition
+from urdfenvs.sensors.full_sensor import FullSensor
+from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+from mpscenes.goals.goal_composition import GoalComposition
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 """
 Fabrics example for a 3D heijn robot.
@@ -34,7 +35,7 @@ def initalize_environment(render):
     # Set the initial position and velocity of the robot.
     pos0 = np.array([-2.0, 0.5, 0.9])
     vel0 = np.array([0.1, 0.0, 0.0])
-    initial_observation = env.reset(pos=pos0, vel=vel0)
+    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     # Definition of the obstacle.
     static_obst_dict_1 = {
             "type": "sphere",
@@ -66,12 +67,13 @@ def initalize_environment(render):
             }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    # Add walls, the goal and the obstacle to the environment.
-    env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
-    env.add_goal(goal)
+    env.reset(pos=pos0, vel=vel0)
+    env.add_sensor(full_sensor, [0])
     for obst in obstacles:
         env.add_obstacle(obst)
-    return (env, obstacles, goal, initial_observation)
+    for sub_goal in goal.sub_goals():
+        env.add_goal(sub_goal)
+    return (env, goal)
 
 
 def set_planner(goal: GoalComposition):
@@ -143,35 +145,32 @@ def run_heijn_robot(n_steps=10000, render=True):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
-    (env, obstacles, goal, initial_observation) = initalize_environment(render)
-    ob = initial_observation
-    obst1, obst2, obst3 = obstacles
-    print(f"Initial observation : {ob}")
-    action = np.array([0.0, 0.0, 0.0])
+    (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
-    # Start the simulation.
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
-    sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
+
+    action = np.array([0.0, 0.0, 0.0])
+    ob, *_ = env.step(action)
+
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
+        ob_robot = ob['robot_0']
         action = planner.compute_action(
-            q=ob["robot_0"]["joint_state"]["position"],
-            qdot=ob["robot_0"]["joint_state"]["velocity"],
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst1.position(),
-            x_obst_1=obst2.position(),
-            x_obst_2=obst3.position(),
-            radius_obst_0=obst1.radius(),
-            radius_obst_1=obst2.radius(),
-            radius_obst_2=obst3.radius(),
+            q=ob_robot['joint_state']['position'],
+            qdot=ob_robot['joint_state']['velocity'],
+            x_goal_0=ob_robot['FullSensor']['goals'][0][0][0:2],
+            weight_goal_0=goal.sub_goals()[0].weight(),
             radius_body_collision_link_front_right=np.array([0.12]),
             radius_body_collision_link_front_left=np.array([0.12]),
             radius_body_collision_link_center_right=np.array([0.18]),
             radius_body_collision_link_center_left=np.array([0.18]),
             radius_body_collision_link_rear_right=np.array([0.12]),
             radius_body_collision_link_rear_left=np.array([0.12]),
+            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
+            x_obst_2=ob_robot['FullSensor']['obstacles'][2][0],
+            radius_obst_2=ob_robot['FullSensor']['obstacles'][2][1],
         )
         ob, *_, = env.step(action)
     return {}
