@@ -2,7 +2,7 @@ import casadi as ca
 
 from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.diffGeometry.symbolicTrajectory import SymbolicTrajectory
-from MotionPlanningSceneHelpers.analyticTrajectory import AnalyticTrajectory
+from mpscenes.common.analytic_trajectory import AnalyticTrajectory
 
 
 class AnalyticSymbolicTrajectory(SymbolicTrajectory):

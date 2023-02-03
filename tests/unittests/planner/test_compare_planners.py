@@ -11,7 +11,7 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 from fabrics.helpers.variables import Variables
 
-from MotionPlanningGoal.goalComposition import GoalComposition
+from mpscenes.goals.goal_composition import GoalComposition
 
 @pytest.fixture
 def goal_1d():

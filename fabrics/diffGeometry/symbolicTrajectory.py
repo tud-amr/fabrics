@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.helpers.constants import eps
 from fabrics.helpers.variables import Variables
-from MotionPlanningSceneHelpers.referenceTrajectory import ReferenceTrajectory
+from mpscenes.common.reference_trajectory import ReferenceTrajectory
 
 from fabrics.helpers.variables import Variables
 
