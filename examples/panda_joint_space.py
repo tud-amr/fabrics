@@ -1,13 +1,17 @@
 import gym
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+from urdfenvs.sensors.full_sensor import FullSensor
 import os
 
-from MotionPlanningGoal.goalComposition import GoalComposition
+from mpscenes.goals.goal_composition import GoalComposition
 
 import numpy as np
 import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+# TODO joint space goals cannot be handled by the full sensor because they cannot
+# be added to the environment
 
 
 def initalize_environment(render=True):
@@ -24,7 +28,7 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    initial_observation = env.reset()
+    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
@@ -37,8 +41,9 @@ def initalize_environment(render=True):
         }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    env.add_goal(goal)
-    return (env, (), goal, initial_observation)
+    env.reset()
+    env.add_sensor(full_sensor, [0])
+    return (env, goal)
 
 
 def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
@@ -101,22 +106,18 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
 
 
 def run_panda_joint_space(n_steps=5000, render=True):
-    (env, _, goal, initial_observation) = initalize_environment(
-        render=render
-    )
-    ob = initial_observation
+    (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
+    action = np.zeros(7)
+    ob, *_ = env.step(action)
 
-    # Start the simulation
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
-    sub_goal_0_weight= np.array(goal.sub_goals()[0].weight())
     for _ in range(n_steps):
+        ob_robot = ob['robot_0']
         action = planner.compute_action(
-            q=ob["robot_0"]["joint_state"]["position"],
-            qdot=ob["robot_0"]["joint_state"]["velocity"],
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
+            q=ob_robot["joint_state"]["position"],
+            qdot=ob_robot["joint_state"]["velocity"],
+            x_goal_0=np.array(goal.sub_goals()[0].position()),
+            weight_goal_0=goal.sub_goals()[0].weight(),
         )
         ob, *_ = env.step(action)
     return {}

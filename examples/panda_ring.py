@@ -2,17 +2,21 @@
 # "Geometry Fabrics: Generalzing Classical Mechanics to Capture the Physics of Behavior"
 # https://arxiv.org/abs/2109.10443
 # This implementation is not related to the paper as no code was published with it.
+import pdb
 import gym
 import os
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+from urdfenvs.sensors.full_sensor import FullSensor
 
-from MotionPlanningGoal.goalComposition import GoalComposition
-from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from mpscenes.goals.goal_composition import GoalComposition
+from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 import numpy as np
 import quaternionic
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+# TODO: Angle cannot be read through the FullSensor
 
 def initalize_environment(render=True, obstacle_resolution = 8):
     """
@@ -28,8 +32,8 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
+    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
-    initial_observation = env.reset(pos=q0)
     # Definition of the obstacle.
     radius_ring = 0.3
     obstacles = []
@@ -75,10 +79,13 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    env.add_goal(goal)
+    env.reset(pos=q0)
+    env.add_sensor(full_sensor, [0])
     for obst in obstacles:
         env.add_obstacle(obst)
-    return (env, obstacles, goal, initial_observation)
+    for sub_goal in goal.sub_goals():
+        env.add_goal(sub_goal)
+    return (env, goal)
 
 
 def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_resolution = 10):
@@ -157,42 +164,39 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
 
 def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=None):
     obstacle_resolution_ring = 10
-    (env, obstacles, goal, initial_observation) = initalize_environment(
-        render=render, obstacle_resolution=obstacle_resolution_ring
+    (env, goal) = initalize_environment(
+        render=render,
+        obstacle_resolution=obstacle_resolution_ring
     )
-    ob = initial_observation
+    action = np.zeros(7)
+    ob, *_ = env.step(action)
+
     if not planner:
         planner = set_planner(goal, obstacle_resolution = obstacle_resolution_ring)
         # Serializing the planner is optional
         if serialize:
             planner.serialize('serialized_10.pbz2')
 
-    # Start the simulation
-    print("Starting simulation")
-    sub_goal_0_position = np.array(goal.sub_goals()[0].position())
-    sub_goal_0_weight = goal.sub_goals()[0].weight()
-    sub_goal_1_position = np.array(goal.sub_goals()[1].position())
-    sub_goal_1_weight= goal.sub_goals()[1].weight()
-    obstacle_positions = []
-    obstacle_radii = []
-    for obst in obstacles:
-        obstacle_positions.append(obst.position())
-        obstacle_radii.append(np.array(obst.radius()))
-
     sub_goal_0_quaternion = quaternionic.array(goal.sub_goals()[1].angle())
     sub_goal_0_rotation_matrix = sub_goal_0_quaternion.to_rotation_matrix
 
-    for i in range(n_steps):
-
+    for _ in range(n_steps):
+        ob_robot = ob['robot_0']
+        x_obsts = [
+            ob_robot['FullSensor']['obstacles'][i][0] for i in range(obstacle_resolution_ring)
+        ]
+        radius_obsts = [
+            ob_robot['FullSensor']['obstacles'][i][1] for i in range(obstacle_resolution_ring)
+        ]
         action = planner.compute_action(
-            q=ob["robot_0"]["joint_state"]["position"],
-            qdot=ob["robot_0"]["joint_state"]["velocity"],
-            x_goal_0=sub_goal_0_position,
-            weight_goal_0=sub_goal_0_weight,
-            x_goal_1=sub_goal_1_position,
-            weight_goal_1=sub_goal_1_weight,
-            x_obsts = obstacle_positions,
-            radius_obsts = obstacle_radii,
+            q=ob_robot["joint_state"]["position"],
+            qdot=ob_robot["joint_state"]["velocity"],
+            x_obsts=x_obsts,
+            radius_obsts=radius_obsts,
+            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
+            weight_goal_0=goal.sub_goals()[0].weight(),
+            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
+            weight_goal_1=goal.sub_goals()[1].weight(),
             radius_body_panda_link1=0.1,
             radius_body_panda_link4=0.1,
             radius_body_panda_link6=0.15,

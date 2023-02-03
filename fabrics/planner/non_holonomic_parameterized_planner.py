@@ -18,7 +18,7 @@ from fabrics.helpers.functions import parse_symbolic_input
 class NonHolonomicFabricPlannerConfig(FabricPlannerConfig):
     l_offset: str = "0.2"
     M_base_energy: str = (
-        "ca.SX(np.array([[sym('m_base_x'), 0, 0], [0, sym('m_base_y'), 0], [0, 0, sym('m_rot')]]))"
+        "ca.hcat([ca.vcat([sym('m_base_x'),0,0]), ca.vcat([0,sym('m_base_y'),0]), ca.vcat([0, 0, sym('m_rot')])])"
     )
     M_arm_energy: str = (
         "sym('m_arm') * np.identity(x.size()[0] - 3)"
