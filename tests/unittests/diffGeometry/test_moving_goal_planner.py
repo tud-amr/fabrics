@@ -4,7 +4,6 @@ import numpy as np
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
-from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from forwardkinematics.planarFks.planarArmFk import PlanarArmFk
 
@@ -32,7 +31,6 @@ def movingGoalGeometry():
     geo_rel = Geometry(h=h_rel, var=var_x_rel)
 
     # define the relative transformation
-    refTraj = AnalyticSymbolicTrajectory(ca.SX(np.identity(2)), 2, var=var_x_ref)
     variables_dynamic = Variables(state_variables={'x': x, 'xdot': xdot}, parameters={'x_ref': x_d, 'xdot_ref': xdot_d, 'xddot_ref': xddot_d})
     dm_rel = DynamicDifferentialMap(variables_dynamic)
     geo = geo_rel.dynamic_pull(dm_rel)

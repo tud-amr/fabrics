@@ -5,7 +5,6 @@ import numpy as np
 
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
-from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 
 from fabrics.helpers.variables import Variables
 
