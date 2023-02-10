@@ -6,20 +6,35 @@ from urdfenvs.sensors.full_sensor import FullSensor
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+import pybullet as p
+import matplotlib.pyplot as plt
+from scipy import ndimage
 
 # Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
 # mass to compute actions for a simulated 3D point mass.
 #
 # todo: tune behavior.
 
-def edf(pos) -> float:
-    #SARAYS FUNCTION
-    # I am adding a random line :)
+def edf(pos, proj_rgb) -> float:
+    #to binary image, obstacles are red
+    proj_r = proj_rgb[:, :, 1]
+    proj_bin = proj_r <0.1
     kkk=1
-    return 0.0
+    plt.subplot(1, 3, 1)
+    plt.imshow(proj_r)
+
+    plt.subplot(1, 3, 2)
+    plt.imshow(proj_bin)
+
+    dist_map = ndimage.distance_transform_edt(proj_bin, return_indices=True)
+    plt.subplot(1, 3, 3)
+    # plt.imshow(dist_map)
+    # plt.show()
+    return 0.0 #dist_map
 
 def edf_jacobian(pos) -> float:
     #SARAYS FUNCTION
+
     return np.zeros(2)
 
 def initalize_environment(render):
@@ -130,10 +145,18 @@ def run_point_robot_urdf(n_steps=10000, render=True):
 
     action = np.array([0.0, 0.0, 0.0])
     ob, *_ = env.step(action)
+    p.resetDebugVisualizerCamera(2, 0, 270.1, [0, 0, 3])
 
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
+
+        width_res = 100
+        height_res = 100
+        img = p.getCameraImage(width_res, height_res, renderer=p.ER_BULLET_HARDWARE_OPENGL)
+        proj_rgb = np.reshape(img[2], (height_res, width_res, 4)) * 1. / 255.
+        proj_depth = img[3]
+
         action[0:2] = planner.compute_action(
             q=ob_robot["joint_state"]["position"][0:2],
             qdot=ob_robot["joint_state"]["velocity"][0:2],
@@ -141,12 +164,21 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
             #x_obst_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
             #radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            edf_eval=edf(ob_robot["joint_state"]["position"][0:2]),
+            edf_eval=edf(ob_robot["joint_state"]["position"][0:2], proj_rgb),
             J_edf_eval=edf_jacobian(ob_robot["joint_state"]["position"][0:2]),
             radius_body_1=np.array([0.2])
         )
         ob, *_, = env.step(action)
+        # env.render(mode='human')
+        plt.subplot(1, 2, 1)
+        plt.imshow(proj_rgb)
+        plt.subplot(1, 2, 2)
+        plt.imshow(proj_depth)
+        plt.show()
+        pos_current = ob["robot_0"]["joint_state"]["position"]
+        edf(pos_current, proj_rgb)
+        kkk=1
     return {}
 
 if __name__ == "__main__":
-    res = run_point_robot_urdf(n_steps=10000, render=True)
+    res = run_point_robot_urdf(n_steps=1, render=True)
