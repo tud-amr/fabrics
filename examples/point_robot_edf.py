@@ -18,7 +18,7 @@ from scipy import ndimage
 def edf(pos, proj_rgb) -> float:
     #to binary image, obstacles are red
     proj_r = proj_rgb[:, :, 1]
-    proj_bin = proj_r <0.1
+    proj_bin = ((1-proj_r) > 0.9)
     kkk=1
     plt.subplot(1, 3, 1)
     plt.imshow(proj_r)
@@ -26,10 +26,12 @@ def edf(pos, proj_rgb) -> float:
     plt.subplot(1, 3, 2)
     plt.imshow(proj_bin)
 
-    dist_map = ndimage.distance_transform_edt(proj_bin, return_indices=True)
+    dist_map_tuple = ndimage.distance_transform_edt(proj_bin)
+    dist_map = dist_map_tuple[1]
+    plt.show()
     plt.subplot(1, 3, 3)
     # plt.imshow(dist_map)
-    # plt.show()
+    #
     return 0.0 #dist_map
 
 def edf_jacobian(pos) -> float:
