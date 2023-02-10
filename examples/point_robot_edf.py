@@ -15,7 +15,7 @@ from scipy import ndimage
 #
 # todo: tune behavior.
 
-def edf(pos, proj_rgb) -> float:
+def edf(pos, proj_rgb): #-> float:
     #to binary image, obstacles are red
     proj_r = proj_rgb[:, :, 1]
     proj_bin = ((1-proj_r) > 0.9)
@@ -26,15 +26,31 @@ def edf(pos, proj_rgb) -> float:
     plt.subplot(1, 3, 2)
     plt.imshow(proj_bin)
 
-    dist_map_tuple = ndimage.distance_transform_edt(proj_bin)
-    dist_map = dist_map_tuple[1]
-    plt.show()
+    dist_map = ndimage.distance_transform_edt(1-proj_bin)
+    dist_map = dist_map/5 # /100 pixels * 20 in meters
+
+    # convert pos to pixels
+    pos_p = [round((pos[0]+10)*5), round((-pos[1]+10)*5)]
+
+    # dist_map = dist_map_t
     plt.subplot(1, 3, 3)
-    # plt.imshow(dist_map)
-    #
-    return 0.0 #dist_map
+    plt.imshow(dist_map)
+    plt.show()
+
+    # index in map
+    dist_pos = dist_map[pos_p[0], pos_p[1]]
+
+    gradient_map = np.gradient(dist_map)
+    gradient_x = gradient_map[0]
+    gradient_y = gradient_map[1]
+    grad_x_pos = gradient_x[pos_p[0], pos_p[1]]
+    grad_y_pos = gradient_y[pos_p[0], pos_p[1]]
+    k = 111
+    return (dist_pos, grad_x_pos, grad_y_pos) #dist_map
 
 def edf_jacobian(pos) -> float:
+
+
     #SARAYS FUNCTION
 
     return np.zeros(2)
@@ -166,7 +182,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
             #x_obst_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
             #radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            edf_eval=edf(ob_robot["joint_state"]["position"][0:2], proj_rgb),
+            #edf_eval=edf(ob_robot["joint_state"]["position"][0:2], proj_rgb),
             J_edf_eval=edf_jacobian(ob_robot["joint_state"]["position"][0:2]),
             radius_body_1=np.array([0.2])
         )
