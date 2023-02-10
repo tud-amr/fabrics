@@ -1,3 +1,4 @@
+import pdb
 import gym
 import numpy as np
 import casadi as ca
@@ -22,6 +23,7 @@ from scipy import ndimage
 # todo: tune behavior.
 
 logging.basicConfig(level=logging.ERROR)
+
 
 class EDFGeometryLeaf(GenericGeometryLeaf):
     def __init__(
@@ -62,8 +64,14 @@ class EDFPlanner(ParameterizedFabricPlanner):
         goal: GoalComposition = None,
     ):
         geometry = EDFGeometryLeaf(self._variables)
-        geometry.set_geometry(self.config.collision_geometry)
-        geometry.set_finsler_structure(self.config.collision_finsler)
+        collision_geometry: str = (
+            "-0.5 / (x ** 1)"
+        )
+        collision_finsler: str = (
+            "0.1/(x**1) * xdot**2"
+        )
+        geometry.set_geometry(collision_geometry)
+        geometry.set_finsler_structure(collision_finsler)
         self.add_leaf(geometry)
         if goal:
             self.set_goal_component(goal)
@@ -85,11 +93,16 @@ def edf(pos, proj_rgb) -> tuple:
         plt.subplot(1, 3, 2)
         plt.imshow(proj_bin)
 
+    pixel_to_meter_ratio = 0.1
+    offset = np.array([6.5, 5])
+    direction_multiplier = np.array([1, -1])
+    
     dist_map = ndimage.distance_transform_edt(1-proj_bin)
-    dist_map = dist_map/5 # /100 pixels * 20 in meters
+    dist_map = dist_map * pixel_to_meter_ratio # /100 pixels * 20 in meters
 
     # convert pos to pixels
-    pos_p = [round((pos[0]+10)*5), round((-pos[1]+10)*5)]
+    pos_p = np.rint((direction_multiplier * pos + offset)/pixel_to_meter_ratio)
+    pos_p = [int(pos_pi) for pos_pi in pos_p]
 
     # dist_map = dist_map_t
     if logging.root.level <= 10:
@@ -98,14 +111,13 @@ def edf(pos, proj_rgb) -> tuple:
         plt.show()
 
     # index in map
-    dist_pos = dist_map[pos_p[0], pos_p[1]]
+    dist_pos = dist_map[int(pos_p[1]), int(pos_p[0])]
 
     gradient_map = np.gradient(dist_map)
-    gradient_x = gradient_map[0]
-    gradient_y = gradient_map[1]
-    grad_x_pos = gradient_x[pos_p[0], pos_p[1]]
-    grad_y_pos = gradient_y[pos_p[0], pos_p[1]]
-    k = 111
+    gradient_x = -gradient_map[1]/pixel_to_meter_ratio
+    gradient_y = gradient_map[0]/pixel_to_meter_ratio
+    grad_x_pos = gradient_x[pos_p[1], pos_p[0]]
+    grad_y_pos = gradient_y[pos_p[1], pos_p[0]]
     return (dist_pos, grad_x_pos, grad_y_pos) #dist_map
 
 def initalize_environment(render):
@@ -128,8 +140,8 @@ def initalize_environment(render):
         dt=0.01, robots=robots, render=render
     )
     # Set the initial position and velocity of the point mass.
-    pos0 = np.array([-2.0, 0.5, 0.0])
-    vel0 = np.array([0.1, 0.0, 0.0])
+    pos0 = np.array([-2.0, 0.0, 0.0])
+    vel0 = np.array([1.0, 0.0, 0.0])
     full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     # Definition of the obstacle.
     static_obst_dict = {
@@ -187,7 +199,7 @@ def set_planner(goal: GoalComposition):
     collision_links = [1]
     planner.set_components(
         collision_links,
-        goal,
+        #goal,
     )
     planner.concretize()
     return planner
@@ -207,6 +219,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
         Boolean toggle to set rendering on (True) or off (False).
     """
     (env, goal) = initalize_environment(render)
+    __import__('pdb').set_trace()
     p.resetDebugVisualizerCamera(5, 0, 270.1, [0, 0, 0])
     planner = set_planner(goal)
 
@@ -217,16 +230,52 @@ def run_point_robot_urdf(n_steps=10000, render=True):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
 
-        width_res = 100
+        width_res = 130
         height_res = 100
         img = p.getCameraImage(width_res, height_res, renderer=p.ER_BULLET_HARDWARE_OPENGL)
         proj_rgb = np.reshape(img[2], (height_res, width_res, 4)) * 1. / 255.
         proj_depth = img[3]
 
-        edf_phi, edf_gradient_x, edf_gradient_y = edf(ob_robot['joint_state']['position'], proj_rgb)
-        print(edf_phi)
-        __import__('pdb').set_trace()
+        """
+        edf_test, *_ = edf(
+            [2.0, 0.0],
+            proj_rgb
+        )
+        assert edf_test == 0.0
+        _, edf_gradient_x, edf_gradient_y = edf(
+            [4.0, 2.0],
+            proj_rgb
+        )
+        assert edf_gradient_x >= 0
+        assert edf_gradient_y >= 0
+        _, edf_gradient_x, edf_gradient_y = edf(
+            [4.0, -2.0],
+            proj_rgb
+        )
+        assert edf_gradient_x >= 0
+        assert edf_gradient_y <= 0
+        _, edf_gradient_x, edf_gradient_y = edf(
+            [-4.0, -2.0],
+            proj_rgb
+        )
+        assert edf_gradient_x <= 0
+        assert edf_gradient_y <= 0
+        _, edf_gradient_x, edf_gradient_y = edf(
+            [-4.0, 2.0],
+            proj_rgb
+        )
+        assert edf_gradient_x <= 0
+        assert edf_gradient_y >= 0
+        """
+
+        edf_phi, edf_gradient_x, edf_gradient_y = edf(
+            ob_robot['joint_state']['position'][0:2],
+            proj_rgb
+        )
+
+        
         edf_gradient = np.array([edf_gradient_x, edf_gradient_y])        
+        print(edf_gradient)
         action[0:2] = planner.compute_action(
             q=ob_robot["joint_state"]["position"][0:2],
             qdot=ob_robot["joint_state"]["velocity"][0:2],
@@ -235,10 +284,11 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             #x_obst_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
             #radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
             phi_edf=edf_phi,
-            J_edf=edf_gradient,
+            J_edf=-edf_gradient,
             Jdot_edf=np.zeros(2),
             radius_body_1=np.array([0.2])
         )
+        print(action)
         ob, *_, = env.step(action)
         if logging.root.level <= 10:
             env.render(mode='human')
