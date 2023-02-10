@@ -13,3 +13,4 @@ setup.py
 tags
 *.pbz2
 *.pkl
+.idea
