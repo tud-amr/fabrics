@@ -1,22 +1,78 @@
 import gym
 import numpy as np
+import casadi as ca
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
+
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+from fabrics.components.energies.execution_energies import ExecutionLagrangian
+from fabrics.diffGeometry.diffMap import ExplicitDifferentialMap
+from fabrics.components.leaves.geometry import GenericGeometryLeaf
+from fabrics.helpers.variables import Variables
 
 # Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
 # mass to compute actions for a simulated 3D point mass.
 #
 # todo: tune behavior.
 
+class EDFGeometryLeaf(GenericGeometryLeaf):
+    def __init__(
+        self,
+        parent_variables: Variables,
+    ):
+        phi = ca.SX.sym("edf_phi", 1)
+        super().__init__(
+            parent_variables,
+            f"edf_leaf",
+            phi,
+        )
+        self.set_forward_map()
+
+    def set_forward_map(self):
+        J = ca.transpose(ca.SX.sym("J_edf", 2))
+        Jdot = ca.transpose(ca.SX.sym("Jdot_edf", 2))
+        explicit_jacobians = {
+            "phi_edf": self._forward_kinematics,
+            "J_edf": J,
+            "Jdot_edf": Jdot,
+        }
+        self._parent_variables.add_parameters(explicit_jacobians)
+        self._forward_map =  ExplicitDifferentialMap(
+            self._forward_kinematics,
+            self._parent_variables,
+            J=J,
+            Jdot=Jdot,
+        )
+
+    def map(self):
+        return self._forward_map
+
+class EDFPlanner(ParameterizedFabricPlanner):
+    def set_components(
+        self,
+        collision_links: list,
+        goal: GoalComposition = None,
+    ):
+        geometry = EDFGeometryLeaf(self._variables)
+        geometry.set_geometry(self.config.collision_geometry)
+        geometry.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(geometry)
+        if goal:
+            self.set_goal_component(goal)
+            # Adds default execution energy
+            execution_energy = ExecutionLagrangian(self._variables)
+            self.set_execution_energy(execution_energy)
+            # Sets speed control
+            self.set_speed_control()
+
 def edf(pos) -> float:
     #SARAYS FUNCTION
     # I am adding a random line :)
     kkk=1
-    return 0.0
+    return 5.0
 
 def edf_jacobian(pos) -> float:
     #SARAYS FUNCTION
@@ -71,7 +127,6 @@ def initalize_environment(render):
     env.add_obstacle(obst1)
     return (env, goal)
 
-
 def set_planner(goal: GoalComposition):
     """
     Initializes the fabric planner for the point robot.
@@ -92,21 +147,16 @@ def set_planner(goal: GoalComposition):
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
-    planner = ParameterizedFabricPlanner(
+    planner = EDFPlanner(
             degrees_of_freedom,
             robot_type,
             collision_geometry=collision_geometry,
             collision_finsler=collision_finsler
     )
     collision_links = [1]
-    self_collision_links = {}
-    # The planner hides all the logic behind the function set_components.
-    # Workaround set-components
     planner.set_components(
         collision_links,
-        self_collision_links,
         goal,
-        number_obstacles=0,
     )
     planner.concretize()
     return planner
@@ -141,8 +191,9 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
             #x_obst_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
             #radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            edf_eval=edf(ob_robot["joint_state"]["position"][0:2]),
-            J_edf_eval=edf_jacobian(ob_robot["joint_state"]["position"][0:2]),
+            phi_edf=edf(ob_robot["joint_state"]["position"][0:2]),
+            J_edf=edf_jacobian(ob_robot["joint_state"]["position"][0:2]),
+            Jdot_edf=edf_jacobian(ob_robot["joint_state"]["position"][0:2]),
             radius_body_1=np.array([0.2])
         )
         ob, *_, = env.step(action)

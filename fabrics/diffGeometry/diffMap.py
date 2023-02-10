@@ -1,4 +1,4 @@
-import pdb
+import logging
 import casadi as ca
 import numpy as np
 
@@ -93,3 +93,21 @@ class DynamicDifferentialMap(DifferentialMap):
         x = evaluations['x_rel']
         xdot = evaluations['xdot_rel']
         return x, xdot
+
+class ExplicitDifferentialMap(DifferentialMap):
+    def __init__(self, phi: ca.SX, variables: Variables, **kwargs):
+        super().__init__(phi, variables, **kwargs)
+        try:
+            self._J = kwargs.get("J")
+            self._Jdot = kwargs.get("Jdot")
+        except Exception as e:
+            raise Exception("J and Jdot not defined for ExplicitDifferentialMap")
+
+    def concretize(self) -> None:
+        logging.warning("Concretezing ExplicitDifferentialMap has no effect.")
+        pass
+
+    def forward(self, **kwargs):
+        logging.warning("Cannot forward evaluate differential map")
+        pass
+
