@@ -13,10 +13,12 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 # todo: tune behavior.
 
 def edf(pos) -> float:
-    SARAYS FUNCTION
+    #SARAYS FUNCTION
+    return 0.0
 
 def edf_jacobian(pos) -> float:
-    SARAYS FUNCTION
+    #SARAYS FUNCTION
+    return np.zeros(2)
 
 def initalize_environment(render):
     """
@@ -102,7 +104,7 @@ def set_planner(goal: GoalComposition):
         collision_links,
         self_collision_links,
         goal,
-        number_obstacles=1,
+        number_obstacles=0,
     )
     planner.concretize()
     return planner
@@ -137,8 +139,8 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
             #x_obst_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
             #radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            edf_eval=edf(q)
-            J_edf_eval=edf_jacobian(q)
+            edf_eval=edf(ob_robot["joint_state"]["position"][0:2]),
+            J_edf_eval=edf_jacobian(ob_robot["joint_state"]["position"][0:2]),
             radius_body_1=np.array([0.2])
         )
         ob, *_, = env.step(action)

@@ -1388,19 +1388,19 @@ files = [
 
 [[package]]
 name = "platformdirs"
-version = "2.6.2"
+version = "3.0.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "platformdirs-2.6.2-py3-none-any.whl", hash = "sha256:83c8f6d04389165de7c9b6f0c682439697887bca0aa2f1c87ef1826be3584490"},
-    {file = "platformdirs-2.6.2.tar.gz", hash = "sha256:e1fea1fe471b9ff8332e229df3cb7de4f53eeea4998d3b6bfff542115e998bd2"},
+    {file = "platformdirs-3.0.0-py3-none-any.whl", hash = "sha256:b1d5eb14f221506f50d6604a561f4c5786d9e80355219694a1b244bcd96f4567"},
+    {file = "platformdirs-3.0.0.tar.gz", hash = "sha256:8a1228abb1ef82d788f74139988b137e78692984ec7b08eaa6c65f1723af28f9"},
 ]
 
 [package.extras]
-docs = ["furo (>=2022.12.7)", "proselint (>=0.13)", "sphinx (>=5.3)", "sphinx-autodoc-typehints (>=1.19.5)"]
-test = ["appdirs (==1.4.4)", "covdefaults (>=2.2.2)", "pytest (>=7.2)", "pytest-cov (>=4)", "pytest-mock (>=3.10)"]
+docs = ["furo (>=2022.12.7)", "proselint (>=0.13)", "sphinx (>=6.1.3)", "sphinx-autodoc-typehints (>=1.22,!=1.23.4)"]
+test = ["appdirs (==1.4.4)", "covdefaults (>=2.2.2)", "pytest (>=7.2.1)", "pytest-cov (>=4)", "pytest-mock (>=3.10)"]
 
 [[package]]
 name = "pluggy"
@@ -1676,14 +1676,14 @@ files = [
 
 [[package]]
 name = "quaternionic"
-version = "1.0.5"
+version = "1.0.6"
 description = "Interpret numpy arrays as quaternionic arrays with numba acceleration"
 category = "main"
 optional = false
-python-versions = ">=3.8,<3.11"
+python-versions = ">=3.8,<3.12"
 files = [
-    {file = "quaternionic-1.0.5-py3-none-any.whl", hash = "sha256:5b397e039668066661688f334a275848ff984c0ea3322b37947c82fb782a7b7d"},
-    {file = "quaternionic-1.0.5.tar.gz", hash = "sha256:6dc4ac9adc7d6d88eacec6a3f330bc048577218e83f6c2e862a24fac6e28402e"},
+    {file = "quaternionic-1.0.6-py3-none-any.whl", hash = "sha256:c4720937eb8c0816aee3c96a8a47f1c9159776273e95d13934467763c066caad"},
+    {file = "quaternionic-1.0.6.tar.gz", hash = "sha256:870e499f9d0f5881a2583abba95309f809879f29ec94990383ade25df073eaf8"},
 ]
 
 [package.dependencies]
@@ -1814,14 +1814,14 @@ test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeo
 
 [[package]]
 name = "setuptools"
-version = "67.1.0"
+version = "67.2.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.1.0-py3-none-any.whl", hash = "sha256:a7687c12b444eaac951ea87a9627c4f904ac757e7abdc5aac32833234af90378"},
-    {file = "setuptools-67.1.0.tar.gz", hash = "sha256:e261cdf010c11a41cb5cb5f1bf3338a7433832029f559a6a7614bd42a967c300"},
+    {file = "setuptools-67.2.0-py3-none-any.whl", hash = "sha256:16ccf598aab3b506593c17378473978908a2734d7336755a8769b480906bec1c"},
+    {file = "setuptools-67.2.0.tar.gz", hash = "sha256:b440ee5f7e607bb8c9de15259dba2583dd41a38879a7abc1d43a71c59524da48"},
 ]
 
 [package.extras]
@@ -1964,14 +1964,14 @@ files = [
 
 [[package]]
 name = "trimesh"
-version = "3.18.3"
+version = "3.19.3"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "trimesh-3.18.3-py3-none-any.whl", hash = "sha256:7427fe09a3591b0e9d5d5fc03afccce761c2a5e89508741543fc41f986ee15e5"},
-    {file = "trimesh-3.18.3.tar.gz", hash = "sha256:955a01041af3ca1ad2991d85334c68f1424108e4a1c1a60eac8a5e030427efa3"},
+    {file = "trimesh-3.19.3-py3-none-any.whl", hash = "sha256:e6a8d418feefa3eca351751de0e19ff6455efa7876671b93e1126d8142498183"},
+    {file = "trimesh-3.19.3.tar.gz", hash = "sha256:d370ba04f8d59ac493b09488527872c689d2aaf4c4737664070f3141e008c16c"},
 ]
 
 [package.dependencies]
@@ -2271,14 +2271,14 @@ testing = ["pytest", "pytest-cov", "setuptools"]
 
 [[package]]
 name = "zipp"
-version = "3.12.0"
+version = "3.13.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "zipp-3.12.0-py3-none-any.whl", hash = "sha256:9eb0a4c5feab9b08871db0d672745b53450d7f26992fd1e4653aa43345e97b86"},
-    {file = "zipp-3.12.0.tar.gz", hash = "sha256:73efd63936398aac78fd92b6f4865190119d6c91b531532e798977ea8dd402eb"},
+    {file = "zipp-3.13.0-py3-none-any.whl", hash = "sha256:e8b2a36ea17df80ffe9e2c4fda3f693c3dad6df1697d3cd3af232db680950b0b"},
+    {file = "zipp-3.13.0.tar.gz", hash = "sha256:23f70e964bc11a34cef175bc90ba2914e1e4545ea1e3e2f67c079671883f9cb6"},
 ]
 
 [package.extras]
