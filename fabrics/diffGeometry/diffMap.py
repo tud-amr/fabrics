@@ -103,11 +103,3 @@ class ExplicitDifferentialMap(DifferentialMap):
         except Exception as e:
             raise Exception("J and Jdot not defined for ExplicitDifferentialMap")
 
-    def concretize(self) -> None:
-        logging.warning("Concretezing ExplicitDifferentialMap has no effect.")
-        pass
-
-    def forward(self, **kwargs):
-        logging.warning("Cannot forward evaluate differential map")
-        pass
-
