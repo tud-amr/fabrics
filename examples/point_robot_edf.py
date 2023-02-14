@@ -1,5 +1,4 @@
 import gym
-import pysnooper
 import numpy as np
 import casadi as ca
 import logging
@@ -306,7 +305,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
             #x_obst_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
             #radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            phi_edf=edf_phi,
+            phi_edf=edf_phi-0.2,
             J_edf=edf_gradient,
             Jdot_edf=np.zeros(2),
             radius_body_1=np.array([0.2])

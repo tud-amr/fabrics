@@ -33,7 +33,8 @@ class Damper:
         self._symbolic_parameters.update(beta_parameters)
 
     def parse_eta_expression(self, eta_expression, lagrangian_execution):
-        eta_parameters, eta_raw = parse_symbolic_input(eta_expression, None, None, 'damper')
+        qdot = ca.vcat(ca.symvar(lagrangian_execution))
+        eta_parameters, eta_raw = parse_symbolic_input(eta_expression, None, qdot, 'damper')
         if 'ex_lag_damper' in eta_parameters:
             ex_lag = eta_parameters['ex_lag_damper']
             self._eta = ca.substitute(eta_raw, ex_lag, lagrangian_execution)
