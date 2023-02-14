@@ -83,7 +83,7 @@ class FabricPlannerConfig:
         "0.5 * (ca.tanh(-0.5 * (ca.norm_2(x) - 0.02)) + 1) * 6.5 + 0.01 + ca.fmax(0, sym('a_ex') - sym('a_le'))"
     )
     damper_eta: str = (
-        "0.5 * (ca.tanh(-0.5 * sym('ex_lag') * (1 - 1) - 0.5) + 1)"
+        "0.5 * (ca.tanh(-0.9 * (1 - 1/2) * ca.dot(xdot, xdot) - 0.5) + 1)"
     )
     """
     damper_beta: str = (
@@ -249,7 +249,7 @@ class ParameterizedFabricPlanner(object):
             self._forced_speed_controlled_geometry = WeightedGeometry(
                 g=forced_geometry, le=execution_lagrangian
             )
-            #self._forced_speed_controlled_geometry.concretize()
+            self._forced_speed_controlled_geometry.concretize()
         except AttributeError:
             logging.warning("No damping")
 
@@ -337,6 +337,8 @@ class ParameterizedFabricPlanner(object):
                 self.add_leaf(lower_limit_geometry)
                 self.add_leaf(upper_limit_geometry)
 
+        execution_energy = ExecutionLagrangian(self._variables)
+        self.set_execution_energy(execution_energy)
         if goal:
             self.set_goal_component(goal)
             # Adds default execution energy
@@ -387,8 +389,8 @@ class ParameterizedFabricPlanner(object):
         try:
             eta = self._damper.substitute_eta()
             a_ex = (
-                eta * self._geometry._alpha
-                + (1 - eta) * self._forced_geometry._alpha
+                eta * self._execution_geometry._alpha
+                + (1 - eta) * self._forced_speed_controlled_geometry._alpha
             )
             beta_subst = self._damper.substitute_beta(-a_ex, -self._geometry._alpha)
             xddot = self._forced_geometry._xddot - (a_ex + beta_subst) * (
@@ -397,9 +399,11 @@ class ParameterizedFabricPlanner(object):
             )
             #xddot = self._forced_geometry._xddot
         except AttributeError:
-            logging.info("No forcing term, using pure geoemtry")
+            logging.warn("No forcing term, using pure geoemtry with energization.")
             self._geometry.concretize()
-            xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
+            #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
+            xddot = self._execution_geometry._xddot - self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
+
         self._funs = CasadiFunctionWrapper(
             "funs", self.variables.asDict(), {"xddot": xddot}
         )
