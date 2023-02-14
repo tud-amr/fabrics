@@ -72,10 +72,10 @@ def test_forward_mapping_polar(simple_differentialMap):
     assert Jdot.shape == (2, 2)
     assert x[0] == pytest.approx(q[0] * np.cos(q[1]))
     assert x[1] == pytest.approx(q[0] * np.sin(q[1]))
-    assert J[0, 0] == np.cos(q[1])
-    assert J[0, 1] == -np.sin(q[1]) * q[0]
-    assert J[1, 0] == np.sin(q[1])
-    assert J[1, 1] == np.cos(q[1]) * q[0]
+    assert J[0, 0] == pytest.approx(np.cos(q[1]))
+    assert J[0, 1] == pytest.approx(-np.sin(q[1]) * q[0])
+    assert J[1, 0] == pytest.approx(np.sin(q[1]))
+    assert J[1, 1] == pytest.approx(np.cos(q[1]) * q[0])
     Jdot_test = Jdot_sign * np.array(
         [
             [
