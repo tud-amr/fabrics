@@ -4,7 +4,6 @@ from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 from MotionPlanningGoal.goalComposition import GoalComposition
-import matplotlib.pyplot as plt
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 """
 Fabrics example for a 3D point mass robot.
@@ -33,26 +32,21 @@ def initalize_environment(render):
         dt=0.01, robots=robots, render=render
     )
     # Set the initial position and velocity of the point mass.
-    pos0 = np.array([-100.0, 0.0, 0.0])
-    vel0 = np.array([0.1, 0.0, 0.0])
+    pos0 = np.array([0.0, 0.1, 0.0])
+    vel0 = np.array([0.5, 0.0, 0.0])
     initial_observation = env.reset(pos=pos0, vel=vel0)
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
-            "geometry": {"position": [20000.0, 0.0, 0.0], "radius": 0.5},
+            "geometry": {"position": [2.0, 1.0, 0.0], "radius": 0.6},
     }
     obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
     static_obst_dict = {
             "type": "sphere",
-            "geometry": {"position": [20000.5, 1.8, 0.0], "radius": 0.5},
+            "geometry": {"position": [2.0, -1.0, 0.0], "radius": 0.6},
     }
     obst2 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
-    static_obst_dict = {
-            "type": "sphere",
-            "geometry": {"position": [2000.0, 2.0, 0.0], "radius": 0.5},
-    }
-    obst3 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
-    obstacles = (obst1, obst2, obst3) # Add additional obstacles here.
+    obstacles = (obst1, obst2) # Add additional obstacles here.
     # Definition of the goal.
     goal_dict = {
             "subgoal0": {
@@ -61,7 +55,7 @@ def initalize_environment(render):
                 "indices": [0, 1],
                 "parent_link" : 0,
                 "child_link" : 1,
-                "desired_position": [500.0, 0.5],
+                "desired_position": [4.5, 0.0],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
             }
@@ -93,14 +87,14 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 2
     robot_type = "pointRobot"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-0.2 / (x ** 1) * xdot ** 2"
+    collision_geometry = "-0.2 / (x ** 1) * (1 - ca.heaviside(xdot)) * xdot ** 2"
     collision_finsler = "0.1/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     damper_beta: str = "0.5"
     planner = ParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
-            collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler,
+            #collision_geometry=collision_geometry,
+            #collision_finsler=collision_finsler,
             #damper_beta=damper_beta,
     )
     collision_links = [1]
@@ -110,7 +104,7 @@ def set_planner(goal: GoalComposition):
         collision_links,
         self_collision_links,
         goal,
-        number_obstacles=0,
+        number_obstacles=2,
     )
     planner.concretize()
     return planner
@@ -129,7 +123,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     """
     (env, obstacles, goal, initial_observation) = initalize_environment(render)
     ob = initial_observation
-    obst1, obst2, obst3 = obstacles
+    obst1, obst2 = obstacles
     print(f"Initial observation : {ob}")
     action = np.array([0.0, 0.0, 0.0])
     planner = set_planner(goal)
@@ -139,7 +133,6 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     sub_goal_0_weight = np.array(goal.sub_goals()[0].weight())
     obst1_position = np.array(obst1.position())
     obst2_position = np.array(obst2.position())
-    obst3_position = np.array(obst3.position())
     vel_mags = []
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
@@ -152,16 +145,12 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             radius_obst_0=np.array([obst1.radius()]),
             x_obst_1=obst2_position[0:2],
             radius_obst_1=np.array([obst2.radius()]),
-            x_obst_2=obst3_position[0:2],
-            radius_obst_2=np.array([obst3.radius()]),
-            radius_body_1=np.array([0.4])
+            radius_body_1=np.array([0.2])
         )
         ob, *_, = env.step(action)
         vel_mag = np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])
         vel_mags.append(vel_mag)
-        #print(f"Velocity magnitude at {env.t()}: {np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])}")
-    plt.plot(vel_mags)
-    plt.show()
+        print(f"Velocity magnitude at {env.t()}: {np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])}")
     return {}
 
 
