@@ -2,7 +2,6 @@ import pytest
 import casadi as ca
 import numpy as np
 from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.diffGeometry.analyticSymbolicTrajectory import AnalyticSymbolicTrajectory
 from fabrics.diffGeometry.diffMap import DynamicDifferentialMap
 
 from fabrics.helpers.variables import Variables

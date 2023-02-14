@@ -25,8 +25,8 @@ from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
 from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf, GenericGeometryLeaf
 
-from MotionPlanningGoal.goalComposition import GoalComposition
-from MotionPlanningGoal.subGoal import SubGoal
+from mpscenes.goals.goal_composition import GoalComposition
+from mpscenes.goals.sub_goal import SubGoal
 
 from forwardkinematics.fksCommon.fk_creator import FkCreator
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-from MotionPlanningGoal.goalComposition import GoalComposition
+from mpscenes.goals.goal_composition import GoalComposition
 
 def test_creation():
     ParameterizedFabricPlanner(2, "pointRobot")
