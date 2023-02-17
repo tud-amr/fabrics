@@ -284,6 +284,24 @@ class ParameterizedFabricPlanner(object):
             )
         return fk
 
+    def get_forward_kinematics_F(self, link_name) -> ca.SX:
+        if isinstance(link_name, ca.SX):
+            return link_name
+        if self._config.urdf:
+            fk = self._forward_kinematics.fk(
+                self._variables.position_variable(),
+                self._config.root_link,
+                link_name,
+                positionOnly=True
+            )
+        else:
+            fk = self._forward_kinematics.fk(
+                self._variables.position_variable(),
+                link_name,
+                positionOnly=True
+            )
+        return fk_fun
+
     """ DEFAULT COMPOSITION """
     def set_components(
         self,
