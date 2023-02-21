@@ -25,6 +25,7 @@ from fabrics.components.leaves.geometry import GenericGeometryLeaf
 from fabrics.helpers.variables import Variables
 
 # TODO hardcoding the indices for subgoal_1 is undesired
+logging.basicConfig(level=logging.DEBUG)
 
 class EDFGeometryLeaf(GenericGeometryLeaf):
     def __init__(
@@ -192,7 +193,7 @@ def initalize_environment(render=True):
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [0.0, -10, -10], "radius": 0.1},
+        "geometry": {"position": [0.0, -5.5, 1.0], "radius": 0.3},
     }
     obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
@@ -208,7 +209,7 @@ def initalize_environment(render=True):
             "indices": [1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_link4",
-            "desired_position": [1.5, 1.8],
+            "desired_position": [1.5, 0.8],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -247,8 +248,8 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
         Degrees of freedom of the robot (default = 7)
     """
     robot_type = "xyz"
-    collision_geometry = "-5 / (x ** 2) * xdot ** 2"
-    collision_finsler = "5/(x ** 2) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_geometry = "-1 / (x ** 2) * xdot ** 2"
+    collision_finsler = "1/(x ** 2) * (1 - ca.heaviside(xdot))* xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/planar_urdf_2_joints.urdf", "r") as file:
         urdf = file.read()
@@ -285,7 +286,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
     # )
     geometry = planner.set_components(
         collision_links,
-        # goal
+        goal
     )
     planner.concretize()
     return planner
@@ -328,7 +329,7 @@ def run_panda_example(n_steps=5000, render=True):
             proj_rgb
         )
         edf_gradient_phi_x = np.array([edf_gradient_x, edf_gradient_y])
-        edf_gradient_phi_q = np.matmul(edf_gradient_phi_x, gradient_num[1:3, :])
+        edf_gradient_phi_q = np.dot(edf_gradient_phi_x, gradient_num[1:3, :])
         print("EDF phi", edf_phi)
         print("gradient phi/q:", edf_gradient_phi_q)
         action = planner.compute_action(
