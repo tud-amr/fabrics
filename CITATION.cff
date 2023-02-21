@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: Dynamic Optimization Fabrics for Motion Generation
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+authors:
+  - given-names: Max
+    family-names: Spahn
+  - given-names: Martijn
+    family-names: Wisse
+  - given-names: Javier
+    family-names: Alonso-Mora
+repository-code: 'https://github.com/maxspahn/fabrics'
+license: Apache-2.0
+version: 0.12.1
+doi: 10.48550/ARXIV.2205.08454
+url: https://arxiv.org/abs/2205.08454
+date-released: 2023-02-21
+
