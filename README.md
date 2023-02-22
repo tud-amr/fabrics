@@ -7,23 +7,31 @@ Geometric Fabrics represent a geometric approach to motion generation for
 various robot structures. The idea is next development step after Riemannian
 motion policies and offer a more stable 
 
-Point Robot             |  Planar Robot
-:-------------------------:|:-------------------------:
-![Optimization Fabrics for point robots](./assets/demo.gif) | ![Optimization Fabrics for point robots](./assets/three_arm.gif) 
+<table>
+  <tr>
+    <td><b>Holonomic robots</b></th>
+    <td><b>Non-Holonomic robots</b></th>
+  </tr> 
+  <tr>
+    <td> <img src="./assets/panda_ring.gif"  alt="1" width = 360px ></td>
+    <td> <img src="./assets/panda_dynamic_avoidance.gif"  alt="1" width = 360px ></td>
+  </tr> 
+  <tr>
+    <td> <img src="./assets/boxer.gif"  alt="1" width = 360px ></td>
+    <td> <img src="./assets/albert.gif"  alt="1" width = 360px ></td>
+  </tr>
+</table>
 
-Nonholonomic Robots
-:-------------------------:
-![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
-
-Holonomic Robots
-:-------------------------:
-![Optimization Fabrics for panda arm](./assets/panda_ring.gif)
 
 ## Installation
 
 Install the package through pip, using 
 ```bash
 pip3 install ".<options>"
+```
+or from pypi using
+```bash
+pip3 install fabrics
 ```
 Options are [agents] and [tutorial]. Those con be installed using
 
@@ -34,7 +42,8 @@ poetry install --with <option>
 
 ## Publications
 
-This repository was used in several publications.
+This repository was used in several publications. The major one being
+[Dynamic Optimization Fabrics for Motion Generation](https://arxiv.org/abs/2205.08454) 
 If you are using this software, please cite:
 ```bash
 @misc{https://doi.org/10.48550/arxiv.2205.08454,
@@ -84,9 +93,10 @@ https://github.com/tud-amr/localPlannerBench
 This repository contains brief examples corresponding to the theory presented
 in "Optimization Fabrics" by Ratliff et al. https://arxiv.org/abs/2008.02399 .
 These examples are named according to the naming in that publication. Each
-script is self-contained and required software is numpy, matplotlib.pyplot and
-casadi.
-
+script is self-contained and required software is installed using 
+```bash
+pip install ".[tutorial]"
+```
 ## Related works and websites
 
 The work is based on some works by the NVIDIA Research Labs. Below you find a
