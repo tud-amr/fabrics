@@ -15,7 +15,9 @@ Nonholonomic Robots
 :-------------------------:
 ![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
 
-<video src='./assets/panda_ring.gif'/>
+Holonomic Robots
+:-------------------------:
+![Optimization Fabrics for panda arm](./assets/panda_ring.gif)
 
 ## Installation
 
