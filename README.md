@@ -15,7 +15,7 @@ Nonholonomic Robots
 :-------------------------:
 ![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
 
-<video src='./assets/panda_ring.mp4'/>
+<video src='https://github.com/tud-amr/fabrics/blob/doc-initial-documentation/assets/panda_ring.mp4'/>
 
 ## Installation
 
