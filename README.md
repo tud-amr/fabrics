@@ -15,6 +15,8 @@ Nonholonomic Robots
 :-------------------------:
 ![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
 
+<video src='./assets/panda_ring.mp4'/>
+
 ## Installation
 
 Install the package through pip, using 
