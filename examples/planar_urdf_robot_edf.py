@@ -25,7 +25,8 @@ from fabrics.components.leaves.geometry import GenericGeometryLeaf
 from fabrics.helpers.variables import Variables
 
 # TODO hardcoding the indices for subgoal_1 is undesired
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 class EDFGeometryLeaf(GenericGeometryLeaf):
     def __init__(
@@ -103,9 +104,6 @@ def edf(pos, proj_rgb) -> tuple:
 
     dist_map = ndimage.distance_transform_edt(1 - proj_bin)
     dist_map = dist_map * pixel_to_meter_ratio  # /100 pixels * 20 in meters
-
-    # we do not want to joint pos, but the cartesian end-effector position, so use the forward kinematics
-    # pos_cart =
 
     # convert pos to pixels
     pos_p = np.rint((direction_multiplier * pos + offset) / pixel_to_meter_ratio)
@@ -262,13 +260,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
         collision_geometry=collision_geometry,
         collision_finsler=collision_finsler
     )
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     'panda',
-    #     urdf=urdf,
-    #     root_link='panda_link0',
-    #     end_link='panda_link4',
-    # )
     # q = planner.variables.position_variable()
     collision_links = ['panda_link1', 'panda_link4']
     self_collision_pairs = {}
@@ -296,8 +287,6 @@ def run_panda_example(n_steps=5000, render=True):
     (env, goal) = initalize_environment(render)
     p.resetDebugVisualizerCamera(5, 90, 0, [0, 0, 0])
     input("Make sure that the pybullet window is in default window size. Then press any key.")
-    # p.resetDebugVisualizerCamera(5, 0, 270.1, [0, 0, 0])
-    # input("Make sure that the pybullet window is in default window size. Then press any key.")
     planner = set_planner(goal)
     action = -np.zeros(env.n())
     ob, *_ = env.step(action)
@@ -306,13 +295,8 @@ def run_panda_example(n_steps=5000, render=True):
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
         pos_joints = ob_robot['joint_state']['position'][0:2]
-        # pos_sym_link4 = planner.get_forward_kinematics("panda_link4")
-        # pos_sym_link4_2 = planner._forward_kinematics.fk([0, 0], "panda_link4", 0)
-        # pos_sym_function = ca.Function('pos_sym_function', [q_0, q_1], [pos_sym_link4], ['q_0', 'q_1'], ['pos_sym_link4'])
-       # pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
-        # planner.get_differential_map()
         pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
-        pos_link4 = pos_link4_fun(pos_joints)[1:3, 3] #only return (y, z)
+        pos_link4 = pos_link4_fun(pos_joints)[1:3, 3]  # only return (y, z)
 
         q_0 = ca.SX.sym('q_0', 1)
         q_1 = ca.SX.sym('q_1', 1)
@@ -320,18 +304,13 @@ def run_panda_example(n_steps=5000, render=True):
         fk_symbolic = planner._forward_kinematics.casadi(q_tot, "panda_link0", "panda_link4", positionOnly=True)
         gradient_fun = ca.Function("symb_fun", [q_tot], [ca.jacobian(fk_symbolic, q_tot)])
         gradient_num = gradient_fun(pos_joints)
-        if math.isnan(pos_link4[0]):
-            kkk= 1
-        # print("position link 4:", pos_link4)
         proj_rgb, proj_depth = get_top_view_image(save=False)
         edf_phi, edf_gradient_x, edf_gradient_y = edf(
-            pos_link4,  #ob_robot['joint_state']['position'][0:2],
+            pos_link4,  # ob_robot['joint_state']['position'][0:2],
             proj_rgb
         )
         edf_gradient_phi_x = np.array([edf_gradient_x, edf_gradient_y])
         edf_gradient_phi_q = np.dot(edf_gradient_phi_x, gradient_num[1:3, :])
-        print("EDF phi", edf_phi)
-        print("gradient phi/q:", edf_gradient_phi_q)
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
@@ -349,8 +328,6 @@ def run_panda_example(n_steps=5000, render=True):
         )
 
         ob, *_ = env.step(action)
-        # print("edf_gradients", edf_gradient)
-        # print("actions:", action)
     return {}
 
 
