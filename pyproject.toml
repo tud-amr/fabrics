@@ -1,8 +1,12 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.6.0"
+version = "0.6.1"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
+readme = "README.md"
+license = "GPL-3.0-or-later"
+repository = "https://tud-amr/fabrics"
+keywords = ["robotics", "motion-planning", "geometry"]
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.10"
