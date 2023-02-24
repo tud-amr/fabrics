@@ -3,6 +3,17 @@
 [![Build and Agents](https://github.com/maxspahn/fabrics/actions/workflows/diffGeo_agents.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/diffGeo_agents.yml)
 [![Build and Unittest](https://github.com/maxspahn/fabrics/actions/workflows/unitTest.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/unitTest.yml)
 
+**Note on development**
+> This project is still under heavy development and there is a lack of
+> documentation. I, @maxspahn, am commited to improve and maintain that package.
+> However, I rely on people like you to point me to issues and unclear sections of
+> the code. So feel free to leave issues whenever something bugs you.
+
+**fabrics ros-wrapper**
+> The fabrics-ros wrapper will released very shortly when compability is
+> verified.
+
+
 Geometric Fabrics represent a geometric approach to motion generation for
 various robot structures. The idea is next development step after Riemannian
 motion policies and offer a more stable 
