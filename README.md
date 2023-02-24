@@ -1,68 +1,119 @@
-# Fabrics
+# (Geometric) Fabrics
 
 [![Build and Agents](https://github.com/maxspahn/fabrics/actions/workflows/diffGeo_agents.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/diffGeo_agents.yml)
 [![Build and Unittest](https://github.com/maxspahn/fabrics/actions/workflows/unitTest.yml/badge.svg)](https://github.com/maxspahn/fabrics/actions/workflows/unitTest.yml)
 
-Optimization fabrics can be used to formulate local motion planning in form of trees with various task definining leaves.
-The work is based on findings in https://arxiv.org/abs/2008.02399 .
+Geometric Fabrics represent a geometric approach to motion generation for
+various robot structures. The idea is next development step after Riemannian
+motion policies and offer a more stable 
 
-Point Robot             |  Planar Robot
-:-------------------------:|:-------------------------:
-![Optimization Fabrics for point robots](./assets/demo.gif) | ![Optimization Fabrics for point robots](./assets/three_arm.gif) 
+<table>
+  <tr>
+    <td><b>Holonomic robots</b></th>
+    <td><b>Non-Holonomic robots</b></th>
+  </tr> 
+  <tr>
+    <td> <img src="./assets/panda_ring.gif"  alt="1" width = 360px ></td>
+    <td> <img src="./assets/panda_dynamic_avoidance.gif"  alt="1" width = 360px ></td>
+  </tr> 
+  <tr>
+    <td> <img src="./assets/boxer.gif"  alt="1" width = 360px ></td>
+    <td> <img src="./assets/albert.gif"  alt="1" width = 360px ></td>
+  </tr>
+</table>
 
-Nonholonomic Robots
-:-------------------------:
-![Optimization Fabrics for nonholonomic robots](./assets/non_holonomic.gif)
 
-
-## Tutorials
-
-This repository contains brief examples corresponding to the theory presented in "Optimization Fabrics" by Ratliff et al.
-https://arxiv.org/abs/2008.02399 .
-These examples are named according to the naming in that publication. Each script is self-contained and required software is 
-numpy, matplotlib.pyplot and casadi.
-
-## Python Package
-
-There is also a python package to be used to develop custom leaves.
-# Dependencies
-Beside some common packages, the examples depend on several custom packages.
-They are installed using the pip installation.
-
-# Installation
+## Installation
 
 Install the package through pip, using 
 ```bash
 pip3 install ".<options>"
 ```
+or from pypi using
+```bash
+pip3 install fabrics
+```
 Options are [agents] and [tutorial]. Those con be installed using
 
 Install the package through poetry, using
 ```bash
-poetry install -E <option>
+poetry install --with <option>
 ```
 
-## Gym Agents
+## Publications
 
-Open-AI gym agents can be controlled using fabrics. Planar cases can be found in
-gym_agents. They require the installation of 
-[planarEnvs](https://gitlab.tudelft.nl/mspahn/planarenvs).
+This repository was used in several publications. The major one being
+[Dynamic Optimization Fabrics for Motion Generation](https://arxiv.org/abs/2205.08454) 
+If you are using this software, please cite:
+```bash
+@misc{https://doi.org/10.48550/arxiv.2205.08454,
+  doi = {10.48550/ARXIV.2205.08454},
+  url = {https://arxiv.org/abs/2205.08454},
+  author = {Spahn, Max and Wisse, Martijn and Alonso-Mora, Javier},
+  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {Dynamic Optimization Fabrics for Motion Generation},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution Share Alike 4.0 International}
+}
+```
+Other publications where this repository was used:
 
+https://github.com/maxspahn/optuna_fabrics
+```bash
+@article{https://doi.org/10.48550/arxiv.2302.06922,
+  doi = {10.48550/ARXIV.2302.06922},
+  url = {https://arxiv.org/abs/2302.06922},
+  author = {Spahn, Max and Alonso-Mora, Javier},
+  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {Autotuning Symbolic Optimization Fabrics for Trajectory Generation},
+  publisher = {arXiv},
+  year = {2023},
+  copyright = {Creative Commons Attribution Share Alike 4.0 International}
+}
+```
+
+https://github.com/tud-amr/localPlannerBench
+```bash
+@misc{https://doi.org/10.48550/arxiv.2210.06033,
+  doi = {10.48550/ARXIV.2210.06033},
+  url = {https://arxiv.org/abs/2210.06033},
+  author = {Spahn, Max and Salmi, Chadi and Alonso-Mora, Javier},
+  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {Local Planner Bench: Benchmarking for Local Motion Planning},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution Share Alike 4.0 International}
+}
+```
+
+
+## Tutorials
+
+This repository contains brief examples corresponding to the theory presented
+in "Optimization Fabrics" by Ratliff et al. https://arxiv.org/abs/2008.02399 .
+These examples are named according to the naming in that publication. Each
+script is self-contained and required software is installed using 
+```bash
+pip install ".[tutorial]"
+```
 ## Related works and websites
+
+The work is based on some works by the NVIDIA Research Labs. Below you find a
+list of all relevant links:
+
 # websites
 https://sites.google.com/nvidia.com/geometric-fabrics
+
 # paper
-https://arxiv.org/abs/2010.14750
-https://arxiv.org/abs/2008.02399
-https://arxiv.org/abs/2010.14745
-https://arxiv.org/abs/2010.15676
-https://arxiv.org/abs/1801.02854
-# videos
-https://www.youtube.com/watch?v=aM9Ha2IawEo
-https://www.youtube.com/watch?v=awiF6JjDEbo
+- https://arxiv.org/abs/2010.14750
+- https://arxiv.org/abs/2008.02399
+- https://arxiv.org/abs/2010.14745
+- https://arxiv.org/abs/2010.15676
+- https://arxiv.org/abs/1801.02854
 
+# videos and talks
+- https://www.youtube.com/watch?v=aM9Ha2IawEo
+- https://www.youtube.com/watch?v=awiF6JjDEbo
+- https://www.youtube.com/watch?v=VsM-kdk74d8
 
-
-## Time Variant (beta)
-
-![Optimization Fabrics for time-variant potentials](./assets/timeVariant.gif) 
