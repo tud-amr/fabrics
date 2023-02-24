@@ -9,3 +9,7 @@ dist
 build
 fabrics.egg-info/
 setup.py
+.vim/
+tags
+*.pbz2
+*.pkl

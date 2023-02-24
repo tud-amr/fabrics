@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - master
+      - develop
 
 jobs:
   test-agents:
@@ -25,7 +26,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -50,15 +51,15 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root -E agents
+        run: poetry install --no-interaction --no-root --with agents
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: poetry install --no-interaction -E agents
+        run: poetry install --no-interaction --with agents --with dev
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
       # Runs a set of commands using the runners shell
       - name: Test agents
-        run: PYTHONPATH=src/ poetry run python -m pytest gym_agents/
+        run: PYTHONPATH=src/ poetry run python -m pytest examples

@@ -2,20 +2,22 @@ import casadi as ca
 import numpy as np
 from copy import deepcopy
 
-from fabrics.diffGeometry.diffMap import DifferentialMap
-from fabrics.diffGeometry.variables import eps
+from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.helpers.functions import joinVariables
+from fabrics.helpers.variables import Variables
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
 
 class Geometry:
     """description"""
 
     def __init__(self, **kwargs):
+        self._x_ref_name = "x_ref"
+        self._xdot_ref_name = "xdot_ref"
+        self._xddot_ref_name = "xddot_ref"
         if 'x' in kwargs:
             h = kwargs.get("h")
-            x = kwargs.get("x")
-            xdot = kwargs.get("xdot")
-            self._vars = [x, xdot]
+            self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
         elif 'var' in kwargs:
             h = kwargs.get("h")
             self._vars = kwargs.get('var')
@@ -31,10 +33,10 @@ class Geometry:
         self._h = h
 
     def x(self):
-        return self._vars[0]
+        return self._vars.position_variable()
 
     def xdot(self):
-        return self._vars[1]
+        return self._vars.velocity_variable()
 
     def __add__(self, b):
         assert isinstance(b, Geometry)
@@ -49,32 +51,39 @@ class Geometry:
 
     def pull(self, dm: DifferentialMap):
         assert isinstance(dm, DifferentialMap)
-        Jt = ca.transpose(dm._J)
-        JtJ = ca.mtimes(Jt, dm._J)
-        h_1 = ca.mtimes(Jt, self._h)
-        h_2 = ca.mtimes(Jt, dm.Jdotqdot())
-        JtJ_eps = JtJ + np.identity(dm.q().size()[0]) * eps
-        h_pulled = ca.mtimes(ca.pinv(JtJ_eps), h_1 + h_2)
+        h_pulled = ca.mtimes(ca.pinv(dm._J), self._h + dm.Jdotqdot())
         h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
         h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
-        new_vars = dm._vars
+        new_state_variables = dm.state_variables()
+        new_parameters = {}
+        new_parameters.update(self._vars.parameters())
+        new_parameters.update(dm.params())
+        new_vars = Variables(state_variables=new_state_variables, parameters=new_parameters)
         if hasattr(dm, '_refTraj'):
             refTrajs = [dm._refTraj] + [refTraj.pull(dm) for refTraj in self._refTrajs]
         else:
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
         return Geometry(h=h_pulled_subst_x_xdot, var=new_vars, refTrajs=refTrajs)
 
+    def dynamic_pull(self, dm: DynamicDifferentialMap):
+        h_pulled = self._h - dm.xddot_ref()
+        h_pulled_subst_x = ca.substitute(h_pulled, self.x(), dm._phi)
+        h_pulled_subst_x_xdot = ca.substitute(h_pulled_subst_x, self.xdot(), dm.phidot())
+        return Geometry(h=h_pulled_subst_x_xdot, var=dm._vars)
+
     def concretize(self):
         self._xddot = -self._h
         var = deepcopy(self._vars)
         for refTraj in self._refTrajs:
             var += refTraj._vars
-        self._funs = ca.Function("funs", var, [self._h, self._xddot])
+        self._funs = CasadiFunctionWrapper(
+            "funs", var.asDict(), {"h": self._h, "xddot": self._xddot}
+        )
 
-    def evaluate(self, *args):
-        funs = self._funs(*args)
-        h_eval = np.array(funs[0])[:, 0]
-        xddot_eval = np.array(funs[1])[:, 0]
+    def evaluate(self, **kwargs):
+        evaluations = self._funs.evaluate(**kwargs)
+        h_eval = evaluations['h']
+        xddot_eval = evaluations['xddot']
         return [h_eval, xddot_eval]
 
     def testHomogeneousDegree2(self):
@@ -82,6 +91,6 @@ class Geometry:
         xdot = np.random.rand(self.xdot().size()[0])
         alpha = 2.0
         xdot2 = alpha * xdot
-        h, _ = self.evaluate(x, xdot)
-        h2, _ = self.evaluate(x, xdot2)
+        h, _ = self.evaluate(x=x, xdot=xdot)
+        h2, _ = self.evaluate(x=x, xdot=xdot2)
         return h * alpha ** 2 == h2
