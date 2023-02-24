@@ -1,0 +1,35 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Publishing package to pypi with minor change.
+
+# Controls when the workflow will run
+on: 
+  pull_request:
+    types: [closed]
+    branches: 
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  publish_minor:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup up python
+        id: setup-python
+        uses: actions/setup-python@v2
+        with: 
+          python-version: 3.8
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Build and publish to pypi
+        uses: JRubics/poetry-publish@v1.13
+        with:
+          python_version: "3.8"
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
