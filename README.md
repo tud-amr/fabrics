@@ -15,8 +15,8 @@
 
 
 Geometric Fabrics represent a geometric approach to motion generation for
-various robot structures. The idea is next development step after Riemannian
-motion policies and offer a more stable 
+various robot structures. The idea is a next development step after Riemannian
+Motion Policies and offers increased stability and accessibility.
 
 <table>
   <tr>
