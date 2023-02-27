@@ -116,17 +116,17 @@ pip install ".[tutorials]"
 The work is based on some works by the NVIDIA Research Labs. Below you find a
 list of all relevant links:
 
-# websites
-https://sites.google.com/nvidia.com/geometric-fabrics
+### websites
+- https://sites.google.com/nvidia.com/geometric-fabrics
 
-# paper
+### paper
 - https://arxiv.org/abs/2010.14750
 - https://arxiv.org/abs/2008.02399
 - https://arxiv.org/abs/2010.14745
 - https://arxiv.org/abs/2010.15676
 - https://arxiv.org/abs/1801.02854
 
-# videos and talks
+### videos and talks
 - https://www.youtube.com/watch?v=aM9Ha2IawEo
 - https://www.youtube.com/watch?v=awiF6JjDEbo
 - https://www.youtube.com/watch?v=VsM-kdk74d8
