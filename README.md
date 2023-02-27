@@ -48,6 +48,7 @@ Options are [agents] and [tutorials]. Those can be installed using
 ```
 pip3 install ".[agents]"
 pip3 install ".[tutorials]"
+```
 
 Install the package through poetry, using
 ```bash
