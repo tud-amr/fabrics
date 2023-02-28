@@ -5,18 +5,18 @@
 
 **Note on development**
 > This project is still under heavy development and there is a lack of
-> documentation. I, @maxspahn, am commited to improve and maintain that package.
+> documentation. I, @maxspahn, am committed to improve and maintain that package.
 > However, I rely on people like you to point me to issues and unclear sections of
 > the code. So feel free to leave issues whenever something bugs you.
 
-**fabrics ros-wrapper**
-> The fabrics-ros wrapper will released very shortly when compability is
+**Fabrics ros-wrapper**
+> The fabrics-ros wrapper will be released very shortly when compatibility is
 > verified.
 
 
 Geometric Fabrics represent a geometric approach to motion generation for
-various robot structures. The idea is next development step after Riemannian
-motion policies and offer a more stable 
+various robot structures. The idea is a next development step after Riemannian
+Motion Policies and offers increased stability and accessibility.
 
 <table>
   <tr>
@@ -40,11 +40,15 @@ Install the package through pip, using
 ```bash
 pip3 install ".<options>"
 ```
-or from pypi using
+or from PyPI using
 ```bash
 pip3 install fabrics
 ```
-Options are [agents] and [tutorial]. Those con be installed using
+Options are [agents] and [tutorials]. Those can be installed using
+```
+pip3 install ".[agents]"
+pip3 install ".[tutorials]"
+```
 
 Install the package through poetry, using
 ```bash
@@ -102,28 +106,28 @@ https://github.com/tud-amr/localPlannerBench
 ## Tutorials
 
 This repository contains brief examples corresponding to the theory presented
-in "Optimization Fabrics" by Ratliff et al. https://arxiv.org/abs/2008.02399 .
+in "Optimization Fabrics" by Ratliff et al. https://arxiv.org/abs/2008.02399.
 These examples are named according to the naming in that publication. Each
 script is self-contained and required software is installed using 
 ```bash
-pip install ".[tutorial]"
+pip install ".[tutorials]"
 ```
 ## Related works and websites
 
 The work is based on some works by the NVIDIA Research Labs. Below you find a
 list of all relevant links:
 
-# websites
-https://sites.google.com/nvidia.com/geometric-fabrics
+### websites
+- https://sites.google.com/nvidia.com/geometric-fabrics
 
-# paper
+### paper
 - https://arxiv.org/abs/2010.14750
 - https://arxiv.org/abs/2008.02399
 - https://arxiv.org/abs/2010.14745
 - https://arxiv.org/abs/2010.15676
 - https://arxiv.org/abs/1801.02854
 
-# videos and talks
+### videos and talks
 - https://www.youtube.com/watch?v=aM9Ha2IawEo
 - https://www.youtube.com/watch?v=awiF6JjDEbo
 - https://www.youtube.com/watch?v=VsM-kdk74d8
