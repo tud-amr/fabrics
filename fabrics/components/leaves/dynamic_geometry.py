@@ -69,10 +69,16 @@ class DynamicObstacleLeaf(GenericDynamicGeometryLeaf):
         forward_kinematics: ca.SX,
         obstacle_name: str,
         collision_link: str,
+        reference_parameters: dict = None,
     ):
         dim_ref = forward_kinematics.size()[0]
         super().__init__(
-            parent_variables, f"{obstacle_name}_{collision_link}_leaf", forward_kinematics, dim = 1, dim_ref = dim_ref
+            parent_variables,
+            f"{obstacle_name}_{collision_link}_leaf",
+            forward_kinematics,
+            dim = 1,
+            dim_ref = dim_ref,
+            reference_parameters=reference_parameters,
         )
         self.set_forward_map(obstacle_name, collision_link)
 
