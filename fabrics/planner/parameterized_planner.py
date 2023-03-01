@@ -295,6 +295,14 @@ class ParameterizedFabricPlanner(object):
         number_dynamic_obstacles: int = 0,
     ):
         # Adds default obstacle avoidance
+        reference_parameter_list = []
+        for i in range(number_dynamic_obstacles):
+            reference_parameters = {
+                f"x_obst_dynamic_{i}": ca.SX.sym(f"x_obst_dynamic_{i}", 3),
+                f"xdot_obst_dynamic_{i}": ca.SX.sym(f"xdot_obst_dynamic_{i}", 3),
+                f"xddot_obst_dynamic_{i}": ca.SX.sym(f"xddot_obst_dynamic_{i}", 3),
+            }
+            reference_parameter_list.append(reference_parameters)
         for collision_link in collision_links:
             fk = self.get_forward_kinematics(collision_link)
             if is_sparse(fk):
@@ -307,8 +315,8 @@ class ParameterizedFabricPlanner(object):
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
             for i in range(number_dynamic_obstacles):
-                obstacle_name = f"dynamic_obst_{i}"
-                geometry = DynamicObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
+                obstacle_name = f"obst_dynamic_{i}"
+                geometry = DynamicObstacleLeaf(self._variables, fk, obstacle_name, collision_link, reference_parameters=reference_parameter_list[i])
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)

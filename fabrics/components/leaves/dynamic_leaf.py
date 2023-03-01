@@ -11,6 +11,7 @@ class DynamicLeaf(object):
         forward_kinematics: ca.SX,
         dim: int = 1,
         dim_ref: int = 1,
+        reference_parameters: dict = None,
     ):
         self._dim_ref = dim_ref
         self._dim = dim
@@ -21,14 +22,19 @@ class DynamicLeaf(object):
         self._fk_xdot = ca.SX.sym(f"fk_xdot_{leaf_name}", dim_ref)
         self._x_rel = ca.SX.sym(f"x_rel_{leaf_name}", dim_ref)
         self._xdot_rel = ca.SX.sym(f"xdot_rel_{leaf_name}", dim_ref)
-        self._x_ref = ca.SX.sym(f"x_ref_{leaf_name}", dim_ref)
-        self._xdot_ref = ca.SX.sym(f"xdot_ref_{leaf_name}", dim_ref)
-        self._xddot_ref = ca.SX.sym(f"xddot_ref_{leaf_name}", dim_ref)
-        reference_parameters = {
-            f"x_ref_{leaf_name}": self._x_ref,
-            f"xdot_ref_{leaf_name}": self._xdot_ref,
-            f"xddot_ref_{leaf_name}": self._xddot_ref,
-        }
+        if not reference_parameters:
+            self._x_ref = ca.SX.sym(f"x_ref_{leaf_name}", dim_ref)
+            self._xdot_ref = ca.SX.sym(f"xdot_ref_{leaf_name}", dim_ref)
+            self._xddot_ref = ca.SX.sym(f"xddot_ref_{leaf_name}", dim_ref)
+            reference_parameters = {
+                f"x_ref_{leaf_name}": self._x_ref,
+                f"xdot_ref_{leaf_name}": self._xdot_ref,
+                f"xddot_ref_{leaf_name}": self._xddot_ref,
+            }
+        else:
+            self._x_ref = list(reference_parameters.values())[0]
+            self._xdot_ref = list(reference_parameters.values())[1]
+            self._xddot_ref = list(reference_parameters.values())[2]
         self._fk_variables = Variables(
             state_variables={f"fk_x_{leaf_name}": self._fk_x, f"fk_xdot_{leaf_name}": self._fk_xdot},
             parameters=reference_parameters,
