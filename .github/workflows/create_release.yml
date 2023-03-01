@@ -64,11 +64,11 @@ jobs:
           artifacts: dist/*.tar.gz;dist/*.whl
       - name: Push release branch
         run: git push origin release/v$VERSION
-      - name: Update main branch
+      - name: Update master branch
         run: |
-          git checkout -b main origin/main
+          git checkout -b master origin/master
           git merge origin/release/v$VERSION
-          git push origin main
+          git push origin master
       - name: Publish to pypi
         uses: JRubics/poetry-publish@v1.13
         with:
