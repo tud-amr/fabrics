@@ -1,0 +1,75 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Create release.
+
+# Controls when the workflow will run
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
+
+jobs:
+  create_release:
+    runs-on: ubuntu-20.04
+    env:
+      CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
+      CI_COMMIT_AUTHOR: Continuous Integration
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: develop
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config user.email "noreply@github.com"
+      - name: Set version variable
+        run: echo "VERSION=$(poetry version -s)" >> $GITHUB_ENV
+      - name: Create release branch
+        run: git checkout -b release/v$VERSION
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v2
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: origin/master..HEAD
+        env:
+          OUTPUT: CHANGELOG.md
+      - name: Commit changelog
+        run: |
+          git add CHANGELOG.md
+          git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+      - name: Builds python package
+        run: poetry build
+      - name: Create a tag
+        run: git tag -a v$VERSION -m "v${{ env.VERSION }}"
+      - name: Create a release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "v${{ env.VERSION }}"
+          bodyFile: CHANGELOG.md
+          artifacts: dist/*.tar.gz;dist/*.whl
+      - name: Push release branch
+        run: git push origin release/v$VERSION
+      - name: Update main branch
+        run: |
+          git fetch origin --unshallow
+          git checkout -b main origin/main
+          git merge origin/release/v$VERSION
+          git push origin main
+      - name: Publish to pypi
+        uses: JRubics/poetry-publish@v1.13
+        with:
+          python_version: "3.8"
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
