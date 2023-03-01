@@ -73,3 +73,9 @@ jobs:
         with:
           python_version: "3.8"
           pypi_token: ${{ secrets.PYPI_TOKEN }}
+      - name: Update develop branch
+        run: |
+          git checkout -b develop origin/develop
+          git merge origin/master
+          git push origin develop
+
