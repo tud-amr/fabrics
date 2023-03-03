@@ -41,12 +41,7 @@ class Geometry:
     def __add__(self, b):
         assert isinstance(b, Geometry)
         # TODO: checkCompatibility()  <24-07-21, mspahn> #
-        nb_vars_a = len(self._vars)
-        nb_vars_b = len(b._vars)
-        if nb_vars_a >= nb_vars_b:
-            var = self._vars
-        else:
-            var = b._vars
+        var = self._vars + b._vars
         return Geometry(h=self._h + b._h, var=var)
 
     def pull(self, dm: DifferentialMap):
