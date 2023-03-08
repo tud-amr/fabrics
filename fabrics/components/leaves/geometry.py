@@ -4,7 +4,7 @@ import numpy as np
 from fabrics.components.maps.parameterized_maps import (
     ParameterizedObstacleMap,
 )
-from fabrics.diffGeometry.diffMap import DifferentialMap
+from fabrics.diffGeometry.diffMap import DifferentialMap, ExplicitDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
 from fabrics.components.leaves.leaf import Leaf
@@ -159,6 +159,74 @@ class ObstacleLeaf(GenericGeometryLeaf):
             reference_variable,
             radius_variable,
             radius_body_variable,
+        )
+
+    def map(self):
+        return self._forward_map
+
+
+class ESDFGeometryLeaf(GenericGeometryLeaf):
+    """ESDFGeometryLeaf is a leaf with explicit gradients that can be set
+    at runtime.
+
+    Euclidean Signed Distance Fields (ESDF) can be exploited to avoid explicit
+    geometry representations. As automated differentiation does not work on ESDFs, 
+    this GeometryLeaf adds parameters for J and Jdot that can be computed at
+    runtime. Note that the signed distance to the closest obstacle is given
+    by phi which is a function of a Euclidiean position which depends on the
+    forward kinematics of the robot, phi(fk(q)). When computed the gradient, 
+    one has to respect the chain rule leading to the jacobian of phi as:
+    d phi / d q = d phi / d x * d x / d q.
+    The second part is the gradient of the forward kinematics which can be 
+    auto generated, see J_collision_link in set_forward_map.
+    At runtime, one has to specify phi and d phi / d x.
+    """
+    def __init__(
+            self,
+            parent_variables: Variables,
+            collision_link: str,
+            collision_fk: ca.SX,
+    ):
+        self._collision_link = collision_link
+        self._collision_fk = collision_fk
+        phi = ca.SX.sym(f"esdf_phi_{self._collision_link}", 1)
+        super().__init__(
+            parent_variables,
+            f"esdf_leaf_{collision_link}",
+            phi,
+        )
+        self.set_forward_map()
+
+    def set_forward_map(self):
+        q = self._parent_variables.position_variable()
+        J_collision_link = ca.jacobian(self._collision_fk, q)
+        J_esdf = ca.transpose(ca.SX.sym(f"esdf_J_{self._collision_link}", 3))
+        Jdot_esdf = ca.transpose(ca.SX.sym(f"esdf_Jdot_{self._collision_link}", q.size()[0]))
+        J = ca.mtimes(J_esdf, J_collision_link)
+        Jdot = Jdot_esdf
+        radius_body_name = f"radius_body_{self._collision_link}"
+        explicit_jacobians = {
+            f"esdf_phi_{self._collision_link}": self._forward_kinematics,
+            f"esdf_J_{self._collision_link}": J_esdf,
+            f"esdf_Jdot_{self._collision_link}": Jdot_esdf,
+        }
+        self._parent_variables.add_parameters(explicit_jacobians)
+        if radius_body_name in self._parent_variables.parameters():
+            radius_body_variable = self._parent_variables.parameters()[
+                radius_body_name
+            ]
+        else:
+            radius_body_variable = ca.SX.sym(radius_body_name, 1)
+        geo_parameters = {
+            radius_body_name: radius_body_variable,
+        }
+        self._parent_variables.add_parameters(geo_parameters)
+        phi_reduced = self._forward_kinematics - radius_body_variable
+        self._forward_map = ExplicitDifferentialMap(
+            phi_reduced,
+            self._parent_variables,
+            J=J,
+            Jdot=Jdot,
         )
 
     def map(self):
