@@ -1,8 +1,8 @@
-import pdb
 import gym
 import numpy as np
 from urdfenvs.robots.albert import AlbertRobot
 from urdfenvs.sensors.full_sensor import FullSensor
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
 import logging
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
@@ -141,6 +141,8 @@ def run_albert_reacher_example(n_steps=10000, render=True):
     planner = set_planner(goal)
     action = np.zeros(env.n())
     ob, *_ = env.step(action)
+
+    env.reconfigure_camera(5.59999942779541, 61.20000457763672, -31.799997329711914, (0.0, 0.0, 0.0))
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']

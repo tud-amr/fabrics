@@ -1,8 +1,3 @@
-# This example is a copy of the example presented in the paper
-# "Geometry Fabrics: Generalzing Classical Mechanics to Capture the Physics of Behavior"
-# https://arxiv.org/abs/2109.10443
-# This implementation is not related to the paper as no code was published with it.
-import pdb
 import gym
 import os
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
@@ -170,6 +165,7 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
     )
     action = np.zeros(7)
     ob, *_ = env.step(action)
+    env.reconfigure_camera(1.4000000953674316, 67.9999008178711, -31.0001220703125, (-0.4589785635471344, 0.23635289072990417, 0.3541859984397888))
 
     if not planner:
         planner = set_planner(goal, obstacle_resolution = obstacle_resolution_ring)
@@ -205,6 +201,7 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
         )
         ob, *_ = env.step(action)
 
+    env.stop_video_recording()
     return {}
 
 

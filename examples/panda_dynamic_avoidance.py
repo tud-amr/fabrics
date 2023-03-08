@@ -7,6 +7,7 @@ import os
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+from mpscenes.obstacles.dynamic_sphere_obstacle import DynamicSphereObstacle
 
 import numpy as np
 import os
@@ -29,16 +30,19 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+        goal_mask=["position", "weight"],
+        obstacle_mask=["position", "velocity", "acceleration", "radius"],
+    )
     # Definition of the obstacle.
-    static_obst_dict = {
+    dynamic_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
+        "geometry": {"trajectory": ["-1 + t * 0.1", "-0.6", "0.4"], "radius": 0.1},
     }
-    obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
+    obst1 = DynamicSphereObstacle(name="dynamicObst", content_dict=dynamic_obst_dict)
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
+        "geometry": {"position": [0.4, -0.3, 0.6], "radius": 0.1},
     }
     obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
@@ -53,16 +57,6 @@ def initalize_environment(render=True):
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
-        "subgoal1": {
-            "weight": 5.0,
-            "is_primary_goal": False,
-            "indices": [0, 1, 2],
-            "parent_link": "panda_link7",
-            "child_link": "panda_hand",
-            "desired_position": [0.1, 0.0, 0.0],
-            "epsilon": 0.05,
-            "type": "staticSubGoal",
-        }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     obstacles = (obst1, obst2)
@@ -70,8 +64,7 @@ def initalize_environment(render=True):
     env.add_sensor(full_sensor, [0])
     for obst in obstacles:
         env.add_obstacle(obst)
-    for sub_goal in goal.sub_goals():
-        env.add_goal(sub_goal)
+    env.add_goal(goal.sub_goals()[0])
     return (env, goal)
 
 
@@ -116,12 +109,16 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
         urdf = file.read()
+    collision_finsler: str = (
+        "2.0/(x**2) * xdot**2"
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         'panda',
         urdf=urdf,
         root_link='panda_link0',
         end_link='panda_link9',
+        collision_finsler=collision_finsler,
     )
     q = planner.variables.position_variable()
     collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
@@ -140,11 +137,33 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         collision_links,
         self_collision_pairs,
         goal,
-        number_obstacles=0,
+        number_obstacles=1,
+        number_dynamic_obstacles=1,
         limits=panda_limits,
     )
     planner.concretize()
     return planner
+
+def parse_runtime_arguments(ob_robot: dict) -> dict:
+    collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
+    arguments = {}
+    arguments['x_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][0]
+    arguments['xdot_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][1]
+    arguments['xddot_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][2]
+    arguments['radius_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][3]
+    arguments['radius_body_panda_link3']=0.02
+    arguments['radius_body_panda_link4']=0.02
+    arguments['radius_body_panda_link9']=0.2
+    arguments['x_obst_0']=ob_robot['FullSensor']['obstacles'][1][0]
+    arguments['radius_obst_0']=ob_robot['FullSensor']['obstacles'][1][3]
+    arguments['q']=ob_robot["joint_state"]["position"]
+    arguments['qdot']=ob_robot["joint_state"]["velocity"]
+    arguments['x_goal_0']=ob_robot['FullSensor']['goals'][0][0]
+    arguments['weight_goal_0']=ob_robot['FullSensor']['goals'][0][1]
+    return arguments
+
+
+
 
 
 def run_panda_example(n_steps=5000, render=True):
@@ -152,25 +171,13 @@ def run_panda_example(n_steps=5000, render=True):
     planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
+    env.reconfigure_camera(1.4000027179718018, 45.20001983642578, -45.000038146972656, (0.0, 0.0, 0.0))
 
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
-        action = planner.compute_action(
-            q=ob_robot["joint_state"]["position"],
-            qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-            weight_goal_1=goal.sub_goals()[1].weight(),
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
-            radius_body_panda_link3=np.array([0.02]),
-            radius_body_panda_link4=np.array([0.02]),
-            radius_body_panda_link9=np.array([0.02]),
-        )
+        arguments = parse_runtime_arguments(ob_robot)
+        action = planner.compute_action(**arguments)
         ob, *_ = env.step(action)
     return {}
 

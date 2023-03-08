@@ -71,7 +71,7 @@ class Spec:
         return self._M
 
     def Minv(self):
-        logging.warning("Casadi pseudo inverse is used in weighted geometry")
+        logging.warning("Casadi pseudo inverse is used in spec")
         return ca.pinv(self._M + np.identity(self.x().size()[0]) * eps)
 
     def x(self):

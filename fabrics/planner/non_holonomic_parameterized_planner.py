@@ -38,6 +38,7 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
                 self._config.urdf,
                 rootLink=self._config.root_link,
                 end_link=self._config.end_link,
+                base_type='diffdrive',
             )
         else:
             self._forward_kinematics = FkCreator(robot_type).fk()
