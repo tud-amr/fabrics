@@ -78,4 +78,13 @@ def test_albert_example():
     res = run_albert_reacher_example(10, render=False)
     assert isinstance(res, dict)
 
+def test_esdf_point_robot():
+    from point_robot_esdf import run_point_robot_esdf
+    res = run_point_robot_esdf(10, render=False)
+    assert isinstance(res, dict)
+
+def test_esdf_planar_robot():
+    from planar_robot_esdf import run_planar_robot_esdf
+    res = run_planar_robot_esdf(10, render=False)
+    assert isinstance(res, dict)
 

@@ -125,9 +125,8 @@ def set_planner(goal: GoalComposition):
     self_collision_links = {}
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
-        collision_links,
-        self_collision_links,
-        goal,
+        collision_links=collision_links,
+        goal=goal,
         number_obstacles=3,
     )
     planner.concretize()

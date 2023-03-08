@@ -28,11 +28,11 @@ def goal():
     return goal
 
 def test_set_components(planner: ParameterizedFabricPlanner, goal):
-    planner.set_components([1], {}, goal)
+    planner.set_components(collision_links=[1], goal=goal)
     planner.concretize()
 
 def test_compute_action(planner: ParameterizedFabricPlanner, goal):
-    planner.set_components([1], {}, goal)
+    planner.set_components(collision_links=[1], goal=goal)
     planner.concretize()
     q = np.zeros(2)
     qdot = np.zeros(2)

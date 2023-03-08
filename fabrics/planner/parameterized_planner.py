@@ -24,7 +24,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf, GenericGeometryLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
@@ -306,14 +306,20 @@ class ParameterizedFabricPlanner(object):
     """ DEFAULT COMPOSITION """
     def set_components(
         self,
-        collision_links: list,
-        self_collision_pairs: dict,
+        collision_links: list = None,
+        self_collision_pairs: dict = None,
+        collision_links_esdf: list = None,
         goal: GoalComposition = None,
         limits: list = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
     ):
-        # Adds default obstacle avoidance
+        if collision_links is None:
+            collision_links = []
+        if collision_links_esdf is None:
+            collision_links_esdf = []
+        if self_collision_pairs is None:
+            self_collision_pairs = {}
         reference_parameter_list = []
         for i in range(number_dynamic_obstacles):
             reference_parameters = {
@@ -339,6 +345,15 @@ class ParameterizedFabricPlanner(object):
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)
+
+
+        for collision_link in collision_links_esdf:
+            fk = self.get_forward_kinematics(collision_link)
+            geometry = ESDFGeometryLeaf(self._variables, collision_link, fk)
+            geometry.set_geometry(self.config.collision_geometry)
+            geometry.set_finsler_structure(self.config.collision_finsler)
+            self.add_leaf(geometry)
+
         for self_collision_key, self_collision_list in self_collision_pairs.items():
             fk_key = self.get_forward_kinematics(self_collision_key)
             for self_collision_link in self_collision_list:
