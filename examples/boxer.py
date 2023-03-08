@@ -58,7 +58,6 @@ def initalize_environment(render):
     pos0 = np.array([-4.0, 0.4, 0.0])
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
-    env.add_walls([0.1, 10, 0.5], [[5.0, 0, 0], [-5.0, 0.0, 0.0], [0.0, 5.0, np.pi/2], [0.0, -5.0, np.pi/2]])
     env.add_sensor(full_sensor, [0])
     for obst in obstacles:
         env.add_obstacle(obst)
