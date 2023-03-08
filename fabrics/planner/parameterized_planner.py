@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict
 import logging
 import casadi as ca
+from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
 from fabrics.helpers.exceptions import ExpressionSparseError
@@ -360,7 +361,10 @@ class ParameterizedFabricPlanner(object):
             return self._variables.position_variable()[sub_goal.indices()]
         else:
             fk_child = self.get_forward_kinematics(sub_goal.child_link())
-            fk_parent = self.get_forward_kinematics(sub_goal.parent_link())
+            try:
+                fk_parent = self.get_forward_kinematics(sub_goal.parent_link())
+            except LinkNotInURDFError as e:
+                fk_parent = ca.SX(np.zeros(3))
             angles = sub_goal.angle()
             if angles and isinstance(angles, list) and len(angles) == 4:
                 angles = ca.SX.sym(f"angle_goal_{sub_goal_index}", 3, 3)

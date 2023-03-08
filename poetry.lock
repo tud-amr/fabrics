@@ -3728,20 +3728,20 @@ pyyaml = "*"
 
 [[package]]
 name = "urdfenvs"
-version = "0.5.2"
+version = "0.5.6"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "dev"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "urdfenvs-0.5.2-py3-none-any.whl", hash = "sha256:deaa6fd39deab9b653dee93c1ad5cf15ccb103178395eb9ee12be0bfa02ffcc3"},
-    {file = "urdfenvs-0.5.2.tar.gz", hash = "sha256:ea94e48fb76494bb1d01188390dcfbfc48e09871bd36c1e57aaf947929da6c14"},
+    {file = "urdfenvs-0.5.6-py3-none-any.whl", hash = "sha256:dab593f02c26e3121575eb3be3429f738f55df5c7a67d802a1cba90216e59ac7"},
+    {file = "urdfenvs-0.5.6.tar.gz", hash = "sha256:4424165b8be92db7af356a98407e5b6d9bf428b33e5c1727ab4f0a4e71bb242b"},
 ]
 
 [package.dependencies]
 deprecation = ">=2.1.0,<3.0.0"
 gym = ">=0.22,<0.23"
-mpscenes = ">=0.3.0,<0.4.0"
+mpscenes = ">=0.3.1,<0.4.0"
 numpy = ">=1.19,<1.24"
 pybullet = ">=3.2.1,<4.0.0"
 yourdfpy = ">=0.0.52,<0.0.53"

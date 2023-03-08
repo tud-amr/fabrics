@@ -56,10 +56,10 @@ def initalize_environment(render=True):
         "subgoal1": {
             "weight": 5.0,
             "is_primary_goal": False,
-            "indices": [1, 2],
+            "indices": [0, 1, 2],
             "parent_link": "panda_link7",
             "child_link": "panda_hand",
-            "desired_position": [0.0, 0.0],
+            "desired_position": [0.1, 0.0, 0.0],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         }
@@ -161,7 +161,7 @@ def run_panda_example(n_steps=5000, render=True):
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][0][0],
             weight_goal_0=goal.sub_goals()[0].weight(),
-            x_goal_1=ob_robot['FullSensor']['goals'][1][0][0:2],
+            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
             weight_goal_1=goal.sub_goals()[1].weight(),
             x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
