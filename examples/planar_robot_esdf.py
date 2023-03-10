@@ -15,14 +15,9 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 import os
 import pybullet as p
-import matplotlib.pyplot as plt
 from scipy import ndimage
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-from fabrics.components.energies.execution_energies import ExecutionLagrangian
-from fabrics.diffGeometry.diffMap import ExplicitDifferentialMap
-from fabrics.components.leaves.geometry import ESDFGeometryLeaf
-from fabrics.helpers.variables import Variables
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,14 +25,6 @@ def edf(pos, proj_rgb) -> tuple:
     # to binary image, obstacle are red
     proj_r = proj_rgb[:, :, 1]
     proj_bin = ((1 - proj_r) > 0.9)
-
-    if logging.root.level <= 10:
-        plt.subplot(1, 3, 1)
-        plt.imshow(proj_r)
-
-        plt.subplot(1, 3, 2)
-        plt.imshow(proj_bin)
-        # plt.show()
 
     pixel_to_meter_ratio = 0.1
     offset = np.array([6.5, 5])
@@ -51,12 +38,6 @@ def edf(pos, proj_rgb) -> tuple:
     if math.isnan(pos_p[0]):
         kkk_stop = 1
     pos_p = [int(pos_pi) for pos_pi in pos_p]
-
-    # dist_map = dist_map_t
-    if logging.root.level <= 10:
-        plt.subplot(1, 3, 3)
-        plt.imshow(dist_map)
-        plt.show()
 
     # index in map
     dist_pos = dist_map[int(pos_p[1]), int(pos_p[0])]
@@ -220,4 +201,4 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_planar_robot_esdf(n_steps=5000)
+    res = run_planar_robot_esdf(n_steps=5000, render=False)

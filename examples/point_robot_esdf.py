@@ -10,13 +10,7 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 import pybullet as p
-import matplotlib.pyplot as plt
 from scipy import ndimage
-
-# Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
-# mass to compute actions for a simulated 3D point mass.
-#
-# todo: tune behavior.
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -25,13 +19,6 @@ def edf(pos, proj_rgb) -> tuple:
     #to binary image, obstacle are red
     proj_r = proj_rgb[:, :, 1]
     proj_bin = ((1-proj_r) > 0.9)
-
-    if logging.root.level <= 10:
-        plt.subplot(1, 3, 1)
-        plt.imshow(proj_r)
-
-        plt.subplot(1, 3, 2)
-        plt.imshow(proj_bin)
 
     pixel_to_meter_ratio = 0.1
     offset = np.array([6.5, 5])
@@ -44,13 +31,6 @@ def edf(pos, proj_rgb) -> tuple:
     pos_p = np.rint((direction_multiplier * pos + offset)/pixel_to_meter_ratio)
     pos_p = [int(pos_pi) for pos_pi in pos_p]
 
-    # dist_map = dist_map_t
-    if logging.root.level <= 10:
-        plt.subplot(1, 3, 3)
-        plt.imshow(dist_map)
-        plt.show()
-
-    # index in map
     dist_pos = dist_map[int(pos_p[1]), int(pos_p[0])]
 
     gradient_map = np.gradient(dist_map)
