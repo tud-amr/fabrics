@@ -6,7 +6,7 @@ name: Create release.
 on: 
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 0"
+    - cron: "0 0 1 * *"
 
 jobs:
   create_release:
@@ -76,7 +76,7 @@ jobs:
           pypi_token: ${{ secrets.PYPI_TOKEN }}
       - name: Update develop branch
         run: |
-          git checkout -b develop origin/develop
+          git checkout develop origin/develop
           git merge origin/master
           git push origin develop
 
