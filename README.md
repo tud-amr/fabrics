@@ -117,6 +117,9 @@ pip install ".[tutorials]"
 The work is based on some works by the NVIDIA Research Labs. Below you find a
 list of all relevant links:
 
+### lecture notes
+- https://www.nathanratliff.com/pedagogy/mathematics-for-intelligent-systems#lecture6
+
 ### websites
 - https://sites.google.com/nvidia.com/geometric-fabrics
 
