@@ -100,9 +100,8 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     collision_links = ['panda_link9', 'panda_link8', 'panda_link4']
     self_collision_pairs = {}
     planner.set_components(
-        collision_links,
-        self_collision_pairs,
-        goal,
+        collision_links=collision_links,
+        goal=goal,
         number_obstacles=0,
     )
     planner.concretize()

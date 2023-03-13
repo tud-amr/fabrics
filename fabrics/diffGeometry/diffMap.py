@@ -92,3 +92,18 @@ class DynamicDifferentialMap(DifferentialMap):
         x = evaluations['x_rel']
         xdot = evaluations['xdot_rel']
         return x, xdot
+
+class ExplicitDifferentialMap(DifferentialMap):
+    """Explicit differential map for which the gradients can be computed at runtime.
+
+    This class is a special differential map for which the Jacobian matrices
+    can be set numerically at runtime.
+    """
+    def __init__(self, phi: ca.SX, variables: Variables, **kwargs):
+        super().__init__(phi, variables, **kwargs)
+        try:
+            self._J = kwargs.get("J")
+            self._Jdot = kwargs.get("Jdot")
+        except Exception as e:
+            raise Exception("J and Jdot not defined for ExplicitDifferentialMap")
+

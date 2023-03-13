@@ -116,9 +116,8 @@ def set_planner(goal: GoalComposition):
         ]
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
-        collision_links,
-        self_collision_pairs,
-        goal,
+        collision_links=collision_links,
+        goal=goal,
         limits=boxer_limits,
         number_obstacles=1,
     )

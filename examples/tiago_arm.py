@@ -158,13 +158,11 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
     )
     q = planner.variables.position_variable()
     collision_links = [f'arm_{arm}_{i}_link' for i in [3, 4, 5, 6, 7]]
-    self_collision_pairs = {}
     # The planner hides all the logic behind the function set_components.
     logging.debug(limits)
     planner.set_components(
-        collision_links,
-        self_collision_pairs,
-        goal,
+        collision_links=collision_links,
+        goal=goal,
         limits=list(limits),
         number_obstacles=1,
     )
