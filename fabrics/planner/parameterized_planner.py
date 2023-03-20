@@ -430,7 +430,11 @@ class ParameterizedFabricPlanner(object):
             self.add_leaf(attractor, prime_leaf=sub_goal.is_primary_goal())
 
 
-    def concretize(self):
+    def concretize(self, mode='acc', time_step=None):
+        self._mode = mode
+        if mode == 'vel':
+            if not time_step:
+                raise Exception("No time step passed in velocity mode.")
         try:
             eta = self._damper.substitute_eta()
             a_ex = (
@@ -449,9 +453,16 @@ class ParameterizedFabricPlanner(object):
             #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
             xddot = self._execution_geometry._xddot - self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
 
-        self._funs = CasadiFunctionWrapper(
-            "funs", self.variables.asDict(), {"xddot": xddot}
-        )
+        if mode == 'acc':
+            self._funs = CasadiFunctionWrapper(
+                "funs", self.variables.asDict(), {"action": xddot}
+            )
+        elif mode == 'vel':
+            action = self._geometry.xdot() + time_step * xddot
+            self._funs = CasadiFunctionWrapper(
+                "funs", self.variables.asDict(), {"action": action}
+            )
+            
 
     def serialize(self, file_name: str):
         """
@@ -474,7 +485,7 @@ class ParameterizedFabricPlanner(object):
         The action is nullified if its magnitude is very large or very small.
         """
         evaluations = self._funs.evaluate(**kwargs)
-        action = evaluations["xddot"]
+        action = evaluations["action"]
         # Debugging
         #logging.debug(f"a_ex: {evaluations['a_ex']}")
         #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
@@ -488,11 +499,5 @@ class ParameterizedFabricPlanner(object):
             logging.warning(f"Fabrics: Avoiding large action with magnitude {action_magnitude}")
             action *= 0.0
         return action
-
-    """
-    def __del__(self):
-        del(self._variables)
-        print("PLANNER DELETED")
-    """
 
 

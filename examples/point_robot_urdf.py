@@ -25,7 +25,7 @@ def initalize_environment(render):
         Boolean toggle to set rendering on (True) or off (False).
     """
     robots = [
-        GenericUrdfReacher(urdf="pointRobot.urdf", mode="acc"),
+        GenericUrdfReacher(urdf="pointRobot.urdf", mode="vel"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
@@ -95,7 +95,7 @@ def set_planner(goal: GoalComposition):
         goal=goal,
         number_obstacles=1,
     )
-    planner.concretize()
+    planner.concretize(mode='vel')
     return planner
 
 
