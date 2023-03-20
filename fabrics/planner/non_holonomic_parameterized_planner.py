@@ -87,7 +87,10 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         extra_terms_functions = CasadiFunctionWrapper("extra_terms", self._variables.asDict(), {"J_nh": self._J_nh, "f_extra": self._f_extra})
         return extra_terms_functions
 
-    def concretize(self):
+    def concretize(self, mode='acc', time_step=None):
+        if mode == 'vel':
+            if not time_step:
+                raise Exception("No time step passed in velocity mode.")
         eps = 1e-6
         MJ = ca.mtimes(self._forced_geometry._M, self._J_nh)
         MJtMJ = ca.mtimes(ca.transpose(MJ), MJ) + ca.SX(np.identity(self._dof - 1)) * eps
@@ -119,6 +122,12 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
             logging.error(e)
             self._geometry.concretize()
             xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
-        self._funs = CasadiFunctionWrapper(
-            "funs", self.variables.asDict(), {"xddot": xddot}
-        )
+        if mode == 'acc':
+            self._funs = CasadiFunctionWrapper(
+                "funs", self.variables.asDict(), {"action": xddot}
+            )
+        elif mode == 'vel':
+            action = self._qudot + time_step * xddot
+            self._funs = CasadiFunctionWrapper(
+                "funs", self.variables.asDict(), {"action": action}
+            )
