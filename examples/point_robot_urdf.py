@@ -95,7 +95,7 @@ def set_planner(goal: GoalComposition):
         goal=goal,
         number_obstacles=1,
     )
-    planner.concretize(mode='vel')
+    planner.concretize(mode='vel', time_step=0.01)
     return planner
 
 
