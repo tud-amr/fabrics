@@ -63,6 +63,11 @@ def test_point_robot_urdf_example():
     res = run_point_robot_urdf(10, render=False)
     assert isinstance(res, dict)
 
+def test_point_robot_urdf_passage_example():
+    from point_robot_urdf_passage import run_point_robot_urdf
+    res = run_point_robot_urdf(10, render=False)
+    assert isinstance(res, dict)
+
 def test_tiago_example():
     from tiago_arm import run_tiago_example
     res = run_tiago_example(10, render=False)
