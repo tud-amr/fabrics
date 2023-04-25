@@ -313,6 +313,7 @@ class ParameterizedFabricPlanner(object):
         limits: list = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
+        dynamic_obstacle_dimension: int = 3,
     ):
         if collision_links is None:
             collision_links = []
@@ -323,9 +324,9 @@ class ParameterizedFabricPlanner(object):
         reference_parameter_list = []
         for i in range(number_dynamic_obstacles):
             reference_parameters = {
-                f"x_obst_dynamic_{i}": ca.SX.sym(f"x_obst_dynamic_{i}", 3),
-                f"xdot_obst_dynamic_{i}": ca.SX.sym(f"xdot_obst_dynamic_{i}", 3),
-                f"xddot_obst_dynamic_{i}": ca.SX.sym(f"xddot_obst_dynamic_{i}", 3),
+                f"x_obst_dynamic_{i}": ca.SX.sym(f"x_obst_dynamic_{i}", dynamic_obstacle_dimension),
+                f"xdot_obst_dynamic_{i}": ca.SX.sym(f"xdot_obst_dynamic_{i}", dynamic_obstacle_dimension),
+                f"xddot_obst_dynamic_{i}": ca.SX.sym(f"xddot_obst_dynamic_{i}", dynamic_obstacle_dimension),
             }
             reference_parameter_list.append(reference_parameters)
         for collision_link in collision_links:
