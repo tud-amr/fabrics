@@ -138,9 +138,11 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        number_obstacles=0,
+        number_obstacles=1,
         limits=panda_limits,
     )
+    # leaf_names = ["obst_0_panda_link9_leaf"]
+    # leaves = planner.get_leaves(leaf_name_specified=leaf_names)
     planner.concretize()
     return planner
 
@@ -150,6 +152,23 @@ def run_panda_example(n_steps=5000, render=True):
     planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
+
+    leaf_names = ["obst_0_panda_link9_leaf"]
+    leaves = planner.get_leaves(leaf_name_specified=leaf_names)
+    # leaves[0]._geo
+    pulled_geometry = leaves[0]._geo.pull(leaves[0]._forward_map)
+    pulled_geometry.concretize()
+    [x_ddot_num, h_num] = pulled_geometry.evaluate(q=np.zeros((7,) ), qdot=np.zeros((7,)), radius_body_panda_link9=0.1, radius_obst_0=0.1, x_obst_0=np.zeros((3,)))
+
+    mapping = leaves[0].map()
+    unpulled_geometry=leaves[0]._geo
+    unpulled_geometry.concretize()
+    mapping.concretize()
+    qdot = np.zeros((7,))
+    [x, J, Jdot] = mapping.forward(q=np.zeros((7,) ), qdot=np.zeros((7,)), radius_body_panda_link9=0.1, radius_obst_0=0.1, x_obst_0=np.zeros((3,)))
+    xdot = J @ ob['robot_0']["joint_state"]["velocity"]
+    [xddot, h] = unpulled_geometry.evaluate(x_obst_0_panda_link9_leaf=x, xdot_obst_0_panda_link9_leaf=xdot)
+
 
 
     for _ in range(n_steps):

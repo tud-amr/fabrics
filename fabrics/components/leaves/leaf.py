@@ -1,6 +1,6 @@
 import casadi as ca
 from fabrics.helpers.variables import Variables
-
+from fabrics.diffGeometry.diffMap import DifferentialMap
 
 class Leaf(object):
     def __init__(
@@ -32,7 +32,7 @@ class Leaf(object):
     def geometry(self):
         return self._geo
 
-    def map(self):
+    def map(self) -> DifferentialMap:
         return self._dm
 
     def lagrangian(self):
