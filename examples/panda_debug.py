@@ -153,23 +153,27 @@ def run_panda_example(n_steps=5000, render=True):
     action = np.zeros(7)
     ob, *_ = env.step(action)
 
+    # specify the list of geometry leaf names that you would like to observe:
     leaf_names = ["obst_0_panda_link9_leaf"]
     leaves = planner.get_leaves(leaf_name_specified=leaf_names)
-    # leaves[0]._geo
+
+    # Option 1: pull the geometry to configuration space, concretize and input (q, qdot) for evaluate():
     pulled_geometry = leaves[0]._geo.pull(leaves[0]._forward_map)
     pulled_geometry.concretize()
+    #test line to try: should be in loop:
     [x_ddot_num, h_num] = pulled_geometry.evaluate(q=np.zeros((7,) ), qdot=np.zeros((7,)), radius_body_panda_link9=0.1, radius_obst_0=0.1, x_obst_0=np.zeros((3,)))
 
+    # Option 2: get the unpulled geometry and input (x and xdot) in evaluate()
     mapping = leaves[0].map()
     unpulled_geometry=leaves[0]._geo
     unpulled_geometry.concretize()
     mapping.concretize()
+
+    #test line to try: should be in loop:
     qdot = np.zeros((7,))
     [x, J, Jdot] = mapping.forward(q=np.zeros((7,) ), qdot=np.zeros((7,)), radius_body_panda_link9=0.1, radius_obst_0=0.1, x_obst_0=np.zeros((3,)))
     xdot = J @ ob['robot_0']["joint_state"]["velocity"]
     [xddot, h] = unpulled_geometry.evaluate(x_obst_0_panda_link9_leaf=x, xdot_obst_0_panda_link9_leaf=xdot)
-
-
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
