@@ -19,7 +19,7 @@ quaternionic = "^1.0.0"
 forwardkinematics = "^1.0"
 mpscenes = "^0.3"
 gym = "0.22"
-urdfenvs = "0.5.2"
+#urdfenvs = "0.5.2"
 
 [tool.poetry.group.dev]
 optional = true
