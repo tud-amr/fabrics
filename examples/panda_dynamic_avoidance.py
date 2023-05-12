@@ -146,10 +146,10 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
 def parse_runtime_arguments(ob_robot: dict) -> dict:
     collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
     arguments = {}
-    arguments['x_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][0]
-    arguments['xdot_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][1]
-    arguments['xddot_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][2]
-    arguments['radius_obst_dynamic_0'] = ob_robot['FullSensor']['obstacles'][0][3]
+    arguments['x_obsts_dynamic'] = [ob_robot['FullSensor']['obstacles'][0][0]]
+    arguments['xdot_obsts_dynamic'] = [ob_robot['FullSensor']['obstacles'][0][1]]
+    arguments['xddot_obsts_dynamic'] = [ob_robot['FullSensor']['obstacles'][0][2]]
+    arguments['radius_obsts_dynamic'] = [ob_robot['FullSensor']['obstacles'][0][3]]
     arguments['radius_body_panda_link3']=0.02
     arguments['radius_body_panda_link4']=0.02
     arguments['radius_body_panda_link9']=0.2
