@@ -35,7 +35,11 @@ def initalize_environment(render):
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.1, 0.0, 0.0])
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "velocity", "acceleration", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "velocity", "acceleration", "size"],
+            variance=0.0,
+    )
     # Definition of the obstacle.
     dynamic_obst_dict = {
             "type": "sphere",
@@ -66,6 +70,7 @@ def initalize_environment(render):
     env.add_goal(goal.sub_goals()[0])
     env.add_obstacle(obst1)
     env.add_obstacle(obst2)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -133,21 +138,22 @@ def run_point_robot_urdf(n_steps=10000, render=True):
         arguments = dict(
             q=ob_robot["joint_state"]["position"][0:2],
             qdot=ob_robot["joint_state"]["velocity"][0:2],
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0][0:2],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][0][0][0:2],
-            xdot_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][0][1][0:2],
-            xddot_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][0][2][0:2],
-            radius_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][0][3],
-            x_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][1][0][0:2],
-            xdot_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][1][1][0:2],
-            xddot_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][1][2][0:2],
-            radius_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][1][3],
+            x_goal_0=ob_robot['FullSensor']['goals'][2]['position'][0:2],
+            weight_goal_0=ob_robot['FullSensor']['goals'][2]['weight'],
+            x_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['position'][0:2],
+            xdot_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['velocity'][0:2],
+            xddot_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['acceleration'][0:2],
+            radius_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['size'],
+            x_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['position'][0:2],
+            xdot_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['velocity'][0:2],
+            xddot_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['acceleration'][0:2],
+            radius_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['size'],
             radius_body_1=np.array([0.4])
         )
         action[0:2] = planner.compute_action(**arguments)
 
         ob, *_, = env.step(action)
+    env.close()
     return {}
 
 if __name__ == "__main__":

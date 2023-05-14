@@ -1,13 +1,11 @@
+import os
 import gym
+import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
-from urdfenvs.sensors.full_sensor import FullSensor
-import os
 
 from mpscenes.goals.goal_composition import GoalComposition
 
-import numpy as np
-import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 # TODO joint space goals cannot be handled by the full sensor because they cannot
@@ -28,7 +26,6 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
@@ -42,7 +39,7 @@ def initalize_environment(render=True):
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     env.reset()
-    env.add_sensor(full_sensor, [0])
+    env.set_spaces()
     return (env, goal)
 
 
@@ -93,7 +90,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         end_link='panda_link9',
     )
     collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
-    self_collision_pairs = {}
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links=collision_links,
@@ -119,6 +115,7 @@ def run_panda_joint_space(n_steps=5000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
         )
         ob, *_ = env.step(action)
+    env.close()
     return {}
 
 

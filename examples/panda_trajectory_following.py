@@ -27,7 +27,11 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position", "velocity"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "velocity", "weight"],
+            obstacle_mask=[],
+            variance=0.0
+    )
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
@@ -46,6 +50,7 @@ def initalize_environment(render=True):
     env.add_sensor(full_sensor, [0])
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -119,8 +124,8 @@ def run_panda_trajectory_example(n_steps=5000, render=True, dynamic_fabric: bool
     logging.warning(f"Running example with dynamic fabrics? {dynamic_fabric}")
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
-        sub_goal_0_position = ob_robot['FullSensor']['goals'][0][0]
-        sub_goal_0_velocity = ob_robot['FullSensor']['goals'][0][1]
+        sub_goal_0_position = ob_robot['FullSensor']['goals'][2]['position']
+        sub_goal_0_velocity = ob_robot['FullSensor']['goals'][2]['velocity']
         if not dynamic_fabric:
             sub_goal_0_velocity *= 0
         action = planner.compute_action(
@@ -129,9 +134,10 @@ def run_panda_trajectory_example(n_steps=5000, render=True, dynamic_fabric: bool
             x_ref_goal_0_leaf=sub_goal_0_position,
             xdot_ref_goal_0_leaf=sub_goal_0_velocity,
             xddot_ref_goal_0_leaf=sub_goal_0_acceleration,
-            weight_goal_0=goal.sub_goals()[0].weight(),
+            weight_goal_0=ob_robot['FullSensor']['goals'][2]['weight'],
         )
         ob, *_ = env.step(action)
+    env.close()
     return {}
 
 

@@ -81,7 +81,11 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "size"],
+            variance=0.0,
+    )
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -119,6 +123,7 @@ def initalize_environment(render=True):
         env.add_obstacle(obst)
     for sub_goal in vis_goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -197,6 +202,7 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
         )
 
         ob, *_ = env.step(action)
+    env.close()
     return {}
 
 
