@@ -27,7 +27,11 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "size"],
+            variance=0.0,
+    )
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -70,6 +74,7 @@ def initalize_environment(render=True):
         env.add_obstacle(obst)
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -158,14 +163,14 @@ def run_panda_self_collision(n_steps=5000, render=True):
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-            weight_goal_1=goal.sub_goals()[1].weight(),
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
+            x_goal_0=ob_robot['FullSensor']['goals'][4]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][4]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][5]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][5]['weight'],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
             radius_body_panda_link3=np.array([0.02]),
             radius_body_panda_link4=np.array([0.02]),
             radius_body_panda_link5=np.array([0.02]),
@@ -173,6 +178,7 @@ def run_panda_self_collision(n_steps=5000, render=True):
             radius_body_panda_link7=np.array([0.02]),
         )
         ob, *_ = env.step(action)
+    env.close()
     return {}
 
 

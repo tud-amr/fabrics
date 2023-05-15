@@ -35,7 +35,11 @@ def initalize_environment(render):
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.1, 0.0, 0.0])
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "size"],
+            variance=0.0,
+    )
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
@@ -60,6 +64,7 @@ def initalize_environment(render):
     env.add_sensor(full_sensor, [0])
     env.add_goal(goal.sub_goals()[0])
     env.add_obstacle(obst1)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -130,13 +135,14 @@ def run_point_robot_urdf(n_steps=10000, render=True):
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0][0:2],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
+            x_goal_0=ob_robot['FullSensor']['goals'][2]['position'][0:2],
+            weight_goal_0=ob_robot['FullSensor']['goals'][2]['weight'],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][3]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][3]['size'],
             radius_body_base_link=np.array([0.2])
         )
         ob, *_, = env.step(action)
+    env.close()
     return {}
 
 if __name__ == "__main__":
