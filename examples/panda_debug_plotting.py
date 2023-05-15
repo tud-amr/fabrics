@@ -12,6 +12,9 @@ import numpy as np
 import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+
 # TODO hardcoding the indices for subgoal_1 is undesired
 
 
@@ -166,6 +169,13 @@ def run_panda_example(n_steps=5000, render=True):
     all_leaf_names = all_leaf_names[0:-2]   #IF THIS IS UNCOMMENTED THAT LEADS TO THE BUG: "Initialization failed since variables [weight_goal_0] are free"
     leaves = planner.get_leaves(leaf_names=all_leaf_names)
 
+    # dictionary for plotting
+    q_ddot_geometries = {} #joint space
+    x_ddot_geometries = {} #task space
+    for leaf_name in all_leaf_names:
+        q_ddot_geometries[leaf_name] = []
+        x_ddot_geometries[leaf_name] = []
+
     # set goal
     planner.set_goal_component(goal=goal)
 
@@ -190,6 +200,7 @@ def run_panda_example(n_steps=5000, render=True):
     x_obsts = [ob['robot_0']['FullSensor']['obstacles'][i][0] for i in range(nr_obst)]
     r_obsts = [ob['robot_0']['FullSensor']['obstacles'][i][1] for i in range(nr_obst)]
 
+    actions = []
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
 
@@ -210,6 +221,8 @@ def run_panda_example(n_steps=5000, render=True):
                                                                     x_goal_1=ob_robot['FullSensor']['goals'][1][0],
                                                                     weight_goal_1=goal.sub_goals()[1].weight(),
                                                                     )
+            leaf_name = all_leaf_names[i]
+            q_ddot_geometries[leaf_name].append(xddot_opt1)
 
             #Option 2:
             [x_num, J, Jdot] = mapping_list[i].forward(q=q_num, qdot=qdot_num,
@@ -261,6 +274,7 @@ def run_panda_example(n_steps=5000, render=True):
                                                                        xdot_limit_joint_6_0_leaf=xdot_num,
                                                                        xdot_limit_joint_6_1_leaf=xdot_num,
                                                                        )
+            x_ddot_geometries[leaf_name].append(x_ddot_opt2)
 
         action = planner.compute_action(
             q=q_num,
@@ -276,8 +290,100 @@ def run_panda_example(n_steps=5000, render=True):
             radius_body_panda_link9=r_body_panda_links[2],
         )
         ob, *_ = env.step(action)
-    return {}
+        actions.append(action)
+    return q_ddot_geometries, x_ddot_geometries, actions
 
+def plot_different_geometries(n_steps, qddot_geometries, xddot_geometries, actions):
+    time_x = np.linspace(0, n_steps * 0.01, n_steps)
+    keys_geometries = list(xddot_geometries.keys())
+
+    #------ Plot geometries in configuration space ------#
+    fig = plt.figure(figsize=(20, 15))
+    plt.clf()
+    gs = GridSpec(1, 4, figure=fig)
+    colorscheme = ['r', 'b', 'm', 'g', 'k', 'y', 'deeppink', 'coral', 'cornflowerblue', 'cyan', 'darkred', 'gray', 'violet', 'orange']
+
+    # Plot obstacle geometries
+    obst_keys = [key for key in keys_geometries if key.startswith("obst")]
+    fig.add_subplot(gs[0, 0])
+    for i, obst_key in enumerate(obst_keys):
+        obst_plt = plt.plot(time_x, qddot_geometries[obst_key], colorscheme[i])
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{q}$')
+    plt.title("Obstacle geometries")
+    plt.grid()
+
+    # Plot limit geometries
+    limit_keys = [key for key in keys_geometries if key.startswith("limit")]
+    fig.add_subplot(gs[0, 1])
+    for i, limit_key in enumerate(limit_keys):
+        limit_plt = plt.plot(time_x, qddot_geometries[limit_key], colorscheme[i])
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{q}$')
+    plt.title("Limit geometries")
+    plt.grid()
+
+    # Plot goal geometries
+    goal_keys = [key for key in keys_geometries if key.startswith("limit")]  #should  be goal!!
+    fig.add_subplot(gs[0, 2])
+    # for i, goal_key in enumerate(goal_keys):
+    #     goal_plt = plt.plot(time_x, qddot_geometries[goal_key], colorscheme[i])
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{q}$')
+    plt.title("Goal geometries [To Do!]")
+    plt.grid()
+
+    # Plot total action
+    fig.add_subplot(gs[0, 3])
+    act_plt = plt.plot(time_x, actions)
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{x}$')
+    plt.title("Total action")
+    plt.grid()
+
+    fig.suptitle("Geometries in configuration space", fontsize=50)
+    plt.show()
+
+    # -------- Plot geometries in task space --------- #
+    fig = plt.figure(figsize=(20, 15))
+    plt.clf()
+    gs = GridSpec(1, 3, figure=fig)
+    colorscheme = ['r', 'b', 'm', 'g', 'k', 'y', 'deeppink', 'coral', 'cornflowerblue', 'cyan', 'darkred', 'gray', 'violet', 'orange']
+
+    # Plot obstacle geometries
+    obst_keys = [key for key in keys_geometries if key.startswith("obst")]
+    fig.add_subplot(gs[0, 0])
+    for i, obst_key in enumerate(obst_keys):
+        obst_plt = plt.plot(time_x, xddot_geometries[obst_key], colorscheme[i])
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{q}$')
+    plt.title("Obstacle geometries")
+    plt.grid()
+
+    # Plot limit geometries
+    limit_keys = [key for key in keys_geometries if key.startswith("limit")]
+    fig.add_subplot(gs[0, 1])
+    for i, limit_key in enumerate(limit_keys):
+        limit_plt = plt.plot(time_x, xddot_geometries[limit_key], colorscheme[i])
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{q}$')
+    plt.title("Limit geometries")
+    plt.grid()
+
+    # Plot goal geometries
+    goal_keys = [key for key in keys_geometries if key.startswith("limit")]  #should  be goal!!
+    fig.add_subplot(gs[0, 2])
+    # for i, goal_key in enumerate(goal_keys):
+    #     goal_plt = plt.plot(time_x, xddot_geometries[goal_key], colorscheme[i])
+    plt.xlabel('time [s]')
+    plt.ylabel('$\ddot{q}$')
+    plt.title("Goal geometries [To Do!]")
+    plt.grid()
+
+    fig.suptitle("Geometries in task space", fontsize=50)
+    plt.show()
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    N_steps = 1000
+    [q_ddot_geometries, x_ddot_geometries, actions] = run_panda_example(n_steps=N_steps)
+    plot_different_geometries(n_steps=N_steps, qddot_geometries=q_ddot_geometries, xddot_geometries=x_ddot_geometries, actions=actions)

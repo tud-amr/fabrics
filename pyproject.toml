@@ -18,6 +18,7 @@ pickle-mixin = "^1.0.2"
 quaternionic = "^1.0.0"
 forwardkinematics = "^1.0"
 mpscenes = "^0.3"
+matplotlib = "3.7.1"
 
 [tool.poetry.group.dev]
 optional = true
