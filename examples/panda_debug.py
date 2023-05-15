@@ -141,18 +141,20 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         number_obstacles=1,
         limits=panda_limits,
     )
-    # leaf_names = ["obst_0_panda_link9_leaf"]
-    # leaves = planner.get_leaves(leaf_name_specified=leaf_names)
     planner.concretize()
     return planner
 
 
 def run_panda_example(n_steps=5000, render=True):
-    nr_obst = 1
-    collision_links = [3, 4, 9]
-    nr_goal = 2
-    x_goal_0 = [0.1, -0.6, 0.4]
-    x_goal_1 = [0.1, 0.0, 0.0]
+    """ This example illustrates how to analyze the specified geometries knowing the current joint positions and velocities.
+    There are two options to get the geometries:
+     -  Option 1: pull the geometry to configuration space, concretize. To later input (q, qdot) for evaluate()
+     -  Option 2: get the unpulled geometry: To later input (x and xdot) in evaluate()
+    h_num is just the inverted value of x_ddot, since xddot + h = 0.
+    """
+
+    nr_obst = 2
+    r_body_panda_links = [np.array([0.02]), np.array([0.02]), np.array([0.02])]
 
     (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
@@ -160,29 +162,33 @@ def run_panda_example(n_steps=5000, render=True):
     ob, *_ = env.step(action)
 
     # specify the list of geometry leaf names that you would like to observe:
-    leaf_names = ["obst_0_panda_link9_leaf"]  #specify just one leaf name
-    all_leaf_names = list(planner.leaves.keys())  #list of all possible leave names
-    leaves = planner.get_leaves(leaf_name_specified=leaf_names)
+    all_leaf_names = list(planner.leaves.keys())
+    all_leaf_names = all_leaf_names[0:-2]   #IF THIS IS UNCOMMENTED THAT LEADS TO THE BUG: "Initialization failed since variables [weight_goal_0] are free"
+    leaves = planner.get_leaves(leaf_names=all_leaf_names)
 
     # set goal
     planner.set_goal_component(goal=goal)
 
+    pulled_geometry_list = []
+    unpulled_geometry_list = []
+    mapping_list = []
     for leave in leaves:
         # Option 1: pull the geometry to configuration space, concretize. To later input (q, qdot) for evaluate():
         pulled_geometry = leave._geo.pull(leave._forward_map)
         pulled_geometry.concretize()
+        pulled_geometry_list.append(pulled_geometry)
 
         # Option 2: get the unpulled geometry: To later input (x and xdot) in evaluate()
-        # mapping = leave.map()
-        # mapping.concretize()
-        # unpulled_geometry=leave._geo  #weight_goal_0=goal.sub_goals()[0].weight() must be inputted somewhere.
-        # unpulled_geometry.concretize()
+        mapping = leave.map()
+        mapping.concretize()
+        mapping_list.append(mapping)
+        unpulled_geometry=leave._geo  #weight_goal_0=goal.sub_goals()[0].weight() must be inputted somewhere.
+        unpulled_geometry.concretize()
+        unpulled_geometry_list.append(unpulled_geometry)
 
     # list of possible input keys: To Do for Saray
-    # params = list(pulled_geometry._vars.parameters().keys())
-    # params_list = ["x_obst_"+str(i) for i in range(nr_obst)]+["radius_obst_"+str(i) for i in range(nr_obst)]+\
-    #               ["radius_body_panda_link"+str(i) for i in collision_links]+\
-    #               ["x_goal_"+str(i) for i in range(nr_goal)]+["weight_goal_"+str(i) for i in range(nr_goal)]
+    x_obsts = [ob['robot_0']['FullSensor']['obstacles'][i][0] for i in range(nr_obst)]
+    r_obsts = [ob['robot_0']['FullSensor']['obstacles'][i][1] for i in range(nr_obst)]
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
@@ -190,28 +196,71 @@ def run_panda_example(n_steps=5000, render=True):
         # define variables
         q_num = ob_robot["joint_state"]["position"]
         qdot_num = ob_robot["joint_state"]["velocity"]
-        x_obst_0 = ob_robot['FullSensor']['obstacles'][0][0]
-        r_obst_0 = ob_robot['FullSensor']['obstacles'][0][1]
-        r_body_panda_link9 = np.array([0.02])
 
-        # analyze the specified geometries knowing the current joint positions and velocities:
-        # h_num is just the inverted value of x_ddot, since xddot + h = 0
+        for i in range(len(pulled_geometry_list)):
+            #Option 1:
+            [xddot_opt1, h_opt1] = pulled_geometry_list[i].evaluate(q=q_num, qdot=qdot_num,
+                                                                    radius_body_panda_link3=r_body_panda_links[0],
+                                                                    radius_body_panda_link4=r_body_panda_links[1],
+                                                                    radius_body_panda_link9=r_body_panda_links[2],
+                                                                    radius_obsts=r_obsts,
+                                                                    x_obsts=x_obsts,
+                                                                    x_goal_0=ob_robot['FullSensor']['goals'][0][0],
+                                                                    weight_goal_0=goal.sub_goals()[0].weight(),
+                                                                    x_goal_1=ob_robot['FullSensor']['goals'][1][0],
+                                                                    weight_goal_1=goal.sub_goals()[1].weight(),
+                                                                    )
 
-        #Option 1:
-        [xddot_opt1, h_opt1] = pulled_geometry.evaluate(q=q_num, qdot=qdot_num,
-                                                        radius_body_panda_link9=r_body_panda_link9,
-                                                        radius_obst_0=r_obst_0,
-                                                        x_obst_0=x_obst_0,
-                                                        )
-
-        #Option 2:
-        # [x_num, J, Jdot] = mapping.forward(q=q_num, qdot=qdot_num,
-        #                                    radius_body_panda_link9=r_body_panda_link9,
-        #                                     radius_obst_0=r_obst_0,
-        #                                    x_obst_0=x_obst_0)
-        # xdot_num = J @ qdot_num
-        # [x_ddot_opt2, h_opt2] = unpulled_geometry.evaluate(x_obst_0_panda_link9_leaf=x_num, xdot_obst_0_panda_link9_leaf=xdot_num)
-
+            #Option 2:
+            [x_num, J, Jdot] = mapping_list[i].forward(q=q_num, qdot=qdot_num,
+                                                       radius_body_panda_link3=r_body_panda_links[0],
+                                                       radius_body_panda_link4=r_body_panda_links[1],
+                                                       radius_body_panda_link9=r_body_panda_links[2],
+                                                       radius_obsts=r_obsts,
+                                                       x_obsts=x_obsts,
+                                                       x_goal_0=ob_robot['FullSensor']['goals'][0][0],
+                                                       weight_goal_0=goal.sub_goals()[0].weight(),
+                                                       x_goal_1=ob_robot['FullSensor']['goals'][1][0],
+                                                       weight_goal_1=goal.sub_goals()[1].weight(),
+                                                       )
+            xdot_num = J @ qdot_num
+            # pos_argument = unpulled_geometry_list[i]._vars.position_variable()  #WOULD LIKE TO USE THESE AS VARIABLE NAMES, BUT DON'T KNOW HOW!
+            # vel_argument = unpulled_geometry_list[i]._vars.velocity_variable()
+            [x_ddot_opt2, h_opt2] = unpulled_geometry_list[i].evaluate(x_obst_0_panda_link9_leaf=x_num,
+                                                                       x_obst_0_panda_link3_leaf=x_num,
+                                                                       x_obst_0_panda_link4_leaf=x_num,  #QUESTION, WHY NO X_OBST_1??
+                                                                       x_limit_joint_0_0_leaf=x_num,
+                                                                       x_limit_joint_0_1_leaf=x_num,
+                                                                       x_limit_joint_1_0_leaf=x_num,
+                                                                       x_limit_joint_1_1_leaf=x_num,
+                                                                       x_limit_joint_2_0_leaf=x_num,
+                                                                       x_limit_joint_2_1_leaf=x_num,
+                                                                       x_limit_joint_3_0_leaf=x_num,
+                                                                       x_limit_joint_3_1_leaf=x_num,
+                                                                       x_limit_joint_4_0_leaf=x_num,
+                                                                       x_limit_joint_4_1_leaf=x_num,
+                                                                       x_limit_joint_5_0_leaf=x_num,
+                                                                       x_limit_joint_5_1_leaf=x_num,
+                                                                       x_limit_joint_6_0_leaf=x_num,
+                                                                       x_limit_joint_6_1_leaf=x_num,
+                                                                       xdot_obst_0_panda_link9_leaf=xdot_num,
+                                                                       xdot_obst_0_panda_link3_leaf=xdot_num,
+                                                                       xdot_obst_0_panda_link4_leaf=xdot_num,
+                                                                       xdot_limit_joint_0_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_0_1_leaf=xdot_num,
+                                                                       xdot_limit_joint_1_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_1_1_leaf=xdot_num,
+                                                                       xdot_limit_joint_2_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_2_1_leaf=xdot_num,
+                                                                       xdot_limit_joint_3_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_3_1_leaf=xdot_num,
+                                                                       xdot_limit_joint_4_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_4_1_leaf=xdot_num,
+                                                                       xdot_limit_joint_5_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_5_1_leaf=xdot_num,
+                                                                       xdot_limit_joint_6_0_leaf=xdot_num,
+                                                                       xdot_limit_joint_6_1_leaf=xdot_num,
+                                                                       )
 
         action = planner.compute_action(
             q=q_num,
@@ -220,13 +269,11 @@ def run_panda_example(n_steps=5000, render=True):
             weight_goal_0=goal.sub_goals()[0].weight(),
             x_goal_1=ob_robot['FullSensor']['goals'][1][0],
             weight_goal_1=goal.sub_goals()[1].weight(),
-            x_obst_0=x_obst_0,
-            radius_obst_0=r_obst_0,
-            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
-            radius_body_panda_link3=np.array([0.02]),
-            radius_body_panda_link4=np.array([0.02]),
-            radius_body_panda_link9=r_body_panda_link9,
+            x_obsts=x_obsts,
+            radius_obsts=r_obsts,
+            radius_body_panda_link3=r_body_panda_links[0],
+            radius_body_panda_link4=r_body_panda_links[1],
+            radius_body_panda_link9=r_body_panda_links[2],
         )
         ob, *_ = env.step(action)
     return {}

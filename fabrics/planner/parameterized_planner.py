@@ -193,11 +193,11 @@ class ParameterizedFabricPlanner(object):
             self.add_dynamic_geometry(leaf.map(), leaf.dynamic_map(), leaf.geometry_map(), leaf.lagrangian(), leaf.geometry())
         self.leaves[leaf._leaf_name] = leaf
 
-    def get_leaves(self, leaf_name_specified:list) -> List[Leaf]:
-        leave_named = []
-        for leaf_name in leaf_name_specified:
-            leave_named.append(self.leaves[leaf_name])
-        return leave_named
+    def get_leaves(self, leaf_names:list) -> List[Leaf]:
+        leaves = []
+        for leaf_name in leaf_names:
+            leaves.append(self.leaves[leaf_name])
+        return leaves
 
     def add_forcing_geometry(
         self,
