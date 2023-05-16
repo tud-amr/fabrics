@@ -67,6 +67,14 @@ class CasadiFunctionWrapper(object):
                 for j, radius_obst_dyn_j in enumerate(kwargs[key]):
                     radius_dyn_dictionary[f'radius_obst_dynamic_{j}'] = radius_obst_dyn_j
                 argument_dictionary.update(radius_dyn_dictionary)
+            if key == 'radius_body_panda_links' or key == 'radius_body_panda_link':
+                """ The syntax should be: [A list of radii of the bodie, a list of the body numbers]
+                # Example: radius_body_panda_links=[[0.02, 0.02, 0.2], [3, 4, 9]] """
+                radius_body_dictionary = {}
+                for j, radius_body_j in enumerate(kwargs[key][0]):
+                    link_nr = kwargs[key][1][j]
+                    radius_body_dictionary[f'radius_body_panda_link{link_nr}'] = radius_body_j
+                argument_dictionary.update(radius_body_dictionary)
             else:
                 argument_dictionary[key] = kwargs[key]
         input_arrays = []
