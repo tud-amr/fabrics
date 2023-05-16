@@ -110,7 +110,7 @@ def set_planner(goal: GoalComposition):
     return planner
 
 
-def run_point_robot_urdf(n_steps=10000, render=True):
+def run_point_robot_debug(n_steps=10000, render=True):
     """
     Set the gym environment, the planner and run point robot example.
     The initial zero action step is needed to initialize the sensor in the
@@ -127,13 +127,16 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     planner = set_planner(goal)
 
     # Extract individual leaves for debugging
-    leaves = planner.get_leaves(leaf_names=['goal_0_leaf'])
+    leaf_name = 'goal_0_leaf'
+    leaves = planner.get_leaves(leaf_names=[leaf_name])
     obstacle_leaf = leaves[0]
     obstacle_leaf.concretize()
 
 
     action = np.array([0.0, 0.0, 0.0])
     ob, *_ = env.step(action)
+
+    debug_evaluations = {leaf_name: []}
 
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
@@ -148,11 +151,11 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             radius_body_base_link=np.array([0.2])
         )
         debug_evaluation = obstacle_leaf.evaluate(**arguments)
-        print(debug_evaluation)
+        debug_evaluations[leaf_name].append(debug_evaluation)
         action = planner.compute_action(**arguments)
         ob, *_, = env.step(action)
     env.close()
-    return {}
+    return debug_evaluations
 
 if __name__ == "__main__":
-    res = run_point_robot_urdf(n_steps=10000, render=True)
+    res = run_point_robot_debug(n_steps=10000, render=True)
