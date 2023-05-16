@@ -29,7 +29,11 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "size"],
+            variance=0.0,
+    )
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -72,6 +76,7 @@ def initalize_environment(render=True):
         env.add_obstacle(obst)
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -187,8 +192,8 @@ def run_panda_example(n_steps=5000, render=True):
         unpulled_geometry_list.append(unpulled_geometry)
 
     # list of possible input keys: To Do for Saray
-    x_obsts = [ob['robot_0']['FullSensor']['obstacles'][i][0] for i in range(nr_obst)]
-    r_obsts = [ob['robot_0']['FullSensor']['obstacles'][i][1] for i in range(nr_obst)]
+    x_obsts = [ob['robot_0']['FullSensor']['obstacles'][i+2]['position'] for i in range(nr_obst)]
+    r_obsts = [ob['robot_0']['FullSensor']['obstacles'][i+2]['size'] for i in range(nr_obst)]
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
@@ -205,10 +210,10 @@ def run_panda_example(n_steps=5000, render=True):
                                                                     radius_body_panda_link9=r_body_panda_links[2],
                                                                     radius_obsts=r_obsts,
                                                                     x_obsts=x_obsts,
-                                                                    x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-                                                                    weight_goal_0=goal.sub_goals()[0].weight(),
-                                                                    x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-                                                                    weight_goal_1=goal.sub_goals()[1].weight(),
+                                                                    x_goal_0=ob_robot['FullSensor']['goals'][2+nr_obst]['position'],
+                                                                    weight_goal_0=ob_robot['FullSensor']['goals'][2+nr_obst]['weight'],
+                                                                    x_goal_1=ob_robot['FullSensor']['goals'][3+nr_obst]['position'],
+                                                                    weight_goal_1=ob_robot['FullSensor']['goals'][3+nr_obst]['weight'],
                                                                     )
 
             #Option 2:
@@ -218,10 +223,10 @@ def run_panda_example(n_steps=5000, render=True):
                                                        radius_body_panda_link9=r_body_panda_links[2],
                                                        radius_obsts=r_obsts,
                                                        x_obsts=x_obsts,
-                                                       x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-                                                       weight_goal_0=goal.sub_goals()[0].weight(),
-                                                       x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-                                                       weight_goal_1=goal.sub_goals()[1].weight(),
+                                                       x_goal_0=ob_robot['FullSensor']['goals'][2+nr_obst]['position'],
+                                                       weight_goal_0=ob_robot['FullSensor']['goals'][2+nr_obst]['weight'],
+                                                       x_goal_1=ob_robot['FullSensor']['goals'][3+nr_obst]['position'],
+                                                       weight_goal_1=ob_robot['FullSensor']['goals'][3+nr_obst]['weight'],
                                                        )
             xdot_num = J @ qdot_num
             # pos_argument = unpulled_geometry_list[i]._vars.position_variable()  #WOULD LIKE TO USE THESE AS VARIABLE NAMES, BUT DON'T KNOW HOW!
@@ -265,10 +270,10 @@ def run_panda_example(n_steps=5000, render=True):
         action = planner.compute_action(
             q=q_num,
             qdot=qdot_num,
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-            weight_goal_1=goal.sub_goals()[1].weight(),
+            x_goal_0=ob_robot['FullSensor']['goals'][2+nr_obst]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][2+nr_obst]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][3+nr_obst]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][3+nr_obst]['weight'],
             x_obsts=x_obsts,
             radius_obsts=r_obsts,
             radius_body_panda_link3=r_body_panda_links[0],

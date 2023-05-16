@@ -47,6 +47,26 @@ class CasadiFunctionWrapper(object):
                 for j, radius_obst_j in enumerate(kwargs[key]):
                     radius_dictionary[f'radius_obst_{j}'] = radius_obst_j
                 argument_dictionary.update(radius_dictionary)
+            if key == 'x_obst_dynamic' or key == 'x_obsts_dynamic':
+                obstacle_dyn_dictionary = {}
+                for j, x_obst_dyn_j in enumerate(kwargs[key]):
+                    obstacle_dyn_dictionary[f'x_obst_dynamic_{j}'] = x_obst_dyn_j
+                argument_dictionary.update(obstacle_dyn_dictionary)
+            if key == 'xdot_obst_dynamic' or key == 'xdot_obsts_dynamic':
+                xdot_dyn_dictionary = {}
+                for j, xdot_obst_dyn_j in enumerate(kwargs[key]):
+                    xdot_dyn_dictionary[f'xdot_obst_dynamic_{j}'] = xdot_obst_dyn_j
+                argument_dictionary.update(xdot_dyn_dictionary)
+            if key == 'xddot_obst_dynamic' or key == 'xddot_obsts_dynamic':
+                xddot_dyn_dictionary = {}
+                for j, xddot_obst_dyn_j in enumerate(kwargs[key]):
+                    xddot_dyn_dictionary[f'xddot_obst_dynamic_{j}'] = xddot_obst_dyn_j
+                argument_dictionary.update(xddot_dyn_dictionary)
+            if key == 'radius_obst_dynamic' or key == 'radius_obsts_dynamic':
+                radius_dyn_dictionary = {}
+                for j, radius_obst_dyn_j in enumerate(kwargs[key]):
+                    radius_dyn_dictionary[f'radius_obst_dynamic_{j}'] = radius_obst_dyn_j
+                argument_dictionary.update(radius_dyn_dictionary)
             else:
                 argument_dictionary[key] = kwargs[key]
         input_arrays = []

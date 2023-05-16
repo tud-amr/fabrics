@@ -35,7 +35,11 @@ def initalize_environment(render):
     # Set the initial position and velocity of the robot.
     pos0 = np.array([-2.0, 0.5, 0.9])
     vel0 = np.array([0.1, 0.0, 0.0])
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=['position', 'size'],
+            variance=0.0
+    )
     # Definition of the obstacle.
     static_obst_dict_1 = {
             "type": "sphere",
@@ -73,6 +77,7 @@ def initalize_environment(render):
         env.add_obstacle(obst)
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -156,22 +161,23 @@ def run_heijn_robot(n_steps=10000, render=True):
         action = planner.compute_action(
             q=ob_robot['joint_state']['position'],
             qdot=ob_robot['joint_state']['velocity'],
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0][0:2],
-            weight_goal_0=goal.sub_goals()[0].weight(),
+            x_goal_0=ob_robot['FullSensor']['goals'][5]['position'][0:2],
+            weight_goal_0=ob_robot['FullSensor']['goals'][5]['weight'],
             radius_body_collision_link_front_right=np.array([0.12]),
             radius_body_collision_link_front_left=np.array([0.12]),
             radius_body_collision_link_center_right=np.array([0.18]),
             radius_body_collision_link_center_left=np.array([0.18]),
             radius_body_collision_link_rear_right=np.array([0.12]),
             radius_body_collision_link_rear_left=np.array([0.12]),
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
-            x_obst_2=ob_robot['FullSensor']['obstacles'][2][0],
-            radius_obst_2=ob_robot['FullSensor']['obstacles'][2][1],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
+            x_obst_2=ob_robot['FullSensor']['obstacles'][4]['position'],
+            radius_obst_2=ob_robot['FullSensor']['obstacles'][4]['size'],
         )
         ob, *_, = env.step(action)
+    env.close()
     return {}
 
 
