@@ -27,7 +27,11 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "size"],
+            variance=0.0,
+    )
     q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
     # Definition of the obstacle.
     radius_ring = 0.3
@@ -49,7 +53,6 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         }
         obstacles.append(SphereObstacle(name="staticObst", content_dict=static_obst_dict))
     # Definition of the goal.
-    goal_position = whole_position
     goal_dict = {
         "subgoal0": {
             "weight": 1.0,
@@ -80,6 +83,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
         env.add_obstacle(obst)
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -178,20 +182,20 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
         x_obsts = [
-            ob_robot['FullSensor']['obstacles'][i][0] for i in range(obstacle_resolution_ring)
+            ob_robot['FullSensor']['obstacles'][i+2]['position'] for i in range(obstacle_resolution_ring)
         ]
         radius_obsts = [
-            ob_robot['FullSensor']['obstacles'][i][1] for i in range(obstacle_resolution_ring)
+            ob_robot['FullSensor']['obstacles'][i+2]['size'] for i in range(obstacle_resolution_ring)
         ]
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
             x_obsts=x_obsts,
             radius_obsts=radius_obsts,
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-            weight_goal_1=goal.sub_goals()[1].weight(),
+            x_goal_0=ob_robot['FullSensor']['goals'][obstacle_resolution_ring+3]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][obstacle_resolution_ring+3]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][obstacle_resolution_ring+4]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][obstacle_resolution_ring+4]['weight'],
             radius_body_panda_link1=0.1,
             radius_body_panda_link4=0.1,
             radius_body_panda_link6=0.15,
@@ -199,8 +203,7 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
             angle_goal_1=np.array(sub_goal_0_rotation_matrix),
         )
         ob, *_ = env.step(action)
-
-    env.stop_video_recording()
+    env.close()
     return {}
 
 

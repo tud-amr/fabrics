@@ -30,7 +30,11 @@ def initalize_environment(render=True):
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=["position", "size"],
+            variance=0.0,
+    )
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -67,6 +71,7 @@ def initalize_environment(render=True):
         env.add_obstacle(obst)
     for sub_goal in vis_goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -125,9 +130,9 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
         ]
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
-        collision_links,
-        self_collision_pairs,
-        goal,
+        collision_links=collision_links,
+        self_collision_pairs=self_collision_pairs,
+        goal=goal,
         number_obstacles=2,
         #limits=panda_limits,
     )
@@ -149,14 +154,15 @@ def run_panda_example(n_steps=5000, render=True):
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=goal.sub_goals()[0].position(),
             weight_goal_0=goal.sub_goals()[0].weight(),
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][1][0],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][1][1],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
             radius_body_panda_link1=0.2,
             radius_body_panda_link4=0.2,
         )
         ob, *_ = env.step(action)
+    env.close()
     return {}
 
 

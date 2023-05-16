@@ -66,6 +66,7 @@ def initalize_environment(render):
     env.add_goal(goal)
     for obst in obstacles:
         env.add_obstacle(obst)
+    env.set_spaces()
     return (env, obstacles, goal, initial_observation)
 
 
@@ -150,6 +151,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
         vel_mag = np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])
         vel_mags.append(vel_mag)
         print(f"Velocity magnitude at {env.t()}: {np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])}")
+    env.close()
     return {}
 
 
