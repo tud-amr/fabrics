@@ -38,6 +38,9 @@ from pyquaternion import Quaternion
 class InvalidRotationAnglesError(Exception):
     pass
 
+class LeafNotFoundError(Exception):
+    pass
+
 def compute_rotation_matrix(angles) -> np.ndarray:
     if isinstance(angles, float):
         angle = angles
@@ -196,6 +199,10 @@ class ParameterizedFabricPlanner(object):
     def get_leaves(self, leaf_names:list) -> List[Leaf]:
         leaves = []
         for leaf_name in leaf_names:
+            if leaf_name not in self.leaves:
+                error_message = f"Leaf with name {leaf_name} not in leaves.\n"
+                error_message = f"Possible leaves are {list(self.leaves.keys())}."
+                raise LeafNotFoundError(error_message)
             leaves.append(self.leaves[leaf_name])
         return leaves
 

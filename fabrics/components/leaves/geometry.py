@@ -71,10 +71,7 @@ class LimitLeaf(GenericGeometryLeaf):
         self.set_forward_map()
 
     def set_forward_map(self):
-        self._forward_map = DifferentialMap(self._forward_kinematics, self._parent_variables)
-
-    def map(self):
-        return self._forward_map
+        self._map = DifferentialMap(self._forward_kinematics, self._parent_variables)
 
 class SelfCollisionLeaf(GenericGeometryLeaf):
     """
@@ -99,10 +96,8 @@ class SelfCollisionLeaf(GenericGeometryLeaf):
             ca.norm_2(self._forward_kinematics)
             / (2 * self_collision_body_radius) - 1
         )
-        self._forward_map = DifferentialMap(phi, self._parent_variables)
+        self._map = DifferentialMap(phi, self._parent_variables)
 
-    def map(self):
-        return self._forward_map
 
 class ObstacleLeaf(GenericGeometryLeaf):
     """
@@ -153,7 +148,7 @@ class ObstacleLeaf(GenericGeometryLeaf):
             radius_body_name: radius_body_variable,
         }
         self._parent_variables.add_parameters(geo_parameters)
-        self._forward_map = ParameterizedObstacleMap(
+        self._map = ParameterizedObstacleMap(
             self._parent_variables,
             self._forward_kinematics,
             reference_variable,
@@ -161,8 +156,6 @@ class ObstacleLeaf(GenericGeometryLeaf):
             radius_body_variable,
         )
 
-    def map(self):
-        return self._forward_map
 
 
 class ESDFGeometryLeaf(GenericGeometryLeaf):
@@ -222,12 +215,10 @@ class ESDFGeometryLeaf(GenericGeometryLeaf):
         }
         self._parent_variables.add_parameters(geo_parameters)
         phi_reduced = self._forward_kinematics - radius_body_variable
-        self._forward_map = ExplicitDifferentialMap(
+        self._map = ExplicitDifferentialMap(
             phi_reduced,
             self._parent_variables,
             J=J,
             Jdot=Jdot,
         )
 
-    def map(self):
-        return self._forward_map
