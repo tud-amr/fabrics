@@ -36,7 +36,6 @@ class CasadiFunctionWrapper(object):
     def evaluate(self, **kwargs):
         argument_dictionary = {}
         for key in kwargs:
-            assert isinstance(kwargs[key], np.ndarray) or isinstance(kwargs[key], list) or isinstance(kwargs[key], float)
             if key == 'x_obst' or key == 'x_obsts':
                 obstacle_dictionary = {}
                 for j, x_obst_j in enumerate(kwargs[key]):
@@ -67,13 +66,17 @@ class CasadiFunctionWrapper(object):
                 for j, radius_obst_dyn_j in enumerate(kwargs[key]):
                     radius_dyn_dictionary[f'radius_obst_dynamic_{j}'] = radius_obst_dyn_j
                 argument_dictionary.update(radius_dyn_dictionary)
-            if key == 'radius_body_panda_links' or key == 'radius_body_panda_link':
-                """ The syntax should be: [A list of radii of the bodie, a list of the body numbers]
-                # Example: radius_body_panda_links=[[0.02, 0.02, 0.2], [3, 4, 9]] """
+            if key.startswith('radius_body') and key.endswith('links'):
+                # Radius bodies can be passed using a dictionary where the keys are simple integers.
                 radius_body_dictionary = {}
-                for j, radius_body_j in enumerate(kwargs[key][0]):
-                    link_nr = kwargs[key][1][j]
-                    radius_body_dictionary[f'radius_body_panda_link{link_nr}'] = radius_body_j
+                body_size_inputs = [input_exp for input_exp in self._input_keys if input_exp.startswith('radius_body')]
+                for link_nr, radius_body_j in kwargs[key].items():
+                    try:
+                        key = [body_size_input for body_size_input in body_size_inputs if str(link_nr) in body_size_input][0]
+                    except IndexError as e:
+                        logging.warning(f"No body link with index {link_nr} in the inputs. Body link {link_nr} is ignored.")
+                    radius_body_dictionary[key] = radius_body_j
+
                 argument_dictionary.update(radius_body_dictionary)
             else:
                 argument_dictionary[key] = kwargs[key]
