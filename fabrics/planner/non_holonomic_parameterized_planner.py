@@ -29,6 +29,7 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         self,
         dof: int,
         robot_type: str,
+        facing_direction: str = '-y',
         **kwargs
     ):
         self.leaves = {}
@@ -47,27 +48,39 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
         self._ref_sign = 1
+        self.set_non_holonomic_constraints(facing_direction=facing_direction)
 
-        # Additional terms introducted by the non-holonomic base
+
+    def set_non_holonomic_constraints(self, facing_direction: str = '-y'):
         q = self._variables.position_variable()
         qdot = self._variables.velocity_variable()
         qudot = ca.SX.sym("qudot", self._dof - 1)
         new_parameters, l_offset = parse_symbolic_input(self._config.l_offset, q, qdot)
         self._variables.add_parameters(new_parameters)
         J_nh = ca.SX(np.zeros((self._dof, self._dof-1)))
-        J_nh[0, 0] = ca.cos(q[2])
-        J_nh[0, 1] = -l_offset * ca.sin(q[2])
-        J_nh[1, 0] = ca.sin(q[2])
-        J_nh[1, 1] = l_offset * ca.cos(q[2])
         for i in range(2, self._dof):
             J_nh[i, i-1] = 1
         f_extra = ca.SX(np.zeros((self._dof, 1)))
-        f_extra[0] = qudot[0] * qudot[1] * -ca.sin(q[2]) - l_offset * ca.cos(q[2]) * qudot[1]**2
-        f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) - l_offset * ca.sin(q[2]) * qudot[1]**2
+        if facing_direction == '-y':
+            J_nh[0, 0] = ca.sin(q[2])
+            J_nh[0, 1] = l_offset * ca.cos(q[2])
+            J_nh[1, 0] = -ca.cos(q[2])
+            J_nh[1, 1] = l_offset * ca.sin(q[2])
+            f_extra[0] = qudot[0] * qudot[1] * ca.cos(q[2]) - l_offset * ca.sin(q[2]) * qudot[1]**2
+            f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) + l_offset * ca.cos(q[2]) * qudot[1]**2
+        elif facing_direction == 'x':
+            logging.warning("Not sure about this, yet.")
+            J_nh[0, 0] = ca.cos(q[2])
+            J_nh[0, 1] = -l_offset * ca.sin(q[2])
+            J_nh[1, 0] = ca.sin(q[2])
+            J_nh[1, 1] = l_offset * ca.cos(q[2])
+            f_extra[0] = qudot[0] * qudot[1] * -ca.sin(q[2]) - l_offset * ca.cos(q[2]) * qudot[1]**2
+            f_extra[1] = qudot[0] * qudot[1] * ca.sin(q[2]) - l_offset * ca.sin(q[2]) * qudot[1]**2
         self._J_nh = J_nh
         self._f_extra = f_extra
         self._qudot = qudot
         self._variables.add_state_variable('qudot', qudot)
+
 
     def set_base_geometry(self):
         q = self._variables.position_variable()
