@@ -33,7 +33,7 @@ def initalize_environment(render):
             castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
             wheel_radius = 0.08,
             wheel_distance = 0.494,
-            spawn_rotation=np.pi/2,
+            spawn_rotation=0.0,
         ),
     ]
     env: UrdfEnv  = gym.make(
@@ -43,12 +43,12 @@ def initalize_environment(render):
     full_sensor = FullSensor(
             goal_mask=["position", "weight"],
             obstacle_mask=['position', 'size'],
-            variance=0.0
+            variance=0.0,
     )
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
-            "geometry": {"position": [1.0, 0.0, 0.0], "radius": 1.0},
+            "geometry": {"position": [-0.3, -4.0, 0.0], "radius": 1.0},
     }
     obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
     obstacles = [obst1] # Add additional obstacles here.
@@ -60,15 +60,15 @@ def initalize_environment(render):
                 "indices": [0, 1],
                 "parent_link" : 'origin',
                 "child_link" : 'ee_link',
-                "desired_position": [4.0, -0.2],
+                "desired_position": [0.0, -6.0],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
             }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
 
-    pos0 = np.array([-4.0, 0.4, 0.0])
-    vel0 = np.array([0.0, 0.0])
+    pos0 = np.array([-0.0, 0.0, 0.0])
+    vel0 = np.array([1.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
     env.add_sensor(full_sensor, [0])
     for obst in obstacles:
@@ -98,8 +98,8 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 3
     robot_type = "boxer"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
-    collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_geometry = "-2.0 / (x ** 2) * xdot ** 2"
+    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
@@ -134,7 +134,7 @@ def run_boxer_example(n_steps=10000, render=True):
     planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
-    env.reconfigure_camera(3.000001907348633, 8.800007820129395, -64.20002746582031, (0.0, 0.0, 0.0))
+    env.reconfigure_camera(3.000001907348633, -90.00001525878906, -94.20011138916016, (0.15715950727462769, -2.938774585723877, -0.02000000700354576))
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
@@ -142,7 +142,7 @@ def run_boxer_example(n_steps=10000, render=True):
             ob_robot['joint_state']['forward_velocity'][0],
             ob_robot['joint_state']['velocity'][2]
         ])
-        action = planner.compute_action(
+        arguments = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
             qudot=qudot,
@@ -155,7 +155,7 @@ def run_boxer_example(n_steps=10000, render=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             radius_body_ee_link=0.5,
         )
-
+        action = planner.compute_action(**arguments)
         ob, *_, = env.step(action)
     env.close()
     return {}

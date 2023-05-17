@@ -28,12 +28,12 @@ def initalize_environment(render):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
-            mode="vel",
+            mode="acc",
             actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
             castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
             wheel_radius = 0.08,
             wheel_distance = 0.494,
-            spawn_rotation = np.pi/2,
+            spawn_rotation = 0,
         ),
     ]
     env: UrdfEnv  = gym.make(
@@ -60,7 +60,7 @@ def initalize_environment(render):
             "indices": [0, 1, 2],
             "parent_link" : 'origin',
             "child_link" : 'panda_hand',
-            "desired_position": [4.0, -0.2, 1.0],
+            "desired_position": [4.0, -1.2, 1.0],
             "epsilon" : 0.1,
             "type": "staticSubGoal"
         },
@@ -104,14 +104,14 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 10
     robot_type = "albert"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
-    collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_geometry = "-2.0 / (x ** 2) * xdot ** 2"
+    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
             collision_geometry=collision_geometry,
             collision_finsler=collision_finsler,
-            l_offset="0.5",
+            l_offset="0.1/ca.norm_2(xdot)",
     )
     collision_links = ["base_link", "base_tip_link", 'panda_link1', 'panda_link4', 'panda_link6', 'panda_hand']
     self_collision_pairs = {}
@@ -163,7 +163,7 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             ob_robot['joint_state']['velocity'][2]
         ])
         qudot = np.concatenate((qudot, ob_robot['joint_state']['velocity'][3:-2]))
-        action[:-2] = planner.compute_action(
+        arguments = dict(
             q=ob_robot["joint_state"]["position"][:-2],
             qdot=ob_robot["joint_state"]["velocity"][:-2],
             qudot=qudot,
@@ -174,7 +174,7 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             m_rot=1.0,
             m_base_x=2.5,
             m_base_y=2.5,
-            m_arm=10.0,
+            m_arm=1.0,
             x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             radius_body_base_link=0.8,
@@ -184,6 +184,7 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             radius_body_panda_link6=0.15,
             radius_body_panda_hand=0.1,
         )
+        action[:-2] = planner.compute_action(**arguments)
         ob, *_, = env.step(action)
     env.close()
     return {}
