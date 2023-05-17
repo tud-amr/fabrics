@@ -93,3 +93,9 @@ def test_esdf_planar_robot():
     res = run_planar_robot_esdf(10, render=False)
     assert isinstance(res, dict)
 
+def test_point_robot_debug():
+    from point_robot_debug import run_point_robot_debug
+    res = run_point_robot_debug(10, render=False)
+    assert isinstance(res, dict)
+    assert 'goal_0_leaf' in res
+

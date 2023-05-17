@@ -50,8 +50,9 @@ class GenericAttractor(Leaf):
             weight_name: weight_variable
         }
         self._weight = weight_variable
+        self._leaf_variables.add_parameters(self._geo_parameters)
         self._parent_variables.add_parameters(self._geo_parameters)
-        self._forward_map = ParameterizedGoalMap(
+        self._map = ParameterizedGoalMap(
             self._parent_variables, self._forward_kinematics, reference_variable
         )
 
@@ -72,5 +73,3 @@ class GenericAttractor(Leaf):
         lagrangian_psi = ca.dot(xdot, ca.mtimes(attractor_metric, xdot))
         self._lag = Lagrangian(lagrangian_psi, var=self._leaf_variables)
 
-    def map(self):
-        return self._forward_map

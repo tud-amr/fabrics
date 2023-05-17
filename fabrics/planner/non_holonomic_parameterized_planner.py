@@ -31,6 +31,7 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         robot_type: str,
         **kwargs
     ):
+        self.leaves = {}
         self._dof = dof
         self._config = NonHolonomicFabricPlannerConfig(**kwargs)
         if self._config.urdf:

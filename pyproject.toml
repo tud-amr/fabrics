@@ -33,7 +33,6 @@ optional = true
 
 [tool.poetry.group.tutorials.dependencies]
 planarenvs = "^1.3.2"
-matplotlib = "^3.7.0"
 jupyterlab = "^3.6.1"
 
 [tool.poetry.group.agents]
