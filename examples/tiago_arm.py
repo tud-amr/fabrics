@@ -57,19 +57,12 @@ def initalize_environment(render=True):
             obstacle_mask=['position', 'size'],
             variance=0.0
     )
-    if arm == 'left':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
-    elif arm == 'right':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
     pos0 = np.zeros(20)
     pos0[0] = 0.0
     # base
     # pos0[0:3] = np.array([0.0, 1.0, -1.0])
     # torso
     pos0[3] = 0.1
-    # Set joint values to center position
-    pos0[13:20] = (limits[:, 0] + limits[:, 1]) / 2.0
-    pos0[6:13] = (limits[:, 0] + limits[:, 1]) / 2.0
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -129,7 +122,7 @@ def initalize_environment(render=True):
     return (env, goal_transformed)
 
 
-def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: int = 7):
+def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     """
     Initializes the fabric planner for the panda robot.
 
@@ -180,11 +173,9 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
     q = planner.variables.position_variable()
     collision_links = [f'arm_{arm}_{i}_link' for i in [3, 4, 5, 6, 7]]
     # The planner hides all the logic behind the function set_components.
-    logging.debug(limits)
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        limits=list(limits),
         number_obstacles=1,
     )
     planner.concretize()
@@ -193,13 +184,9 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
 
 def run_tiago_example(n_steps=5000, render=True):
     (env, goal) = initalize_environment(render)
-    if arm == 'left':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
-    elif arm == 'right':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
     action = np.zeros(23)
     ob, *_ = env.step(action)
-    planner = set_planner(goal, limits)
+    planner = set_planner(goal)
 
     # Initializing actions and joint states
     augmented_action = np.zeros(23)
