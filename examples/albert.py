@@ -34,6 +34,7 @@ def initalize_environment(render):
             wheel_radius = 0.08,
             wheel_distance = 0.494,
             spawn_rotation = 0,
+            facing_direction = '-y',
         ),
     ]
     env: UrdfEnv  = gym.make(

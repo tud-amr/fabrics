@@ -797,31 +797,32 @@ files = [
 
 [[package]]
 name = "gym"
-version = "0.22.0"
-description = "Gym: A universal API for reinforcement learning environments."
+version = "0.26.2"
+description = "Gym: A universal API for reinforcement learning environments"
 category = "dev"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.6"
 files = [
-    {file = "gym-0.22.0.tar.gz", hash = "sha256:339144c89951758187c378111919bc0e2f1695f9e9d9699e3f19279a6398148d"},
+    {file = "gym-0.26.2.tar.gz", hash = "sha256:e0d882f4b54f0c65f203104c24ab8a38b039f1289986803c7d02cdbe214fbcc4"},
 ]
 
 [package.dependencies]
 cloudpickle = ">=1.2.0"
 gym_notices = ">=0.0.4"
-importlib_metadata = {version = ">=4.10.0", markers = "python_version < \"3.10\""}
+importlib_metadata = {version = ">=4.8.0", markers = "python_version < \"3.10\""}
 numpy = ">=1.18.0"
 
 [package.extras]
 accept-rom-license = ["autorom[accept-rom-license] (>=0.4.2,<0.5.0)"]
-all = ["ale-py (>=0.7.4,<0.8.0)", "box2d-py (==2.3.5)", "box2d-py (==2.3.5)", "lz4 (>=3.1.0)", "lz4 (>=3.1.0)", "mujoco_py (>=1.50,<2.0)", "opencv-python (>=3.0)", "opencv-python (>=3.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "scipy (>=1.4.1)", "scipy (>=1.4.1)"]
-atari = ["ale-py (>=0.7.4,<0.8.0)"]
-box2d = ["box2d-py (==2.3.5)", "pygame (==2.1.0)"]
+all = ["ale-py (>=0.8.0,<0.9.0)", "box2d-py (==2.3.5)", "imageio (>=2.14.1)", "lz4 (>=3.1.0)", "matplotlib (>=3.0)", "moviepy (>=1.0.0)", "mujoco (==2.2)", "mujoco_py (>=2.1,<2.2)", "opencv-python (>=3.0)", "pygame (==2.1.0)", "pytest (==7.0.1)", "swig (>=4.0.0,<5.0.0)"]
+atari = ["ale-py (>=0.8.0,<0.9.0)"]
+box2d = ["box2d-py (==2.3.5)", "pygame (==2.1.0)", "swig (>=4.0.0,<5.0.0)"]
 classic-control = ["pygame (==2.1.0)"]
-mujoco = ["mujoco_py (>=1.50,<2.0)"]
-nomujoco = ["box2d-py (==2.3.5)", "lz4 (>=3.1.0)", "opencv-python (>=3.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "pygame (==2.1.0)", "scipy (>=1.4.1)"]
-other = ["lz4 (>=3.1.0)", "opencv-python (>=3.0)"]
-toy-text = ["pygame (==2.1.0)", "scipy (>=1.4.1)"]
+mujoco = ["imageio (>=2.14.1)", "mujoco (==2.2)"]
+mujoco-py = ["mujoco_py (>=2.1,<2.2)"]
+other = ["lz4 (>=3.1.0)", "matplotlib (>=3.0)", "moviepy (>=1.0.0)", "opencv-python (>=3.0)"]
+testing = ["box2d-py (==2.3.5)", "imageio (>=2.14.1)", "lz4 (>=3.1.0)", "matplotlib (>=3.0)", "moviepy (>=1.0.0)", "mujoco (==2.2)", "mujoco_py (>=2.1,<2.2)", "opencv-python (>=3.0)", "pygame (==2.1.0)", "pytest (==7.0.1)", "swig (>=4.0.0,<5.0.0)"]
+toy-text = ["pygame (==2.1.0)"]
 
 [[package]]
 name = "gym-notices"
@@ -2303,19 +2304,19 @@ files = [
 
 [[package]]
 name = "planarenvs"
-version = "1.3.2"
+version = "1.3.3"
 description = "Lightweight open-ai gym environments for planar kinematic chains."
 category = "dev"
 optional = false
 python-versions = ">=3.8,<3.10"
 files = [
-    {file = "planarenvs-1.3.2-py3-none-any.whl", hash = "sha256:69f3995aedcb17e811bf2f371a9d7cfe2d9f659a50f04959cec66658b260074e"},
-    {file = "planarenvs-1.3.2.tar.gz", hash = "sha256:13dfb37a1bf819bbbf87ee0b20e5f0e34c5fddea0ff8e823a1b45b5a58a0de37"},
+    {file = "planarenvs-1.3.3-py3-none-any.whl", hash = "sha256:648bcd83979190b90c88b65f40b92b9745245bc9cc65c1a9a4307634aea9f9a0"},
+    {file = "planarenvs-1.3.3.tar.gz", hash = "sha256:837010a565c3b2741f74c33bf9a7c664a754dbe3947040e2288be2f384af6fd3"},
 ]
 
 [package.dependencies]
 forwardkinematics = ">=1.0.3,<2.0.0"
-gym = ">=0.22,<0.23"
+gym = ">=0.26.0,<0.27.0"
 mpscenes = ">=0.3,<0.4"
 numpy = ">=1.19,<1.24"
 pygame = ">=2.1.2,<3.0.0"
@@ -3584,19 +3585,19 @@ pyyaml = "*"
 
 [[package]]
 name = "urdfenvs"
-version = "0.7.3"
+version = "0.7.6"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "dev"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "urdfenvs-0.7.3-py3-none-any.whl", hash = "sha256:61c781150c0edfd0615f7d7dc5e61ade28fb0c889d4e30d2f0f595bbebf0ec5c"},
-    {file = "urdfenvs-0.7.3.tar.gz", hash = "sha256:50ff650731884f21a8708382c91a9e12f13ec53ab6bc391cdff828d4a3c800ea"},
+    {file = "urdfenvs-0.7.6-py3-none-any.whl", hash = "sha256:fa8132e61fbfde708a2b36a82dc47f57b4359813d2092f42b728872b170c07ff"},
+    {file = "urdfenvs-0.7.6.tar.gz", hash = "sha256:8994b05a3adca1a04a3fa44fc53af14542603ba5463c71ccb22124c1f9d787a6"},
 ]
 
 [package.dependencies]
 deprecation = ">=2.1.0,<3.0.0"
-gym = ">=0.22,<0.23"
+gym = ">=0.26.0,<0.27.0"
 mpscenes = ">=0.3.1,<0.4.0"
 numpy = ">=1.19,<1.24"
 pybullet = ">=3.2.1,<4.0.0"
@@ -4016,4 +4017,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.10"
-content-hash = "e8e49b69b4d9c4ee429957ad60a39b8a290c0b8d4f2fb66a502910f1c8d1f330"
+content-hash = "ac21933e9770153bc302f82877f7d13dc43d616946edc4f5f3f54d3feaa47fbb"
