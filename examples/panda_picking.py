@@ -200,7 +200,6 @@ def run_panda_example(n_steps=5000, render=True):
     print("Press 'd' to go to the object again.")
 
     env.reconfigure_camera(1.4, 85.0, -25.0, (0.0, 0.0, 0.0))
-    env.start_video_recording("panda_picking.mp4")
 
 
     for _ in range(n_steps):
@@ -229,15 +228,14 @@ def run_panda_example(n_steps=5000, render=True):
         distance_to_full_closing = np.linalg.norm(q[-2:] - np.array([0.00, 0.00]))
         if GRIPPER_ACTION == 0:# and distance_to_full_opening > 0.01:
 
-            action[7:] = np.ones(2) * 0.01
+            action[7:] = np.ones(2) * 0.05
         elif GRIPPER_ACTION == 1:# and distance_to_full_closing > 0.01:
-            action[7:] = np.ones(2) * -0.01
+            action[7:] = np.ones(2) * -0.05
         else:
             action[7:] = np.zeros(2)
         ob, *_ = env.step(action)
     listener.stop()
     listener.join()
-    env.stop_video_recording()
     return {}
 
 
