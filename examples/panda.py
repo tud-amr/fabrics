@@ -143,7 +143,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        number_obstacles=0,
+        number_obstacles=2,
         limits=panda_limits,
     )
     planner.concretize()
@@ -170,9 +170,7 @@ def run_panda_example(n_steps=5000, render=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
-            radius_body_panda_link3=np.array([0.02]),
-            radius_body_panda_link4=np.array([0.02]),
-            radius_body_panda_link9=np.array([0.02]),
+            radius_body_links={3: 0.02, 4: 0.02, 9: 0.02},
         )
         ob, *_ = env.step(action)
     env.close()
