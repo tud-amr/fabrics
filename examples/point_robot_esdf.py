@@ -148,6 +148,7 @@ def initalize_environment(render):
     env.add_obstacle(obst1)
     env.add_obstacle(obst2)
     env.add_obstacle(obst3)
+    env.set_spaces()
     return (env, goal)
 
 
