@@ -5,13 +5,15 @@ from copy import deepcopy
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
 from fabrics.helpers.constants import eps
-from fabrics.helpers.functions import joinVariables, checkCompatability
+from fabrics.helpers.functions import checkCompatability
 
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 from fabrics.helpers.variables import Variables
 
 class Spec:
     """description"""
+
+    _vars: Variables
 
     def __init__(self, M: ca.SX, **kwargs):
         self._x_ref_name = "x_ref"
