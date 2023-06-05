@@ -25,7 +25,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
+from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
@@ -312,6 +312,7 @@ class ParameterizedFabricPlanner(object):
         limits: list = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
+        number_plane_constraints: int = 0,
         dynamic_obstacle_dimension: int = 3,
     ):
         if collision_links is None:
@@ -342,6 +343,12 @@ class ParameterizedFabricPlanner(object):
             for i in range(number_dynamic_obstacles):
                 obstacle_name = f"obst_dynamic_{i}"
                 geometry = DynamicObstacleLeaf(self._variables, fk, obstacle_name, collision_link, reference_parameters=reference_parameter_list[i])
+                geometry.set_geometry(self.config.collision_geometry)
+                geometry.set_finsler_structure(self.config.collision_finsler)
+                self.add_leaf(geometry)
+            for i in range(number_plane_constraints):
+                constraint_name = f"constraint_{i}"
+                geometry = PlaneConstraintGeometryLeaf(self._variables, constraint_name, collision_link, fk)
                 geometry.set_geometry(self.config.collision_geometry)
                 geometry.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(geometry)

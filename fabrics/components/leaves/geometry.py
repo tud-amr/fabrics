@@ -3,6 +3,7 @@ import numpy as np
 
 from fabrics.components.maps.parameterized_maps import (
     ParameterizedObstacleMap,
+    ParameterizedPlaneConstraintMap,
 )
 from fabrics.diffGeometry.diffMap import DifferentialMap, ExplicitDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
@@ -221,4 +222,52 @@ class ESDFGeometryLeaf(GenericGeometryLeaf):
             J=J,
             Jdot=Jdot,
         )
+
+class PlaneConstraintGeometryLeaf(GenericGeometryLeaf):
+    def __init__(
+            self,
+            parent_variables: Variables,
+            constraint_name: str,
+            collision_link: str,
+            collision_fk: ca.SX,
+    ):
+        self._collision_link = collision_link
+        self._collision_fk = collision_fk
+        self._constraint_name = constraint_name
+        super().__init__(
+            parent_variables,
+            f"{collision_link}_{constraint_name}",
+            collision_fk,
+        )
+        self.set_forward_map()
+
+    def set_forward_map(self):
+        q = self._parent_variables.position_variable()
+        radius_body_name = f"radius_body_{self._collision_link}"
+        if radius_body_name in self._parent_variables.parameters():
+            radius_body_variable = self._parent_variables.parameters()[
+                radius_body_name
+            ]
+        else:
+            radius_body_variable = ca.SX.sym(radius_body_name, 1)
+        if self._constraint_name in self._parent_variables.parameters():
+            constraint_variable = self._parent_variables.parameters()[
+                self._constraint_name
+            ]
+        else:
+            constraint_variable = ca.SX.sym(self._constraint_name, 4)
+        geo_parameters = {
+            radius_body_name: radius_body_variable,
+            self._constraint_name: constraint_variable,
+        }
+        self._parent_variables.add_parameters(geo_parameters)
+        self._forward_map = ParameterizedPlaneConstraintMap(
+            self._parent_variables,
+            self._forward_kinematics,
+            constraint_variable,
+            radius_body_variable
+        )
+
+    def map(self):
+        return self._forward_map
 
