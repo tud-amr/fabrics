@@ -22,7 +22,7 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 #
 # todo: tune behavior.
 
-NUMBER_OF_RAYS = 2000
+NUMBER_OF_RAYS = 100
 
 class ParameterizedFSDMap(ParameterizedGeometryMap):
     def __init__(
@@ -178,7 +178,7 @@ def initalize_environment(render):
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.1, 0.0, 0.0])
     full_sensor = FullSensor(goal_mask=["position", "weight"], obstacle_mask=["position", "size"])
-    fsd_sensor = FreeSpaceDecompositionSensor('lidar_sensor_joint', max_radius=5, raw_data=False, plotting_interval=100, nb_rays=NUMBER_OF_RAYS)
+    fsd_sensor = FreeSpaceDecompositionSensor('lidar_sensor_joint', max_radius=5, plotting_interval=100, nb_rays=NUMBER_OF_RAYS)
     # Definition of the obstacle.
     obstacles = get_obstacles_fsd()
     # Definition of the goal.
