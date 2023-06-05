@@ -1,7 +1,6 @@
 import os
 import time
 import gym
-import casadi as ca
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
@@ -11,43 +10,10 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.obstacles.box_obstacle import BoxObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 #from examples.point_robot_sensors import get_goal_sensors, get_obstacles_sensors
-from fabrics.components.energies.execution_energies import ExecutionLagrangian
-from fabrics.components.leaves.geometry import PlaneConstraintGeometryLeaf
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-
-# Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
-# mass to compute actions for a simulated 3D point mass.
-#
-# todo: tune behavior.
 
 NUMBER_OF_RAYS = 100
 
-class FSDPlanner(ParameterizedFabricPlanner):
-    def set_components(self, collision_links: list = None,
-                       self_collision_pairs: dict = None,
-                       collision_links_esdf: list = None,
-                       goal: GoalComposition = None,
-                       limits: list = None,
-                       number_obstacles: int = 0,
-                       number_constraints: int = 10,
-                       number_dynamic_obstacles: int = 0):
-        for collision_link in collision_links:
-            fk = self.get_forward_kinematics(collision_link)
-            for i in range(number_constraints):
-                constraint_name = f"constraint_{i}"
-                geometry = PlaneConstraintGeometryLeaf(self._variables, constraint_name, collision_link, fk)
-                geometry.set_geometry(self.config.collision_geometry)
-                geometry.set_finsler_structure(self.config.collision_finsler)
-                self.add_leaf(geometry)
-        execution_energy = ExecutionLagrangian(self._variables)
-        self.set_execution_energy(execution_energy)
-        if goal:
-            self.set_goal_component(goal)
-            # Adds default execution energy
-            execution_energy = ExecutionLagrangian(self._variables)
-            self.set_execution_energy(execution_energy)
-            # Sets speed control
-            self.set_speed_control()
 
 def get_goal_fsd():
     goal_dict = {
