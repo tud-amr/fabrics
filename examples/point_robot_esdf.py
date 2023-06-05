@@ -107,7 +107,11 @@ def initalize_environment(render):
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.0, 0.0, 0.0])
-    full_sensor = FullSensor(goal_mask=["position", "weight"], obstacle_mask=["position", "size"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=[],
+            variance=0.0
+    )
     # Definition of the obstacle.
     static_obst_dict_1 = {
             "type": "sphere",
@@ -144,7 +148,6 @@ def initalize_environment(render):
     env.add_obstacle(obst1)
     env.add_obstacle(obst2)
     env.add_obstacle(obst3)
-    env.set_spaces()
     return (env, goal)
 
 
@@ -243,6 +246,7 @@ def run_point_robot_esdf(n_steps=10000, render=True):
             radius_body_base_link=np.array([0.4])
         )
         ob, *_, = env.step(action)
+    env.close()
     return {}
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
 from fabrics.helpers.exceptions import ExpressionSparseError
+from typing import List
 
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.constants import eps
@@ -35,6 +36,9 @@ from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 from pyquaternion import Quaternion
 
 class InvalidRotationAnglesError(Exception):
+    pass
+
+class LeafNotFoundError(Exception):
     pass
 
 def compute_rotation_matrix(angles) -> np.ndarray:
@@ -115,6 +119,7 @@ class ParameterizedFabricPlanner(object):
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
         self._ref_sign = 1
+        self.leaves = {}
 
     """ INITIALIZING """
 
@@ -189,6 +194,17 @@ class ParameterizedFabricPlanner(object):
             self.add_geometry(leaf.map(), leaf.lagrangian(), leaf.geometry())
         elif isinstance(leaf, GenericDynamicGeometryLeaf):
             self.add_dynamic_geometry(leaf.map(), leaf.dynamic_map(), leaf.geometry_map(), leaf.lagrangian(), leaf.geometry())
+        self.leaves[leaf._leaf_name] = leaf
+
+    def get_leaves(self, leaf_names:list) -> List[Leaf]:
+        leaves = []
+        for leaf_name in leaf_names:
+            if leaf_name not in self.leaves:
+                error_message = f"Leaf with name {leaf_name} not in leaves.\n"
+                error_message = f"Possible leaves are {list(self.leaves.keys())}."
+                raise LeafNotFoundError(error_message)
+            leaves.append(self.leaves[leaf_name])
+        return leaves
 
     def add_forcing_geometry(
         self,
@@ -285,23 +301,6 @@ class ParameterizedFabricPlanner(object):
             )
         return fk
 
-    def get_forward_kinematics_F(self, link_name) -> ca.SX:
-        if isinstance(link_name, ca.SX):
-            return link_name
-        if self._config.urdf:
-            fk = self._forward_kinematics.fk(
-                self._variables.position_variable(),
-                self._config.root_link,
-                link_name,
-                positionOnly=True
-            )
-        else:
-            fk = self._forward_kinematics.fk(
-                self._variables.position_variable(),
-                link_name,
-                positionOnly=True
-            )
-        return fk_fun
 
     """ DEFAULT COMPOSITION """
     def set_components(
@@ -313,6 +312,7 @@ class ParameterizedFabricPlanner(object):
         limits: list = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
+        dynamic_obstacle_dimension: int = 3,
     ):
         if collision_links is None:
             collision_links = []
@@ -323,9 +323,9 @@ class ParameterizedFabricPlanner(object):
         reference_parameter_list = []
         for i in range(number_dynamic_obstacles):
             reference_parameters = {
-                f"x_obst_dynamic_{i}": ca.SX.sym(f"x_obst_dynamic_{i}", 3),
-                f"xdot_obst_dynamic_{i}": ca.SX.sym(f"xdot_obst_dynamic_{i}", 3),
-                f"xddot_obst_dynamic_{i}": ca.SX.sym(f"xddot_obst_dynamic_{i}", 3),
+                f"x_obst_dynamic_{i}": ca.SX.sym(f"x_obst_dynamic_{i}", dynamic_obstacle_dimension),
+                f"xdot_obst_dynamic_{i}": ca.SX.sym(f"xdot_obst_dynamic_{i}", dynamic_obstacle_dimension),
+                f"xddot_obst_dynamic_{i}": ca.SX.sym(f"xddot_obst_dynamic_{i}", dynamic_obstacle_dimension),
             }
             reference_parameter_list.append(reference_parameters)
         for collision_link in collision_links:

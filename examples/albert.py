@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-from urdfenvs.robots.albert import AlbertRobot
+from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.sensors.full_sensor import FullSensor
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 import logging
@@ -26,13 +26,26 @@ def initalize_environment(render):
         Boolean toggle to set rendering on (True) or off (False).
     """
     robots = [
-        AlbertRobot(mode="acc"),
+        GenericDiffDriveRobot(
+            urdf="albert.urdf",
+            mode="acc",
+            actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
+            castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
+            wheel_radius = 0.08,
+            wheel_distance = 0.494,
+            spawn_rotation = 0,
+            facing_direction = '-y',
+        ),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=['position', 'size'],
+            variance=0.0
+    )
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
@@ -48,7 +61,7 @@ def initalize_environment(render):
             "indices": [0, 1, 2],
             "parent_link" : 'origin',
             "child_link" : 'panda_hand',
-            "desired_position": [4.0, -0.2, 1.0],
+            "desired_position": [4.0, -1.2, 1.0],
             "epsilon" : 0.1,
             "type": "staticSubGoal"
         },
@@ -70,6 +83,7 @@ def initalize_environment(render):
         env.add_obstacle(obst)
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
+    env.set_spaces()
     return (env, goal)
 
 
@@ -91,14 +105,14 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 10
     robot_type = "albert"
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
-    collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_geometry = "-2.0 / (x ** 2) * xdot ** 2"
+    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
             collision_geometry=collision_geometry,
             collision_finsler=collision_finsler,
-            l_offset="0.5",
+            l_offset="0.1/ca.norm_2(xdot)",
     )
     collision_links = ["base_link", "base_tip_link", 'panda_link1', 'panda_link4', 'panda_link6', 'panda_hand']
     self_collision_pairs = {}
@@ -149,21 +163,21 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             ob_robot['joint_state']['forward_velocity'][0],
             ob_robot['joint_state']['velocity'][2]
         ])
-        qudot = np.concatenate((qudot, ob_robot['joint_state']['velocity'][3:]))
-        action = planner.compute_action(
-            q=ob_robot["joint_state"]["position"],
-            qdot=ob_robot["joint_state"]["velocity"],
+        qudot = np.concatenate((qudot, ob_robot['joint_state']['velocity'][3:-2]))
+        arguments = dict(
+            q=ob_robot["joint_state"]["position"][:-2],
+            qdot=ob_robot["joint_state"]["velocity"][:-2],
             qudot=qudot,
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_goal_1=ob_robot['FullSensor']['goals'][1][0],
-            weight_goal_1=goal.sub_goals()[1].weight(),
+            x_goal_0=ob_robot['FullSensor']['goals'][3]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][3]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][4]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][4]['weight'],
             m_rot=1.0,
             m_base_x=2.5,
             m_base_y=2.5,
-            m_arm=10.0,
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
+            m_arm=1.0,
+            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             radius_body_base_link=0.8,
             radius_body_base_tip_link=0.3,
             radius_body_panda_link1=0.1,
@@ -171,7 +185,9 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             radius_body_panda_link6=0.15,
             radius_body_panda_hand=0.1,
         )
+        action[:-2] = planner.compute_action(**arguments)
         ob, *_, = env.step(action)
+    env.close()
     return {}
 
 

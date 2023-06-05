@@ -1,8 +1,7 @@
 import gym
 import os
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from urdfenvs.robots.generic_urdf import GenericUrdfReacher
-from urdfenvs.robots.tiago import TiagoRobot
+from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.sensors.full_sensor import FullSensor
 import logging
 from copy import deepcopy
@@ -30,26 +29,40 @@ def initalize_environment(render=True):
     steps the simulation once.
     """
     robots = [
-        TiagoRobot(mode="acc"),
+        GenericDiffDriveRobot(
+            urdf="tiago_dual.urdf",
+            mode="acc",
+            actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
+            castor_wheels=[
+                "caster_front_right_2_joint",
+                "caster_front_left_2_joint",
+                "caster_back_right_2_joint",
+                "caster_back_left_2_joint",
+            ],
+            not_actuated_joints=[
+                "suspension_right_joint",
+                "suspension_left_joint",
+            ],
+            wheel_radius = 0.1,
+            wheel_distance = 0.4044,
+            spawn_offset = np.array([-0.1764081, 0.0, 0.1]),
+        ),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-    full_sensor = FullSensor(goal_mask=["position"], obstacle_mask=["position", "radius"])
-    if arm == 'left':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
-    elif arm == 'right':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
+    full_sensor = FullSensor(
+            goal_mask=["position", "weight"],
+            obstacle_mask=['position', 'size'],
+            variance=0.0
+    )
     pos0 = np.zeros(20)
     pos0[0] = 0.0
     # base
     # pos0[0:3] = np.array([0.0, 1.0, -1.0])
     # torso
     pos0[3] = 0.1
-    # Set joint values to center position
-    pos0[13:20] = (limits[:, 0] + limits[:, 1]) / 2.0
-    pos0[6:13] = (limits[:, 0] + limits[:, 1]) / 2.0
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
@@ -105,10 +118,11 @@ def initalize_environment(render=True):
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
     env.add_obstacle(obst)
+    env.set_spaces()
     return (env, goal_transformed)
 
 
-def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: int = 7):
+def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     """
     Initializes the fabric planner for the panda robot.
 
@@ -147,7 +161,7 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/tiago_dual.urdf", "r") as file:
+    with open(absolute_path + "/tiago_dual_fk.urdf", "r") as file:
         urdf = file.read()
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -159,11 +173,9 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
     q = planner.variables.position_variable()
     collision_links = [f'arm_{arm}_{i}_link' for i in [3, 4, 5, 6, 7]]
     # The planner hides all the logic behind the function set_components.
-    logging.debug(limits)
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        limits=list(limits),
         number_obstacles=1,
     )
     planner.concretize()
@@ -172,16 +184,12 @@ def set_planner(goal: GoalComposition, limits: np.ndarray, degrees_of_freedom: i
 
 def run_tiago_example(n_steps=5000, render=True):
     (env, goal) = initalize_environment(render)
-    if arm == 'left':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[6:13]
-    elif arm == 'right':
-        limits = env.env._robots[0]._limit_pos_j.transpose()[13:20]
-    action = np.zeros(19)
+    action = np.zeros(23)
     ob, *_ = env.step(action)
-    planner = set_planner(goal, limits)
+    planner = set_planner(goal)
 
     # Initializing actions and joint states
-    augmented_action = np.zeros(19)
+    augmented_action = np.zeros(23)
     q = np.zeros(7)
     qdot = np.zeros(7)
     body_arguments = {}
@@ -199,10 +207,10 @@ def run_tiago_example(n_steps=5000, render=True):
         action = planner.compute_action(
             q=q,
             qdot=qdot,
-            x_goal_0=ob_robot['FullSensor']['goals'][0][0],
-            weight_goal_0=goal.sub_goals()[0].weight(),
-            x_obst_0=ob_robot['FullSensor']['obstacles'][0][0],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][0][1],
+            x_goal_0=ob_robot['FullSensor']['goals'][3]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][3]['weight'],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             **body_arguments
         )
         if arm == 'left':
@@ -210,6 +218,7 @@ def run_tiago_example(n_steps=5000, render=True):
         elif arm == 'right':
             augmented_action[12:19] = action
         ob, *_ = env.step(augmented_action)
+    env.close()
     return {}
 
 if __name__ == "__main__":
