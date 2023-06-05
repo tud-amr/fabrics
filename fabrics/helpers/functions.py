@@ -47,20 +47,6 @@ def parse_symbolic_input(expression: str, x: ca.SX, xdot: ca.SX, name: str = '')
     return new_parameters, symbolic_expression
 
 
-def joinVariables(var1, var2):
-    var = var1 + var2
-    unique_items = []
-    for item in var:
-        already_exists = False
-        for u_item in unique_items:
-            if u_item.size() == item.size() and ca.is_equal(u_item, item):
-                already_exists = True
-                break
-        if not already_exists:
-            unique_items.append(item)
-    return unique_items
-
-
 def joinRefTrajs(refTrajs1, refTrajs2):
     refTrajs = refTrajs1 + refTrajs2
     unique_items = []

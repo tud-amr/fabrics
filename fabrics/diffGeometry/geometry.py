@@ -3,7 +3,6 @@ import numpy as np
 from copy import deepcopy
 
 from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
-from fabrics.helpers.functions import joinVariables
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
 
