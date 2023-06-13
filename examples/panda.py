@@ -129,7 +129,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         end_link='panda_link9',
     )
     q = planner.variables.position_variable()
-    collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
+    collision_links = ['panda_link9', 'panda_link7', 'panda_link3', 'panda_link4']
     panda_limits = [
             [-2.8973, 2.8973],
             [-1.7628, 1.7628],
@@ -144,6 +144,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         collision_links=collision_links,
         goal=goal,
         number_obstacles=2,
+        number_plane_constraints=1,
         limits=panda_limits,
     )
     planner.concretize()
@@ -155,6 +156,9 @@ def run_panda_example(n_steps=5000, render=True):
     planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
+    env.add_collision_link(0, 3, 'sphere', [0.10])
+    env.add_collision_link(0, 4, 'sphere', [0.10])
+    env.add_collision_link(0, 7, 'sphere', [0.10])
 
 
     for _ in range(n_steps):
@@ -170,7 +174,8 @@ def run_panda_example(n_steps=5000, render=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
-            radius_body_links={3: 0.02, 4: 0.02, 9: 0.02},
+            radius_body_links={3: 0.1, 4: 0.1, 9: 0.1, 7: 0.1},
+            constraint_0=np.array([0, 0, 1, 0.0]),
         )
         ob, *_ = env.step(action)
     env.close()

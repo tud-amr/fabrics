@@ -1,7 +1,6 @@
 import os
 import time
 import gym
-import casadi as ca
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
@@ -11,110 +10,10 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.obstacles.box_obstacle import BoxObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 #from examples.point_robot_sensors import get_goal_sensors, get_obstacles_sensors
-from fabrics.components.energies.execution_energies import ExecutionLagrangian
-from fabrics.components.leaves.geometry import GenericGeometryLeaf
-from fabrics.components.maps.parameterized_maps import ParameterizedGeometryMap
-from fabrics.helpers.variables import Variables
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-
-# Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
-# mass to compute actions for a simulated 3D point mass.
-#
-# todo: tune behavior.
 
 NUMBER_OF_RAYS = 100
 
-class ParameterizedFSDMap(ParameterizedGeometryMap):
-    def __init__(
-        self,
-        var: Variables,
-        fk,
-        constraint_variable,
-        radius_body_variable,
-    ):
-        phi = ca.fabs(ca.dot(constraint_variable[0:3], fk) + constraint_variable[3]) / ca.norm_2(constraint_variable[0:3]) - radius_body_variable
-
-        #phi = ca.fabs(a*x + b*y + c*z + d) / ((a**2 + b**2 + c**2)**0.5)
-        #phi = (
-        #    ca.norm_2(fk - reference_variable)
-        #    / (radius_variable + radius_body_variable)
-        #    - 1
-        #)
-        super().__init__(phi, var)
-class FreeSpaceDecompGeometryLeaf(GenericGeometryLeaf):
-    def __init__(
-            self,
-            parent_variables: Variables,
-            constraint_name: str,
-            collision_link: str,
-            collision_fk: ca.SX,
-    ):
-        self._collision_link = collision_link
-        self._collision_fk = collision_fk
-        self._constraint_name = constraint_name
-        super().__init__(
-            parent_variables,
-            f"{collision_link}_{constraint_name}",
-            collision_fk,
-        )
-        self.set_forward_map()
-
-    def set_forward_map(self):
-        q = self._parent_variables.position_variable()
-        radius_body_name = f"radius_body_{self._collision_link}"
-        if radius_body_name in self._parent_variables.parameters():
-            radius_body_variable = self._parent_variables.parameters()[
-                radius_body_name
-            ]
-        else:
-            radius_body_variable = ca.SX.sym(radius_body_name, 1)
-        if self._constraint_name in self._parent_variables.parameters():
-            constraint_variable = self._parent_variables.parameters()[
-                self._constraint_name
-            ]
-        else:
-            constraint_variable = ca.SX.sym(self._constraint_name, 4)
-        geo_parameters = {
-            radius_body_name: radius_body_variable,
-            self._constraint_name: constraint_variable,
-        }
-        self._parent_variables.add_parameters(geo_parameters)
-        self._forward_map = ParameterizedFSDMap(
-            self._parent_variables,
-            self._forward_kinematics,
-            constraint_variable,
-            radius_body_variable
-        )
-
-    def map(self):
-        return self._forward_map
-
-class FSDPlanner(ParameterizedFabricPlanner):
-    def set_components(self, collision_links: list = None,
-                       self_collision_pairs: dict = None,
-                       collision_links_esdf: list = None,
-                       goal: GoalComposition = None,
-                       limits: list = None,
-                       number_obstacles: int = 0,
-                       number_constraints: int = 10,
-                       number_dynamic_obstacles: int = 0):
-        for collision_link in collision_links:
-            fk = self.get_forward_kinematics(collision_link)
-            for i in range(number_constraints):
-                constraint_name = f"constraint_{i}"
-                geometry = FreeSpaceDecompGeometryLeaf(self._variables, constraint_name, collision_link, fk)
-                geometry.set_geometry(self.config.collision_geometry)
-                geometry.set_finsler_structure(self.config.collision_finsler)
-                self.add_leaf(geometry)
-        execution_energy = ExecutionLagrangian(self._variables)
-        self.set_execution_energy(execution_energy)
-        if goal:
-            self.set_goal_component(goal)
-            # Adds default execution energy
-            execution_energy = ExecutionLagrangian(self._variables)
-            self.set_execution_energy(execution_energy)
-            # Sets speed control
-            self.set_speed_control()
 
 def get_goal_fsd():
     goal_dict = {
@@ -216,7 +115,7 @@ def set_planner(goal: GoalComposition):
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/point_robot.urdf", "r") as file:
         urdf = file.read()
-    planner = FSDPlanner(
+    planner = ParameterizedFabricPlanner(
             degrees_of_freedom,
             robot_type,
             urdf=urdf,
@@ -230,7 +129,8 @@ def set_planner(goal: GoalComposition):
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        number_obstacles=1,
+        number_obstacles=0,
+        number_plane_constraints=10,
     )
     planner.concretize(mode='vel', time_step=0.01)
     return planner
