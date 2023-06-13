@@ -261,13 +261,11 @@ class PlaneConstraintGeometryLeaf(GenericGeometryLeaf):
             self._constraint_name: constraint_variable,
         }
         self._parent_variables.add_parameters(geo_parameters)
-        self._forward_map = ParameterizedPlaneConstraintMap(
+        self._map = ParameterizedPlaneConstraintMap(
             self._parent_variables,
             self._forward_kinematics,
             constraint_variable,
             radius_body_variable
         )
 
-    def map(self):
-        return self._forward_map
 
