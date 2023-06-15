@@ -78,6 +78,12 @@ class FabricPlannerConfig:
     self_collision_finsler: str = (
         "0.1/(x**1) * xdot**2"
     )
+    geometry_plane_constraint: str = (
+        "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    )
+    finsler_plane_constraint: str = (
+        "0.1/(x**1) * xdot**2"
+    )
     attractor_potential: str = (
         "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
     )
@@ -349,8 +355,8 @@ class ParameterizedFabricPlanner(object):
             for i in range(number_plane_constraints):
                 constraint_name = f"constraint_{i}"
                 geometry = PlaneConstraintGeometryLeaf(self._variables, constraint_name, collision_link, fk)
-                geometry.set_geometry(self.config.collision_geometry)
-                geometry.set_finsler_structure(self.config.collision_finsler)
+                geometry.set_geometry(self.config.geometry_plane_constraint)
+                geometry.set_finsler_structure(self.config.finsler_plane_constraint)
                 self.add_leaf(geometry)
 
 
