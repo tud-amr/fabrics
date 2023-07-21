@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 from mpscenes.obstacles.dynamic_sphere_obstacle import DynamicSphereObstacle
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv

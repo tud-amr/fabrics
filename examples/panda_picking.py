@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 from pynput import keyboard
 from typing import List
 from mpscenes.obstacles.collision_obstacle import CollisionObstacle

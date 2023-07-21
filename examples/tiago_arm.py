@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import os
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot

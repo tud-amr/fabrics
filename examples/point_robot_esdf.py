@@ -1,7 +1,7 @@
 import logging
 import os
 
-import gym
+import gymnasium as gym
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher

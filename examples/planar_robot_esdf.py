@@ -1,7 +1,7 @@
 from copy import deepcopy
 import pdb
 import math
-import gym
+import gymnasium as gym
 import casadi as ca
 import logging
 import numpy as np
