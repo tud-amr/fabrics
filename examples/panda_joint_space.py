@@ -1,6 +1,9 @@
 import os
 import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 
@@ -80,14 +83,16 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
+    with open(absolute_path + "/panda_for_fk.urdf", "r", encoding='utf-8') as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink='panda_link0',
+        end_link='panda_link9',
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        'panda',
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_link9',
+        forward_kinematics,
     )
     collision_links = ['panda_link9', 'panda_link3', 'panda_link4']
     # The planner hides all the logic behind the function set_components.

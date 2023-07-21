@@ -1,6 +1,7 @@
 import gymnasium as gym
 from pynput import keyboard
 from typing import List
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 from mpscenes.obstacles.collision_obstacle import CollisionObstacle
 from mpscenes.obstacles.box_obstacle import BoxObstacle
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
@@ -147,18 +148,19 @@ def set_planner(degrees_of_freedom: int = 7):
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-    with open(URDF_FILE, 'r') as file:
-        urdf = file.read()
     goal = create_dummy_goal()
+    with open(URDF_FILE, "r", encoding="utf-8") as file:
+        urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="panda_link0",
+        end_link="panda_leftfinger",
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        'panda',
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_leftfinger',
+        forward_kinematics,
     )
-    q = planner.variables.position_variable()
-    collision_links = ['panda_hand', 'panda_link3', 'panda_link4']
+    collision_links = ["panda_hand", "panda_link3", "panda_link4"]
     panda_limits = [
             [-2.8973, 2.8973],
             [-1.7628, 1.7628],

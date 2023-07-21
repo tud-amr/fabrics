@@ -1,14 +1,16 @@
 import pytest
 import numpy as np
-from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+from forwardkinematics.fksCommon.fk_creator import FkCreator
+
 from mpscenes.goals.goal_composition import GoalComposition
 
-def test_creation():
-    ParameterizedFabricPlanner(2, "pointRobot")
+from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 @pytest.fixture
 def planner():
-    return ParameterizedFabricPlanner(2, "pointRobot")
+    fk = FkCreator("pointRobot").fk()
+    return ParameterizedFabricPlanner(2, fk)
 
 @pytest.fixture
 def goal():

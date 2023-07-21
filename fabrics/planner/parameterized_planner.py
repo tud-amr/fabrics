@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional
 import logging
 import casadi as ca
+from forwardkinematics.fksCommon.fk import ForwardKinematics
 from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
@@ -104,23 +105,13 @@ class FabricPlannerConfig:
         "0.5 * (ca.tanh(-sym('alpha_eta') * sym('ex_lag') * (1 - sym('ex_factor')) - 0.5) + 1)"
     )
     """
-    urdf: str = None
-    root_link: str = 'base_link'
-    end_link: str = 'ee_link'
 
 
 class ParameterizedFabricPlanner(object):
-    def __init__(self, dof: int, robot_type: str, **kwargs):
+    def __init__(self, dof: int, forward_kinematics: ForwardKinematics, **kwargs):
         self._dof = dof
         self._config = FabricPlannerConfig(**kwargs)
-        if self._config.urdf:
-            self._forward_kinematics = GenericURDFFk(
-                self._config.urdf,
-                rootLink=self._config.root_link,
-                end_link=self._config.end_link,
-            )
-        else:
-            self._forward_kinematics = FkCreator(robot_type).fk()
+        self._forward_kinematics = forward_kinematics
         self.initialize_joint_variables()
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
@@ -292,10 +283,10 @@ class ParameterizedFabricPlanner(object):
     def get_forward_kinematics(self, link_name) -> ca.SX:
         if isinstance(link_name, ca.SX):
             return link_name
-        if self._config.urdf:
+        if isinstance(self._forward_kinematics, GenericURDFFk):
             fk = self._forward_kinematics.fk(
                 self._variables.position_variable(),
-                self._config.root_link,
+                self._forward_kinematics._rootLink,
                 link_name,
                 positionOnly=True
             )
@@ -365,10 +356,11 @@ class ParameterizedFabricPlanner(object):
             collision_link_name: str,
             forward_kinematics: ca.SX,
             reference_parameters: dict,
+            dynamic_obstacle_dimension: int = 3,
             ) -> None:
         geometry = DynamicObstacleLeaf(
             self._variables,
-            forward_kinematics,
+            forward_kinematics[0:dynamic_obstacle_dimension],
             obstacle_name,
             collision_link_name,
             reference_parameters=reference_parameters
@@ -485,6 +477,7 @@ class ParameterizedFabricPlanner(object):
                         collision_link,
                         fk,
                         reference_parameter_list[i],
+                        dynamic_obstacle_dimension=dynamic_obstacle_dimension,
                 )
             for i in range(number_plane_constraints):
                 constraint_name = f"constraint_{i}"

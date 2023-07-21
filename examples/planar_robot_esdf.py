@@ -1,19 +1,20 @@
+import os
+import sys
 from copy import deepcopy
-import pdb
 import math
-import gymnasium as gym
-import casadi as ca
 import logging
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-import os
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
-import os
 import pybullet as p
 from scipy import ndimage
 
@@ -147,23 +148,24 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-    robot_type = "xyz"
     collision_geometry = "-1.0 / (x ** 2) * xdot ** 2"
     collision_finsler = "0.2/(x ** 2) * (1 - ca.heaviside(xdot))* xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/planar_urdf_2_joints.urdf", "r") as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="panda_link0",
+        end_link="panda_link4",
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        robot_type,
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_link4',
+        forward_kinematics,
         collision_geometry=collision_geometry,
         collision_finsler=collision_finsler
     )
     collision_links = ['panda_link4']
-    geometry = planner.set_components(
+    planner.set_components(
         collision_links_esdf=collision_links,
         goal=goal,
     )
@@ -210,4 +212,4 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_planar_robot_esdf(n_steps=5000, render=False)
+    res = run_planar_robot_esdf(n_steps=5000, render=bool(sys.argv[1]))

@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 import casadi as ca
+from forwardkinematics.fksCommon.fk import ForwardKinematics
 import numpy as np
 import logging
 
-from forwardkinematics.fksCommon.fk_creator import FkCreator
-from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner, FabricPlannerConfig
 from fabrics.diffGeometry.energy import Lagrangian
@@ -28,22 +27,14 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
     def __init__(
         self,
         dof: int,
-        robot_type: str,
+        forward_kinematics: ForwardKinematics,
         facing_direction: str = '-y',
         **kwargs
     ):
         self.leaves = {}
         self._dof = dof
         self._config = NonHolonomicFabricPlannerConfig(**kwargs)
-        if self._config.urdf:
-            self._forward_kinematics = GenericURDFFk(
-                self._config.urdf,
-                rootLink=self._config.root_link,
-                end_link=self._config.end_link,
-                base_type='diffdrive',
-            )
-        else:
-            self._forward_kinematics = FkCreator(robot_type).fk()
+        self._forward_kinematics  = forward_kinematics
         self.initialize_joint_variables()
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])

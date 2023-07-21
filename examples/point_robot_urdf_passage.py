@@ -1,16 +1,16 @@
+import os
 import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
-from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-"""
-Fabrics example for a 3D point mass robot.
-The fabrics planner uses a 2D point mass to compute actions for a simulated 3D point mass.
 
-To do: tune behavior.
-"""
+from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 def initalize_environment(render):
     """
@@ -53,8 +53,8 @@ def initalize_environment(render):
                 "weight": 0.5,
                 "is_primary_goal": True,
                 "indices": [0, 1],
-                "parent_link" : 0,
-                "child_link" : 1,
+                "parent_link" : "world",
+                "child_link" : "base_link",
                 "desired_position": [4.5, 0.0],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
@@ -85,21 +85,24 @@ def set_planner(goal: GoalComposition):
     goal: StaticSubGoal
         The goal to the motion planning problem.
     """
-    degrees_of_freedom = 2
-    robot_type = "pointRobot"
-    # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
-    collision_geometry = "-0.2 / (x ** 1) * (1 - ca.heaviside(xdot)) * xdot ** 2"
-    collision_finsler = "0.1/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
-    damper_beta: str = "0.5"
-    planner = ParameterizedFabricPlanner(
-            degrees_of_freedom,
-            robot_type,
-            #collision_geometry=collision_geometry,
-            #collision_finsler=collision_finsler,
-            #damper_beta=damper_beta,
+    degrees_of_freedom = 3
+    absolute_path = os.path.dirname(os.path.abspath(__file__))
+    with open(absolute_path + "/point_robot.urdf", "r", encoding="utf-8") as file:
+        urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="world",
+        end_link="base_link",
     )
-    collision_links = [1]
-    self_collision_links = {}
+    collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
+    collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
+    planner = ParameterizedFabricPlanner(
+        degrees_of_freedom,
+        forward_kinematics,
+        collision_geometry=collision_geometry,
+        collision_finsler=collision_finsler
+    )
+    collision_links = ["base_link"]
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links=collision_links,
@@ -137,16 +140,16 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     vel_mags = []
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
-        action[0:2] = planner.compute_action(
-            q=ob["robot_0"]["joint_state"]["position"][0:2],
-            qdot=ob["robot_0"]["joint_state"]["velocity"][0:2],
+        action = planner.compute_action(
+            q=ob["robot_0"]["joint_state"]["position"],
+            qdot=ob["robot_0"]["joint_state"]["velocity"],
             x_goal_0=sub_goal_0_position,
             weight_goal_0=sub_goal_0_weight,
-            x_obst_0=obst1_position[0:2],
-            radius_obst_0=np.array([obst1.radius()]),
-            x_obst_1=obst2_position[0:2],
-            radius_obst_1=np.array([obst2.radius()]),
-            radius_body_1=np.array([0.2])
+            x_obst_0=obst1_position,
+            radius_obst_0=obst1.radius(),
+            x_obst_1=obst2_position,
+            radius_obst_1=obst2.radius(),
+            radius_body_base_link=0.2,
         )
         ob, *_ = env.step(action)
         vel_mag = np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])
