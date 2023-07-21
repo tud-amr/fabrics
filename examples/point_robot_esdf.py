@@ -42,8 +42,10 @@ def edf(pos, proj_rgb) -> tuple:
 
 def get_top_view_image(save=False, load_only=False):
     try:
-        proj_rgb = np.load("proj_rgb_point_robot.npy")
-        proj_depth = np.load("proj_depth_point_robot.npy")
+        rgb_file = os.path.dirname(os.path.abspath(__file__)) + "/proj_rgb_point_robot.npy"
+        depth_file = os.path.dirname(os.path.abspath(__file__)) + "/proj_depth_point_robot.npy"
+        proj_rgb = np.load(rgb_file)
+        proj_depth = np.load(depth_file)
     except FileNotFoundError as e:
         if load_only:
             raise(e)
@@ -97,8 +99,9 @@ def initalize_environment(render):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
+    urdf_file = os.path.dirname(os.path.abspath(__file__)) + "/point_robot.urdf"
     robots = [
-        GenericUrdfReacher(urdf="point_robot.urdf", mode="acc"),
+        GenericUrdfReacher(urdf=urdf_file, mode="acc"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
