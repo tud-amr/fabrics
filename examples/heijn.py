@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import os
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv

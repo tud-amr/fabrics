@@ -50,7 +50,6 @@ def test_movingGoalGeometry(movingGoalGeometry):
     geo_rel, geo, geo_fk = movingGoalGeometry
     # example computes
     geo.concretize()
-    geo_rel.concretize()
     geo_fk.concretize()
     x_0 = np.array([1.0, -1.0])
     xdot_0 = np.array([-0.0, 0.0])

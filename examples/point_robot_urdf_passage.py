@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
@@ -34,7 +34,7 @@ def initalize_environment(render):
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([0.0, 0.1, 0.0])
     vel0 = np.array([0.5, 0.0, 0.0])
-    initial_observation = env.reset(pos=pos0, vel=vel0)
+    env.reset(pos=pos0, vel=vel0)
     # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
@@ -67,7 +67,7 @@ def initalize_environment(render):
     for obst in obstacles:
         env.add_obstacle(obst)
     env.set_spaces()
-    return (env, obstacles, goal, initial_observation)
+    return (env, obstacles, goal)
 
 
 def set_planner(goal: GoalComposition):
@@ -121,8 +121,9 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
-    (env, obstacles, goal, initial_observation) = initalize_environment(render)
-    ob = initial_observation
+    env, obstacles, goal = initalize_environment(render)
+    action = np.zeros(3)
+    ob, *_ = env.step(action)
     obst1, obst2 = obstacles
     print(f"Initial observation : {ob}")
     action = np.array([0.0, 0.0, 0.0])
@@ -147,7 +148,7 @@ def run_point_robot_urdf(n_steps=10000, render=True):
             radius_obst_1=np.array([obst2.radius()]),
             radius_body_1=np.array([0.2])
         )
-        ob, *_, = env.step(action)
+        ob, *_ = env.step(action)
         vel_mag = np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])
         vel_mags.append(vel_mag)
         print(f"Velocity magnitude at {env.t()}: {np.linalg.norm(ob['robot_0']['joint_state']['velocity'][0:2])}")

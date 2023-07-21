@@ -1,7 +1,7 @@
 from copy import deepcopy
 import pdb
 import math
-import gym
+import gymnasium as gym
 import casadi as ca
 import logging
 import numpy as np
@@ -52,8 +52,10 @@ def edf(pos, proj_rgb) -> tuple:
 
 def get_top_view_image(save=False, load_only=False):
     try:
-        proj_rgb = np.load("proj_rgb_planar_arm.npy")
-        proj_depth = np.load("proj_depth_planar_arm.npy")
+        rgb_file = os.path.dirname(os.path.abspath(__file__)) + "/proj_rgb_planar_arm.npy"
+        depth_file = os.path.dirname(os.path.abspath(__file__)) + "/proj_depth_planar_arm.npy"
+        proj_rgb = np.load(rgb_file)
+        proj_depth = np.load(depth_file)
     except FileNotFoundError as e:
         if load_only:
             raise(e)
@@ -74,8 +76,9 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
+    urdf_file = os.path.dirname(os.path.abspath(__file__)) + "/planar_urdf_2_joints.urdf"
     robots = [
-        GenericUrdfReacher(urdf="planar_urdf_2_joints.urdf", mode="acc"),
+        GenericUrdfReacher(urdf=urdf_file, mode="acc"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",

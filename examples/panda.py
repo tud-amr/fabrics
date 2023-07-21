@@ -1,5 +1,5 @@
 import pdb
-import gym
+import gymnasium as gym
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
@@ -156,9 +156,9 @@ def run_panda_example(n_steps=5000, render=True):
     planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
-    env.add_collision_link(0, 3, 'sphere', [0.10])
-    env.add_collision_link(0, 4, 'sphere', [0.10])
-    env.add_collision_link(0, 7, 'sphere', [0.10])
+    env.add_collision_link(0, 3, shape_type='sphere', size=[0.10])
+    env.add_collision_link(0, 4, shape_type='sphere', size=[0.10])
+    env.add_collision_link(0, 7, shape_type='sphere', size=[0.10])
 
 
     for _ in range(n_steps):
