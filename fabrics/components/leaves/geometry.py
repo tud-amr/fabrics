@@ -1,9 +1,8 @@
 import casadi as ca
-import numpy as np
 
 from fabrics.components.maps.parameterized_maps import (
-    ParameterizedObstacleMap,
     ParameterizedPlaneConstraintMap,
+    SphereSphereMap,
 )
 from fabrics.diffGeometry.diffMap import DifferentialMap, ExplicitDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
@@ -149,13 +148,21 @@ class ObstacleLeaf(GenericGeometryLeaf):
             radius_body_name: radius_body_variable,
         }
         self._parent_variables.add_parameters(geo_parameters)
-        self._map = ParameterizedObstacleMap(
+#        self._map_old = ParameterizedObstacleMap(
+#            self._parent_variables,
+#            self._forward_kinematics,
+#            reference_variable,
+#            radius_variable,
+#            radius_body_variable,
+#        )
+        self._map = SphereSphereMap(
             self._parent_variables,
-            self._forward_kinematics,
             reference_variable,
-            radius_variable,
+            self._forward_kinematics,
             radius_body_variable,
+            radius_variable,
         )
+
 
 
 
