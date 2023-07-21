@@ -1,5 +1,10 @@
 import gymnasium as gym
 import os
+import numpy as np
+import quaternionic
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
@@ -7,8 +12,6 @@ from urdfenvs.sensors.full_sensor import FullSensor
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
-import numpy as np
-import quaternionic
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 # TODO: Angle cannot be read through the FullSensor
@@ -129,14 +132,16 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     # collision_geometry= "-0.1 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
     # collision_finsler= "0.1/(x**1) * xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/albert_polluted_2.urdf", "r") as file:
+    with open(absolute_path + "/albert_polluted_2.urdf", "r", encoding='utf-8') as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="panda_link0",
+        end_link=["panda_vacuum", "panda_vacuum_2"],
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        robot_type,
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link=['panda_vacuum_2', 'panda_vacuum'],
+        forward_kinematics,
     )
     panda_limits = [
             [-2.8973, 2.8973],

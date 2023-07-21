@@ -1,15 +1,18 @@
-import gymnasium as gym
 import os
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+
 from mpscenes.goals.goal_composition import GoalComposition
+from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-"""
-Fabrics example for a 3D heijn robot.
-"""
+
 absolute_path = os.path.dirname(os.path.abspath(__file__))
 urdf_file = absolute_path + "/heijn_robot.urdf" 
 
@@ -102,22 +105,24 @@ def set_planner(goal: GoalComposition):
     collision_finsler = "1.0/(x**1) * (1 - ca.heaviside(xdot))* xdot**2"
     with open(urdf_file, 'r') as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink='odom',
+        end_link=[
+            'front_link',
+            'collision_link_front_right',
+            'collision_link_front_left',
+            'collision_link_center_right',
+            'collision_link_center_left',
+            'collision_link_rear_right',
+            'collision_link_rear_left',
+        ],
+    )
     planner = ParameterizedFabricPlanner(
-            degrees_of_freedom,
-            urdf=urdf,
-            robot_type='heijn',
-            root_link='odom',
-            end_link=[
-                'front_link',
-                'collision_link_front_right',
-                'collision_link_front_left',
-                'collision_link_center_right',
-                'collision_link_center_left',
-                'collision_link_rear_right',
-                'collision_link_rear_left',
-            ],
-            collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler
+        degrees_of_freedom,
+        forward_kinematics,
+        collision_geometry=collision_geometry,
+        collision_finsler=collision_finsler
     )
     collision_links = [
         'collision_link_front_right',

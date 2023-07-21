@@ -1,16 +1,20 @@
-import logging
 import os
-
+import logging
 import gymnasium as gym
 import numpy as np
+from scipy import ndimage
+import pybullet as p
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
+
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
+
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-import pybullet as p
-from scipy import ndimage
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -171,21 +175,21 @@ def set_planner(goal: GoalComposition):
         The goal to the motion planning problem.
     """
     degrees_of_freedom = 3
-    robot_type = "xyz"
-    # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
+    absolute_path = os.path.dirname(os.path.abspath(__file__))
+    with open(absolute_path + "/point_robot.urdf", "r", encoding="utf-8") as file:
+        urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="world",
+        end_link="base_link",
+    )
     collision_geometry = "-0.8 / (x ** 2) * xdot ** 2"
     collision_finsler = "0.5/(x ** 2) * (1 - ca.heaviside(xdot))* xdot**2"
-    absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/point_robot.urdf", "r") as file:
-        urdf = file.read()
     planner = ParameterizedFabricPlanner(
-            degrees_of_freedom,
-            robot_type,
-            urdf=urdf,
-            root_link='world',
-            end_link='base_link',
-            collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler
+        degrees_of_freedom,
+        forward_kinematics,
+        collision_geometry=collision_geometry,
+        collision_finsler=collision_finsler
     )
     collision_links_esdf = ['base_link']
     planner.set_components(
