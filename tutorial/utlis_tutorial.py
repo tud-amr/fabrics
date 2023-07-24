@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.rcParams['figure.dpi'] = 200                    # figure dpi
-plt.rcParams["font.family"] = "Times New Roman"     # font style
+plt.rcParams['figure.dpi'] = 200  # figure dpi
 
 
 # animation

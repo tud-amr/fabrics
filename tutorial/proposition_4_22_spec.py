@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import *
+from utlis_tutorial import update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -158,14 +158,14 @@ def main():
     energies_en = spec.energies(sol_en)
     plotEnergies(energies, ax[1][0], t)
     plotEnergies(energies_en, ax[1][1], t)
-    ani_data = [
+    animation_data = [
         [line, line2],
         [point, point2],
         [{'x': x, 'y': y}, {'x': x2, 'y': y2}]
     ]
     ani = animation.FuncAnimation(
         fig, update, len(x),
-        fargs=ani_data,
+        fargs=animation_data,
         interval=25, blit=True
     )
     plt.show()
