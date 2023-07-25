@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.8.1"
+version = "0.8.2"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 readme = "README.md"
@@ -16,7 +16,7 @@ geomdl = "^5.3.1"
 pyquaternion = "^0.9.9"
 pickle-mixin = "^1.0.2"
 quaternionic = "^1.0.0"
-forwardkinematics = "^1.0"
+forwardkinematics = "^1"
 mpscenes = "^0.4"
 pynput = "^1.7.6"
 

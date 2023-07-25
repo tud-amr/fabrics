@@ -968,14 +968,14 @@ woff = ["brotli (>=1.0.1)", "brotlicffi (>=0.8.0)", "zopfli (>=0.1.4)"]
 
 [[package]]
 name = "forwardkinematics"
-version = "1.1.1"
+version = "1.1.3"
 description = "\"Light-weight implementation of forward kinematics using casadi.\""
 category = "main"
 optional = false
 python-versions = ">=3.8,<3.10"
 files = [
-    {file = "forwardkinematics-1.1.1-py3-none-any.whl", hash = "sha256:f80f8dead126ffac3fd3ac91a671f044e3c33a8c7c08440e58262503bdf7fadd"},
-    {file = "forwardkinematics-1.1.1.tar.gz", hash = "sha256:77c17705f45ae2f935c6932db1ca26daeaebf36fd425de8540b7fdb4b6878e3d"},
+    {file = "forwardkinematics-1.1.3-py3-none-any.whl", hash = "sha256:d2d91d422c1ad09316f641ff078eccfc8e91e6910e6a735f01550d40023c608e"},
+    {file = "forwardkinematics-1.1.3.tar.gz", hash = "sha256:bb9dd79721b313274c811400eb65a9ca8c1efe23a31bca4d83ab725c8d033345"},
 ]
 
 [package.dependencies]
@@ -4478,4 +4478,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.10"
-content-hash = "e6bd4fda592c564b02ba90a736d306ed5624813b5a4b40a45a08ed4a12bf4b65"
+content-hash = "0f194cccf180b77a87882ff2d942267c7d6cc680eb95257ab01778fccb99ee46"

@@ -15,7 +15,7 @@ from urdfenvs.sensors.full_sensor import FullSensor
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
-import pybullet as p
+import pybullet
 from scipy import ndimage
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
@@ -62,7 +62,9 @@ def get_top_view_image(save=False, load_only=False):
             raise(e)
         width_res = 130
         height_res = 100
-        img = p.getCameraImage(width_res, height_res, renderer=p.ER_BULLET_HARDWARE_OPENGL)
+        img = pybullet.getCameraImage(
+            width_res, height_res, renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
+        )
         proj_rgb = np.reshape(img[2], (height_res, width_res, 4)) * 1. / 255.
         proj_depth = img[3]
         if save:
@@ -179,7 +181,7 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
     action = -np.zeros(env.n())
     ob, *_ = env.step(action)
     if render:
-        p.resetDebugVisualizerCamera(5, 90, 0, [0, 0, 0])
+        env.reconfigure_camera(5.0, 90.0, 0.0, (0.0, 0.0, 0.0))
         input("Make sure that the pybullet window is in default window size. Then press any key.")
         proj_rgb, proj_depth = get_top_view_image(save=True)
 
@@ -187,8 +189,11 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
         ob_robot = ob['robot_0']
         pos_joints = ob_robot['joint_state']['position'][0:2]
 
-        pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
-        pos_link4 = pos_link4_fun(pos_joints)[1:3, 3]  # only return (y, z)
+        #pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
+        #pos_link4 = pos_link4_fun(pos_joints)[1:3, 3]  # only return (y, z)
+        pos_link4 = planner._forward_kinematics.numpy(
+            pos_joints, 'panda_link0', 'panda_link4', positionOnly=True
+        )[1:3]
         proj_rgb, _ = get_top_view_image(save=False, load_only=True)
         edf_phi, edf_gradient_x, edf_gradient_y = edf(
             pos_link4,
