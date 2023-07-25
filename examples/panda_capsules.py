@@ -143,7 +143,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     return planner
 
 
-def run_panda_example(n_steps=5000, render=True):
+def run_panda_capsule_example(n_steps=5000, render=True):
     (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
     action = np.zeros(7)
@@ -178,4 +178,4 @@ def run_panda_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    res = run_panda_capsule_example(n_steps=5000)
