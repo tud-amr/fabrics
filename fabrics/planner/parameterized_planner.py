@@ -302,15 +302,21 @@ class ParameterizedFabricPlanner(object):
             self,
             obstacle_name: str,
             capsule_name: str,
-            forward_kinematics_center_1: ca.SX,
-            forward_kinematics_center_2: ca.SX,
+            tf_capsule_origin: ca.SX,
+            capsule_length: float
             ) -> None:
+        tf_origin_center_0 = np.identity(4)
+        tf_origin_center_0[2][3] = capsule_length / 2
+        tf_center_0 = ca.mtimes(tf_capsule_origin, tf_origin_center_0)
+        tf_origin_center_1 = np.identity(4)
+        tf_origin_center_1[2][3] = - capsule_length / 2
+        tf_center_1 = ca.mtimes(tf_capsule_origin, tf_origin_center_1)
         capsule_sphere_leaf = CapsuleSphereLeaf(
             self._variables,
             capsule_name,
             obstacle_name,
-            forward_kinematics_center_1,
-            forward_kinematics_center_2,
+            tf_center_0[0:3,3],
+            tf_center_1[0:3,3],
         )
         capsule_sphere_leaf.set_geometry(self.config.collision_geometry)
         capsule_sphere_leaf.set_finsler_structure(self.config.collision_finsler)
