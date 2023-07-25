@@ -1,6 +1,7 @@
 import casadi as ca
 
 from fabrics.components.maps.parameterized_maps import (
+    CapsuleSphereMap,
     ParameterizedPlaneConstraintMap,
     SphereSphereMap,
 )
@@ -13,6 +14,13 @@ from fabrics.helpers.functions import parse_symbolic_input
 
 
 class GenericGeometryLeaf(Leaf):
+
+    def extract_or_create_variable(self, variable_name: str, variable_dimension: int) -> ca.SX:
+        if variable_name in self._parent_variables.parameters():
+            return self._parent_variables.parameters()[variable_name]
+        else:
+            return ca.SX.sym(variable_name, variable_dimension)
+
     def set_geometry(self, geometry: str) -> None:
         """
         Sets the geometry from a string.
@@ -274,5 +282,51 @@ class PlaneConstraintGeometryLeaf(GenericGeometryLeaf):
             constraint_variable,
             radius_body_variable
         )
+
+class CapsuleSphereLeaf(GenericGeometryLeaf):
+    def __init__(
+        self,
+        parent_variables: Variables,
+        capsule_name: str,
+        sphere_name: str,
+        capsule_center_1: ca.SX,
+        capsule_center_2: ca.SX,
+    ):
+        super().__init__(
+            parent_variables, f"{capsule_name}_{sphere_name}_leaf", None
+        )
+        self._capsule_centers = [
+            capsule_center_1,
+            capsule_center_2,
+        ]
+        self._capsule_name = capsule_name
+        self._sphere_name = sphere_name
+        self.set_forward_map()
+
+
+    def set_forward_map(self):
+        sphere_radius_name = f"radius_{self._sphere_name}"
+        sphere_center_name = f"x_{self._sphere_name}"
+        capsule_radius_name = f"radius_{self._capsule_name}"
+        obstacle_dimension = self._capsule_centers[0].size()[0]
+        sphere_radius = self.extract_or_create_variable(sphere_radius_name, 1)
+        capsule_radius = self.extract_or_create_variable(capsule_radius_name, 1)
+        sphere_center = self.extract_or_create_variable(sphere_center_name, obstacle_dimension)
+        geo_parameters = {
+            sphere_radius_name: sphere_radius,
+            capsule_radius_name: capsule_radius,
+            sphere_center_name: sphere_center,
+        }
+        self._parent_variables.add_parameters(geo_parameters)
+        self._map = CapsuleSphereMap(
+            self._parent_variables,
+            self._capsule_centers,
+            sphere_center,
+            capsule_radius,
+            sphere_radius,
+        )
+
+
+
 
 

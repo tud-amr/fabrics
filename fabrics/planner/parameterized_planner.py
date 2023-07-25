@@ -26,7 +26,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
+from fabrics.components.leaves.geometry import CapsuleSphereLeaf, ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
@@ -297,6 +297,27 @@ class ParameterizedFabricPlanner(object):
                 positionOnly=True
             )
         return fk
+
+    def add_capsule_sphere_geometry(
+            self,
+            obstacle_name: str,
+            capsule_name: str,
+            forward_kinematics_center_1: ca.SX,
+            forward_kinematics_center_2: ca.SX,
+            ) -> None:
+        capsule_sphere_leaf = CapsuleSphereLeaf(
+            self._variables,
+            capsule_name,
+            obstacle_name,
+            forward_kinematics_center_1,
+            forward_kinematics_center_2,
+        )
+        capsule_sphere_leaf.set_geometry(self.config.collision_geometry)
+        capsule_sphere_leaf.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(capsule_sphere_leaf)
+
+
+
 
     def add_spherical_obstacle_geometry(
             self,
