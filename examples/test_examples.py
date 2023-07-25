@@ -4,6 +4,11 @@ def test_panda_example():
     res = run_panda_example(10, render=False)
     assert isinstance(res, dict)
 
+def test_panda_capsule_example():
+    from panda_capsules import run_panda_capsule_example
+    res = run_panda_capsule_example(10, render=False)
+    assert isinstance(res, dict)
+
 def test_panda_ring_example():
     from panda_ring import run_panda_ring_example
     res = run_panda_ring_example(n_steps=10, render=False, serialize=True)

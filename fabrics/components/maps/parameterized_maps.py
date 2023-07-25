@@ -1,7 +1,9 @@
+from typing import List
 import casadi as ca
 from fabrics.diffGeometry.diffMap import (
     DifferentialMap,
 )
+from fabrics.helpers.distances import capsule_to_sphere, sphere_to_plane
 from fabrics.helpers.variables import Variables
 
 
@@ -13,20 +15,50 @@ class ParameterizedGoalMap(DifferentialMap):
 class ParameterizedGeometryMap(DifferentialMap):
     pass
 
-class ParameterizedObstacleMap(ParameterizedGeometryMap):
+
+class SphereSphereMap(ParameterizedGeometryMap):
     def __init__(
         self,
         var: Variables,
-        fk,
-        reference_variable,
-        radius_variable,
-        radius_body_variable,
+        sphere_1_position: ca.SX,
+        sphere_2_position: ca.SX,
+        sphere_1_radius : ca.SX,
+        sphere_2_radius : ca.SX,
     ):
         phi = (
-            ca.norm_2(fk - reference_variable)
-            / (radius_variable + radius_body_variable)
+            ca.norm_2(sphere_1_position - sphere_2_position)
+            / (sphere_1_radius + sphere_2_radius)
             - 1
         )
+        super().__init__(phi, var)
+
+
+class CapsuleSphereMap(ParameterizedGeometryMap):
+    def __init__(
+        self,
+        var: Variables,
+        capsule_centers: List[ca.SX],
+        sphere_center: ca.SX,
+        capsule_radius: ca.SX,
+        sphere_radius: ca.SX,
+    ):
+        phi = capsule_to_sphere(
+            capsule_centers, sphere_center, capsule_radius, sphere_radius
+        )
+        super().__init__(phi, var)
+
+
+
+class PlaneSphereMap(ParameterizedGeometryMap):
+    def __init__(
+        self,
+        var: Variables,
+        sphere_center: ca.SX,
+        sphere_radius: ca.SX,
+        constraint: ca.SX,
+    ):
+        phi = sphere_to_plane(sphere_center, constraint, sphere_radius)
+
         super().__init__(phi, var)
 
 class ParameterizedPlaneConstraintMap(ParameterizedGeometryMap):
@@ -39,12 +71,6 @@ class ParameterizedPlaneConstraintMap(ParameterizedGeometryMap):
     ):
         phi = ca.fabs(ca.dot(constraint_variable[0:3], fk) + constraint_variable[3]) / ca.norm_2(constraint_variable[0:3]) - radius_body_variable
 
-        #phi = ca.fabs(a*x + b*y + c*z + d) / ((a**2 + b**2 + c**2)**0.5)
-        #phi = (
-        #    ca.norm_2(fk - reference_variable)
-        #    / (radius_variable + radius_body_variable)
-        #    - 1
-        #)
         super().__init__(phi, var)
 
 
