@@ -136,7 +136,7 @@ def plotEnergies(energies, ax, t):
     ax.plot(t, energies)
 
 def main():
-    # setup
+    # setup 
     spec = ConservativeSpec()
     gen = Generator()
     w0 = 1.0
