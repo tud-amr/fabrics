@@ -3,6 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
+from tutorial_utils import plot_trajectory, plot_energies, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -11,11 +12,11 @@ qdot = ca.SX.sym("qdot", n)
 
 r = ca.norm_2(q)
 a = ca.arctan2(q[1], q[0])
-w = ca.norm_2(qdot)/ca.norm_2(q)
+w = ca.norm_2(qdot) / ca.norm_2(q)
 h = ca.SX.sym("h", 2)
 b = r
-h[0] = b * r * w**2 * ca.cos(a)
-h[1] = b * r * w**2 * ca.sin(a)
+h[0] = b * r * w ** 2 * ca.cos(a)
+h[1] = b * r * w ** 2 * ca.sin(a)
 h_fun = ca.Function("h", [q, qdot], [h])
 
 
@@ -34,23 +35,25 @@ def generateLagrangian(Lg, name):
     f_e = -dL_dq
     f = ca.mtimes(ca.transpose(F), qdot) + f_e
 
-    M_fun = ca.Function("M_" + name , [q, qdot], [M])
+    M_fun = ca.Function("M_" + name, [q, qdot], [M])
     f_fun = ca.Function("f_" + name, [q, qdot], [f])
     return (L_fun, M_fun, f_fun)
+
 
 Lg = ca.norm_2(qdot)
 (Lex, Mex, fex) = generateLagrangian(Lg, "ex")
 
 q0 = np.array([2.0, -0.5])
-Lg = ca.norm_2(qdot) * 1/ca.norm_2(q - q0)**2
+Lg = ca.norm_2(qdot) * 1 / ca.norm_2(q - q0) ** 2
 (Le, Me, fe) = generateLagrangian(Lg, "e")
 
 # forcing potential
 qd = np.array([-2, -2])
-psi = ca.norm_2(q - qd) * ca.norm_2(qdot)
+# psi = ca.norm_2(q - qd) * ca.norm_2(qdot)
 psi = 0.07 * ca.norm_2(q - qd)
 der_psi = ca.gradient(psi, q)
 der_psi_fun = ca.Function("der_psi", [q, qdot], [der_psi])
+
 
 class Energy(object):
 
@@ -80,8 +83,9 @@ class Energy(object):
         self.update(q, qdot)
         a1 = np.dot(qdot, np.dot(self._Me, qdot))
         a2 = np.dot(qdot, np.dot(self._Me, h) - self._fe)
-        alpha = a2/a1
+        alpha = a2 / a1
         return alpha
+
 
 class ForcingPotential(object):
     def __init__(self, M_fun):
@@ -95,6 +99,7 @@ class ForcingPotential(object):
 
     def derPsi(self):
         return np.linalg.solve(self._M, self._dPsi)[:, 0]
+
 
 class SpeedController(object):
     def __init__(self, execEnergy, metricEnergy):
@@ -111,23 +116,23 @@ class SpeedController(object):
         self._a_le = self._metricEnergy.alpha(h, q, qdot)
         # interpolation
         eta = 0.050
-        self._alpha_ex = eta * self._a_ex0 +  (1 - eta) * self._a_expsi
+        self._alpha_ex = eta * self._a_ex0 + (1 - eta) * self._a_expsi
         return self._alpha_ex
 
     def beta(self):
         return max(0.0, 1.05 * (self._alpha_ex - self._a_le))
 
-class Geometry(object):
 
+class Geometry(object):
     """Geometry as in Optimization fabrics
         xddot + h(x, xdot) = 0
     """
 
-    def __init__(self, Le = None, Forcing=None, SpeedController=None):
+    def __init__(self, Le=None, Forcing=None, SpeedController=None):
         self._n = 2
         self._h = np.zeros(n)
         self._rhs = np.zeros(n)
-        self._rhs_aug = np.zeros(2*n)
+        self._rhs_aug = np.zeros(2 * n)
         self._q = np.zeros(n)
         self._qdot = np.zeros(n)
         self._forcing = Forcing
@@ -165,7 +170,7 @@ class Geometry(object):
 
     def contDynamics(self, z, t):
         self._q = z[0:n]
-        self._qdot = z[n:2*n]
+        self._qdot = z[n:2 * n]
         self.setRHS()
         if self._forcing:
             self.force()
@@ -181,28 +186,6 @@ class Geometry(object):
         sol, info = odeint(self.contDynamics, z0, t, full_output=True)
         return sol
 
-def update(num, x1, x2, x3, y1, y2, y3, line1, line2, line3,  point1, point2, point3):
-    start = max(0, num - 100)
-    line1.set_data(x1[start:num], y1[start:num])
-    point1.set_data(x1[num], y1[num])
-    line2.set_data(x2[start:num], y2[start:num])
-    point2.set_data(x2[num], y2[num])
-    line3.set_data(x3[start:num], y3[start:num])
-    point3.set_data(x3[num], y3[num])
-    return line1, point1, line2, point2, line3, point3
-
-def plotTraj(sol, ax, fig):
-    x = sol[:, 0]
-    y = sol[:, 1]
-    ax.set_xlim([-4, 4])
-    ax.set_ylim([-4, 4])
-    ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k")
-    (point,) = ax.plot(x, y, "rx")
-    return (x, y, line, point)
-
-def plotEnergies(energies, ax, t):
-    ax.plot(t, energies)
 
 def main():
     # setup 
@@ -212,11 +195,11 @@ def main():
     speedController = SpeedController(lex, le)
     geo1 = Geometry(Le=le)
     geo2 = Geometry(Le=lex)
-    #geo3 = Geometry(Le=lex, Forcing=forcing)
+    # geo3 = Geometry(Le=lex, Forcing=forcing)
     geo3 = Geometry(Forcing=forcing, SpeedController=speedController)
     w0 = 1.0
     r0 = 2.0
-    a0 = 1.0/3.0 * np.pi
+    a0 = 1.0 / 3.0 * np.pi
     q0 = r0 * np.array([np.cos(a0), np.sin(a0)])
     q0_dot = np.array([-r0 * w0 * np.sin(a0), r0 * w0 * np.cos(a0)])
     t = np.arange(0.0, 20.00, 0.01)
@@ -234,9 +217,9 @@ def main():
     ax[0][0].set_title("Constant Finsler energy")
     ax[0][1].set_title("Constant kinetic energy")
     ax[0][2].set_title("Speed controlled")
-    (x, y, line, point) = plotTraj(sol1, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol2, ax[0][1], fig)
-    (x3, y3, line3, point3) = plotTraj(sol3, ax[0][2], fig)
+    (x, y, line, point) = plot_trajectory(sol1, ax[0][0])
+    (x2, y2, line2, point2) = plot_trajectory(sol2, ax[0][1])
+    (x3, y3, line3, point3) = plot_trajectory(sol3, ax[0][2])
     ax[0][2].plot(qd[0], qd[1], 'go')
     energies1_e = le.energies(sol1)
     energies2_e = le.energies(sol2)
@@ -244,23 +227,28 @@ def main():
     energies1_ex = lex.energies(sol1)
     energies2_ex = lex.energies(sol2)
     energies3_ex = lex.energies(sol3)
-    plotEnergies(energies1_e, ax[1][0], t)
-    plotEnergies(energies2_e, ax[1][1], t)
-    plotEnergies(energies3_e, ax[1][2], t)
-    plotEnergies(energies1_ex, ax[1][0], t)
-    plotEnergies(energies2_ex, ax[1][1], t)
-    plotEnergies(energies3_ex, ax[1][2], t)
+    plot_energies(energies1_e, ax[1][0], t)
+    plot_energies(energies2_e, ax[1][1], t)
+    plot_energies(energies3_e, ax[1][2], t)
+    plot_energies(energies1_ex, ax[1][0], t)
+    plot_energies(energies2_ex, ax[1][1], t)
+    plot_energies(energies3_ex, ax[1][2], t)
     ax[1][0].legend(["Le", "Le"])
     ax[1][1].legend(["Le", "Le"])
     ax[1][2].legend(["Le", "Le"])
+    animation_data = [
+        [line, line2, line3],
+        [point, point2, point3],
+        [{'x': x, 'y': y}, {'x': x2, 'y': y2}, {'x': x3, 'y': y3}]
+    ]
     ani = animation.FuncAnimation(
         fig, update, len(x),
-        fargs=[x, x2, x3, y, y2, y3, line, line2, line3, point, point2, point3],
-        interval=10, blit=True
+        fargs=animation_data,
+        interval=25, blit=True
     )
     plt.show()
 
 
 if __name__ == "__main__":
-    #cProfile.run('main()', 'restats_with')
+    # cProfile.run('main()', 'restats_with')
     main()
