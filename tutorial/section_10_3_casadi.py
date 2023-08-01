@@ -1,10 +1,8 @@
-import pdb
 import numpy as np
-from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, update, plotMultipleTraj
+from tutorial_utils import plot_trajectory, update, plot_multiple_trajectories
 
 EPS = 1e-5
 
@@ -255,10 +253,10 @@ def main():
     fig.suptitle("Example for goal attraction")
     ax[0].set_title("No Damping")
     ax[1].set_title("With Damping")
-    plotMultipleTraj(sols[0], ax[0], fig, int(T / 0.01 / 25))
-    plotMultipleTraj(sols[1], ax[1], fig, int(T / 0.01 / 25))
-    (x, y, line, point) = plotTraj(sol1, ax[0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol2, ax[1], fig)
+    plot_multiple_trajectories(sols[0], ax[0], int(T / 0.01 / 25))
+    plot_multiple_trajectories(sols[1], ax[1], int(T / 0.01 / 25))
+    (x, y, line, point) = plot_trajectory(sol1, ax[0])
+    (x2, y2, line2, point2) = plot_trajectory(sol2, ax[1])
     animation_data = [
         [line, line2],
         [point, point2],

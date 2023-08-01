@@ -16,37 +16,37 @@ def update(num, lines, points, coords):
     return outputs
 
 
-def plotEnergies(energies, ax, t, equal=False, name=None):
+def plot_energies(energies, ax, t, equal=False, name=None):
     if equal:
         ax.plot(t, energies)
-        ax.axis("equal")
+        ax.axis('equal')
     elif name is not None:
         ax.plot(t, energies, label=name)
-        ax.legend(loc="upper right")
+        ax.legend(loc='upper right')
     else:
         ax.plot(t, energies)
 
 
-def plotVelo(velo, ax, fig, name="", equal=None):
-    ax.plot(np.arange(len(velo)), velo, "-", label=name)
-    ax.legend(loc="upper right")
+def plot_velocity(velocity, ax, name='', equal=None):
+    ax.plot(np.arange(len(velocity)), velocity, '-', label=name)
+    ax.legend(loc='upper right')
     if equal:
-        ax.axis("equal")
+        ax.axis('equal')
 
 
-def plotTraj(sol: np.ndarray, ax, fig, ani=True):
+def plot_trajectory(sol: np.ndarray, ax, ani=True):
     x = sol[:, 0]
     y = sol[:, 1]
     ax.set_xlim([-4, 4])
     ax.set_ylim([-4, 4])
     ax.plot(x, y, linewidth=1)
     if ani:
-        (line,) = ax.plot(x, y, color="k", linewidth=1)
-        (point,) = ax.plot(x, y, "r*", markersize=10)
+        (line,) = ax.plot(x, y, color='k', linewidth=1)
+        (point,) = ax.plot(x, y, 'r*', markersize=10)
         return x, y, line, point
 
 
-def plotPolarTraj(sol, ax, fig):
+def plot_polar_trajectory(sol, ax):
     r = sol[:, 0]
     theta = sol[:, 1]
     x = r * np.cos(theta)
@@ -54,23 +54,25 @@ def plotPolarTraj(sol, ax, fig):
     ax.set_xlim([-4, 4])
     ax.set_ylim([-4, 4])
     ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k", linewidth=1)
-    (point,) = ax.plot(x, y, "r*", markersize=10)
+    (line,) = ax.plot(x, y, color='k', linewidth=1)
+    (point,) = ax.plot(x, y, 'r*', markersize=10)
     return x, y, line, point
 
 
-def plotMultipleTraj(sols: list, ax, fig, pos: int):
+def plot_multiple_trajectories(sols: list, ax, pos: int):
     """ pos is the position of arrows related to time length"""
     for sol in sols:
         x = sol[:, 0]
         y = sol[:, 1]
         ax.set_xlim([-4.5, 4.5])
         ax.set_ylim([-4.5, 4.5])
-        ax.plot([x[0]], [y[0]], "ko")
+        ax.plot([x[0]], [y[0]], 'ko')
         ax.plot(x, y)
         ax.annotate('',
                     xy=(x[pos + 2], y[pos + 2]), xycoords='data',
                     xytext=(x[pos], y[pos]), textcoords='data',
-                    arrowprops=dict(arrowstyle="fancy, head_width=0.5, head_length=0.9, tail_width=0.5",
-                                    connectionstyle="arc3", facecolor='black', alpha=0.4),
+                    arrowprops={
+                        'arrowstyle': 'fancy, head_width=0.5, head_length=0.9,'' tail_width=0.5',
+                        'connectionstyle': 'arc3', 'facecolor': 'black', 'alpha': 0.4
+                    },
                     )

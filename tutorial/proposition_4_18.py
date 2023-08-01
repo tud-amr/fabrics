@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, plotEnergies, update
+from tutorial_utils import plot_trajectory, plot_energies, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -189,15 +189,15 @@ def main():
     ax[0][0].set_title("Pure conservative spec")
     ax[0][1].set_title("Forced conservative spec")
     ax[0][2].set_title("Forced and damped conservative Spec")
-    (x, y, line, point) = plotTraj(sol, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol_force, ax[0][1], fig)
-    (x3, y3, line3, point3) = plotTraj(sol_dam, ax[0][2], fig)
+    (x, y, line, point) = plot_trajectory(sol, ax[0][0])
+    (x2, y2, line2, point2) = plot_trajectory(sol_force, ax[0][1])
+    (x3, y3, line3, point3) = plot_trajectory(sol_dam, ax[0][2])
     energies = spec.energies(sol)
     energies_force = spec.energies(sol_force)
     energies_dam = spec.energies(sol_dam)
-    plotEnergies(energies, ax[1][0], t)
-    plotEnergies(energies_force, ax[1][1], t)
-    plotEnergies(energies_dam, ax[1][2], t)
+    plot_energies(energies, ax[1][0], t)
+    plot_energies(energies_force, ax[1][1], t)
+    plot_energies(energies_dam, ax[1][2], t)
     animation_data = [
         [line, line2, line3],
         [point, point2, point3],

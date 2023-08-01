@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, plotEnergies, update
+from tutorial_utils import plot_trajectory, plot_energies, update
 
 """ pull back of energized, generic generator
 PAY ATTENTION TO THE DEFINITION OF PHI
@@ -290,15 +290,15 @@ def main():
     ax[0][0].set_title("Energized")
     ax[0][1].set_title("Energized and pulled")
     ax[0][2].set_title("Pulled and energized")
-    (x, y, line, point) = plotTraj(sol, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol_p_t, ax[0][1], fig)
-    (x3, y3, line3, point3) = plotTraj(sol_p2_t, ax[0][2], fig)
+    (x, y, line, point) = plot_trajectory(sol, ax[0][0])
+    (x2, y2, line2, point2) = plot_trajectory(sol_p_t, ax[0][1])
+    (x3, y3, line3, point3) = plot_trajectory(sol_p2_t, ax[0][2])
     energies = le.energies(sol)
     energies_p = le.energies(sol_p_t)
     energies_p2 = le.energies(sol_p2_t)
-    plotEnergies(energies, ax[1][0], t)
-    plotEnergies(energies_p, ax[1][1], t)
-    plotEnergies(energies_p2, ax[1][2], t)
+    plot_energies(energies, ax[1][0], t)
+    plot_energies(energies_p, ax[1][1], t)
+    plot_energies(energies_p2, ax[1][2], t)
     animation_data = [
         [line, line2, line3],
         [point, point2, point3],

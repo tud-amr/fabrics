@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, update, plotMultipleTraj
+from tutorial_utils import plot_trajectory, update, plot_multiple_trajectories
 
 m = 2
 # q are the root coordinates q = [x, y]
@@ -126,12 +126,12 @@ def main():
     ax[0].add_patch(obst1)
     ax[1].add_patch(obst2)
     ax[2].add_patch(obst3)
-    plotMultipleTraj(sols[0], ax[0], fig, int(len(t)/50))
-    plotMultipleTraj(sols[1], ax[1], fig, int(len(t)/50))
-    plotMultipleTraj(sols[2], ax[2], fig, int(len(t)/50))
-    (x, y, line, point) = plotTraj(sol1, ax[0], fig, ani=True)
-    (x2, y2, line2, point2) = plotTraj(sol2, ax[1], fig, ani=True)
-    (x3, y3, line3, point3) = plotTraj(sol3, ax[2], fig, ani=True)
+    plot_multiple_trajectories(sols[0], ax[0], int(len(t) / 50))
+    plot_multiple_trajectories(sols[1], ax[1], int(len(t) / 50))
+    plot_multiple_trajectories(sols[2], ax[2], int(len(t) / 50))
+    (x, y, line, point) = plot_trajectory(sol1, ax[0], ani=True)
+    (x2, y2, line2, point2) = plot_trajectory(sol2, ax[1], ani=True)
+    (x3, y3, line3, point3) = plot_trajectory(sol3, ax[2], ani=True)
     animation_data = [
         [line, line2, line3],
         [point, point2, point3],

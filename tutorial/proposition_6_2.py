@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotPolarTraj, update
+from tutorial_utils import plot_polar_trajectory, update
 
 n = 2
 m = 2
@@ -189,9 +189,9 @@ def main():
     # ax[0][0].add_patch(obst1)
     ax[0][1].add_patch(obst2)
     ax[1][0].add_patch(obst3)
-    (x, y, line, point) = plotPolarTraj(sol1, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotPolarTraj(sol2, ax[0][1], fig)
-    (x3, y3, line3, point3) = plotPolarTraj(sol3, ax[1][0], fig)
+    (x, y, line, point) = plot_polar_trajectory(sol1, ax[0][0])
+    (x2, y2, line2, point2) = plot_polar_trajectory(sol2, ax[0][1])
+    (x3, y3, line3, point3) = plot_polar_trajectory(sol3, ax[1][0])
     animation_data = [
         [line, line2, line3],
         [point, point2, point3],

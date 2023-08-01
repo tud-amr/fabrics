@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, plotEnergies, update
+from tutorial_utils import plot_trajectory, plot_energies, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -137,12 +137,12 @@ def main():
     fig.suptitle("Bending a Finsler energy")
     ax[0][0].set_title("Pure Conservative Spec")
     ax[0][1].set_title("Added Nominal Geometry")
-    (x, y, line, point) = plotTraj(sol, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol_en, ax[0][1], fig)
+    (x, y, line, point) = plot_trajectory(sol, ax[0][0])
+    (x2, y2, line2, point2) = plot_trajectory(sol_en, ax[0][1])
     energies = spec.energies(sol)
     energies_en = spec.energies(sol_en)
-    plotEnergies(energies, ax[1][0], t)
-    plotEnergies(energies_en, ax[1][1], t)
+    plot_energies(energies, ax[1][0], t)
+    plot_energies(energies_en, ax[1][1], t)
     animation_data = [
         [line, line2],
         [point, point2],

@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, plotEnergies, update
+from tutorial_utils import plot_trajectory, plot_energies, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -217,9 +217,9 @@ def main():
     ax[0][0].set_title("Constant Finsler energy")
     ax[0][1].set_title("Constant kinetic energy")
     ax[0][2].set_title("Speed controlled")
-    (x, y, line, point) = plotTraj(sol1, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol2, ax[0][1], fig)
-    (x3, y3, line3, point3) = plotTraj(sol3, ax[0][2], fig)
+    (x, y, line, point) = plot_trajectory(sol1, ax[0][0])
+    (x2, y2, line2, point2) = plot_trajectory(sol2, ax[0][1])
+    (x3, y3, line3, point3) = plot_trajectory(sol3, ax[0][2])
     ax[0][2].plot(qd[0], qd[1], 'go')
     energies1_e = le.energies(sol1)
     energies2_e = le.energies(sol2)
@@ -227,12 +227,12 @@ def main():
     energies1_ex = lex.energies(sol1)
     energies2_ex = lex.energies(sol2)
     energies3_ex = lex.energies(sol3)
-    plotEnergies(energies1_e, ax[1][0], t)
-    plotEnergies(energies2_e, ax[1][1], t)
-    plotEnergies(energies3_e, ax[1][2], t)
-    plotEnergies(energies1_ex, ax[1][0], t)
-    plotEnergies(energies2_ex, ax[1][1], t)
-    plotEnergies(energies3_ex, ax[1][2], t)
+    plot_energies(energies1_e, ax[1][0], t)
+    plot_energies(energies2_e, ax[1][1], t)
+    plot_energies(energies3_e, ax[1][2], t)
+    plot_energies(energies1_ex, ax[1][0], t)
+    plot_energies(energies2_ex, ax[1][1], t)
+    plot_energies(energies3_ex, ax[1][2], t)
     ax[1][0].legend(["Le", "Le"])
     ax[1][1].legend(["Le", "Le"])
     ax[1][2].legend(["Le", "Le"])

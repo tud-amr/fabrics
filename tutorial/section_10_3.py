@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, update, plotEnergies, plotMultipleTraj
+from tutorial_utils import plot_trajectory, update, plot_energies, plot_multiple_trajectories
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -246,11 +246,11 @@ def main():
     fig.suptitle("Baseline Geometry and Goal-Reaching Optimization")
     ax[0][0].set_title("Baseline Geometry")
     ax[0][1].set_title("Goal-reaching Optimization")
-    plotMultipleTraj(sols[0], ax[0][0], fig, int(len(t) / 25))
-    plotMultipleTraj(sols[1], ax[0][1], fig, int(len(t) / 25))
-    (x, y, line, point) = plotTraj(sol1, ax[0][0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol2, ax[0][1], fig)
-    (x3, y3, line3, point3) = plotTraj(sol3, ax[1][0], fig)
+    plot_multiple_trajectories(sols[0], ax[0][0], int(len(t) / 25))
+    plot_multiple_trajectories(sols[1], ax[0][1], int(len(t) / 25))
+    (x, y, line, point) = plot_trajectory(sol1, ax[0][0])
+    (x2, y2, line2, point2) = plot_trajectory(sol2, ax[0][1])
+    (x3, y3, line3, point3) = plot_trajectory(sol3, ax[1][0])
     animation_data = [
         [line, line2, line3],
         [point, point2, point3],

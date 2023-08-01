@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import plotTraj, update
+from tutorial_utils import plot_trajectory, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -92,8 +92,8 @@ def main():
     fig.suptitle("Geometry generators")
     ax[0].set_title("Remaining on the same energy level")
     ax[1].set_title(r"Changing energy level with $\gamma = sin(t) \dot{q}$")
-    (x, y, line, point) = plotTraj(sol, ax[0], fig)
-    (x2, y2, line2, point2) = plotTraj(sol_en, ax[1], fig)
+    (x, y, line, point) = plot_trajectory(sol, ax[0])
+    (x2, y2, line2, point2) = plot_trajectory(sol_en, ax[1])
     animation_data = [
         [line, line2],
         [point, point2],
