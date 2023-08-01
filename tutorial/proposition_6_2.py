@@ -3,6 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
+from utlis_tutorial import plotPolarTraj, update
 
 n = 2
 m = 2
@@ -25,20 +26,20 @@ J1dot_fun = ca.Function("Jdot1", [q, qdot], [J1dot])
 
 r = ca.norm_2(x)
 a = ca.arctan2(x[1], x[0])
-w = ca.norm_2(xdot)/ca.norm_2(x)
+w = ca.norm_2(xdot) / ca.norm_2(x)
 h1 = ca.SX.sym("h1", 2)
-b = r**1
-h1[0] = b * r * w**2 * ca.cos(a)
-h1[1] = b * r * w**2 * ca.sin(a)
+b = r ** 1
+h1[0] = b * r * w ** 2 * ca.cos(a)
+h1[1] = b * r * w ** 2 * ca.sin(a)
 h1_fun = ca.Function("h1", [x, xdot], [h1])
 
 k = 0.5
 lam = 0.3
 r_obst = 1.00
 x_obst = np.array([2.0, 0.0])
-psi = k * r_obst**2/ ((ca.norm_2(x - x_obst) - r_obst)**2)
+psi = k * r_obst ** 2 / ((ca.norm_2(x - x_obst) - r_obst) ** 2)
 derPsi = ca.gradient(psi, x)
-h2 = lam * (ca.norm_2(xdot))**2 * derPsi
+h2 = lam * (ca.norm_2(xdot)) ** 2 * derPsi
 h2_fun = ca.Function('h2', [x, xdot], [h2])
 
 
@@ -57,14 +58,16 @@ def generateLagrangian(Lg, name):
     f_e = -dL_dq
     f = ca.mtimes(ca.transpose(F), qdot) + f_e
 
-    M_fun = ca.Function("M_" + name , [q, qdot], [M])
+    M_fun = ca.Function("M_" + name, [q, qdot], [M])
     f_fun = ca.Function("f_" + name, [q, qdot], [f])
     return (L_fun, M_fun, f_fun)
 
+
 q0 = np.array([2.0, -0.5])
-Lg = ca.norm_2(qdot) * 1/ca.norm_2(q - q0)**2
-#Lg = ca.norm_2(qdot)
+Lg = ca.norm_2(qdot) * 1 / ca.norm_2(q - q0) ** 2
+# Lg = ca.norm_2(qdot)
 (L1_fun, M1_fun, f1_fun) = generateLagrangian(Lg, "ex")
+
 
 class Geometry(object):
 
@@ -73,6 +76,7 @@ class Geometry(object):
 
     def h(self, x, xdot):
         return self.h_fun(x, xdot)
+
 
 class Leaf(object):
     def __init__(self, M_fun, phi_fun, J_fun, J_dot_fun, geo):
@@ -115,7 +119,7 @@ class RootGeometry(object):
         self._leaves = leaves
         self._h = np.zeros(m)
         self._rhs = np.zeros(m)
-        self._rhs_aug = np.zeros(2*m)
+        self._rhs_aug = np.zeros(2 * m)
         self._q = np.zeros(m)
         self._qdot = np.zeros(m)
         self._M = np.zeros((m, m))
@@ -141,7 +145,7 @@ class RootGeometry(object):
         self._rhs_aug[3] = self._rhs[1]
 
     def contDynamics(self, z, t):
-        self.update(z[0:m], z[m:2*m])
+        self.update(z[0:m], z[m:2 * m])
         self.setRHS()
         self.augment()
         zdot = self._rhs_aug
@@ -151,27 +155,6 @@ class RootGeometry(object):
         sol, info = odeint(self.contDynamics, z0, t, full_output=True)
         return sol
 
-def update(num, x1, y1, line1, point1, x2, y2, line2, point2, x3, y3, line3, point3):
-    start = max(0, num - 100)
-    line1.set_data(x1[start:num], y1[start:num])
-    point1.set_data(x1[num], y1[num])
-    line2.set_data(x2[start:num], y2[start:num])
-    point2.set_data(x2[num], y2[num])
-    line3.set_data(x3[start:num], y3[start:num])
-    point3.set_data(x3[num], y3[num])
-    return line1, point1, line2, point2, line3, point3
-
-def plotPolarTraj(sol, ax, fig):
-    r = sol[:, 0]
-    theta = sol[:, 1]
-    x = r * np.cos(theta)
-    y = r * np.sin(theta)
-    ax.set_xlim([-4, 4])
-    ax.set_ylim([-4, 4])
-    ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k")
-    (point,) = ax.plot(x, y, "r.")
-    return (x, y, line, point)
 
 def main():
     # setup 
@@ -185,7 +168,7 @@ def main():
     w0 = 1.20
     r0_dot = -1.5
     r0 = 2.0
-    a0 = 1.0/3.0 * np.pi
+    a0 = 1.0 / 3.0 * np.pi
     q0 = np.array([r0, a0])
     q0_dot = np.array([r0_dot, w0])
     t = np.arange(0.0, 50.00, 0.05)
@@ -200,23 +183,28 @@ def main():
     ax[0][0].set_title("Geometry generator 1")
     ax[0][1].set_title("Geometry generator 2")
     ax[1][0].set_title("Geometry generator 3")
-    obst1 = plt.Circle(x_obst, radius=r_obst, color='r')
-    obst2 = plt.Circle(x_obst, radius=r_obst, color='r')
-    obst3 = plt.Circle(x_obst, radius=r_obst, color='r')
-    #ax[0][0].add_patch(obst1)
+    obst1 = plt.Circle(tuple(x_obst), radius=r_obst, color='k', fill=None, hatch='///')
+    obst2 = plt.Circle(tuple(x_obst), radius=r_obst, color='k', fill=None, hatch='///')
+    obst3 = plt.Circle(tuple(x_obst), radius=r_obst, color='k', fill=None, hatch='///')
+    # ax[0][0].add_patch(obst1)
     ax[0][1].add_patch(obst2)
     ax[1][0].add_patch(obst3)
     (x, y, line, point) = plotPolarTraj(sol1, ax[0][0], fig)
     (x2, y2, line2, point2) = plotPolarTraj(sol2, ax[0][1], fig)
     (x3, y3, line3, point3) = plotPolarTraj(sol3, ax[1][0], fig)
+    animation_data = [
+        [line, line2, line3],
+        [point, point2, point3],
+        [{'x': x, 'y': y}, {'x': x2, 'y': y2}, {'x': x3, 'y': y3}]
+    ]
     ani = animation.FuncAnimation(
         fig, update, len(x),
-        fargs=[x, y, line, point, x2, y2, line2, point2, x3, y3, line3, point3],
+        fargs=animation_data,
         interval=25, blit=True
     )
     plt.show()
 
 
 if __name__ == "__main__":
-    #cProfile.run('main()', 'restats_with')
+    # cProfile.run('main()', 'restats_with')
     main()

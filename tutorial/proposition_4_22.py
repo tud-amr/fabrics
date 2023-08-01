@@ -3,6 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
+from utlis_tutorial import plotTraj, plotEnergies, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -11,11 +12,11 @@ qdot = ca.SX.sym("qdot", n)
 
 r = ca.norm_2(q)
 a = ca.arctan2(q[1], q[0])
-w = ca.norm_2(qdot)/ca.norm_2(q)
+w = ca.norm_2(qdot) / ca.norm_2(q)
 h = ca.SX.sym("h", 2)
 b = r
-h[0] = b * r * w**2 * ca.cos(a)
-h[1] = b * r * w**2 * ca.sin(a)
+h[0] = b * r * w ** 2 * ca.cos(a)
+h[1] = b * r * w ** 2 * ca.sin(a)
 h_fun = ca.Function("h", [q, qdot], [h])
 
 
@@ -34,9 +35,10 @@ def generateLagrangian(Lg, name):
     f_e = -dL_dq
     f = ca.mtimes(ca.transpose(F), qdot) + f_e
 
-    M_fun = ca.Function("M_" + name , [q, qdot], [M])
+    M_fun = ca.Function("M_" + name, [q, qdot], [M])
     f_fun = ca.Function("f_" + name, [q, qdot], [f])
     return (L_fun, M_fun, f_fun)
+
 
 q0 = np.array([2.0, -0.5])
 Lg = ca.norm_2(qdot)
@@ -68,12 +70,11 @@ class EnergyLagrangian(object):
         self.update(q, qdot)
         a1 = np.dot(qdot, np.dot(self._Me, qdot))
         a2 = np.dot(qdot, np.dot(self._Me, h) - self._fe)
-        alpha = -a2/a1
+        alpha = -a2 / a1
         return alpha * qdot
 
 
 class Geometry(object):
-
     """Geometry as in Optimization fabrics
         xddot + h(x, xdot) = 0
     """
@@ -82,7 +83,7 @@ class Geometry(object):
         self._n = 2
         self._h = np.zeros(n)
         self._rhs = np.zeros(n)
-        self._rhs_aug = np.zeros(2*n)
+        self._rhs_aug = np.zeros(2 * n)
         self._q = np.zeros(n)
         self._qdot = np.zeros(n)
 
@@ -102,7 +103,7 @@ class Geometry(object):
 
     def contDynamics(self, z, t, Le=None):
         self._q = z[0:n]
-        self._qdot = z[n:2*n]
+        self._qdot = z[n:2 * n]
         self.setRHS()
         if Le:
             self.energize(Le)
@@ -112,31 +113,11 @@ class Geometry(object):
 
     def computePath(self, z0, t, Le=None):
         if Le:
-            sol, info = odeint(self.contDynamics, z0, t, args = (Le,), full_output=True)
+            sol, info = odeint(self.contDynamics, z0, t, args=(Le,), full_output=True)
         else:
             sol, info = odeint(self.contDynamics, z0, t, full_output=True)
         return sol
 
-def update(num, x1, x2, y1, y2, line1, line2, point1, point2):
-    start = max(0, num - 100)
-    line1.set_data(x1[start:num], y1[start:num])
-    point1.set_data(x1[num], y1[num])
-    line2.set_data(x2[start:num], y2[start:num])
-    point2.set_data(x2[num], y2[num])
-    return line1, point1, line2, point2
-
-def plotTraj(sol, ax, fig):
-    x = sol[:, 0]
-    y = sol[:, 1]
-    ax.set_xlim([-4, 4])
-    ax.set_ylim([-4, 4])
-    ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k")
-    (point,) = ax.plot(x, y, "rx")
-    return (x, y, line, point)
-
-def plotEnergies(energies, ax, t):
-    ax.plot(t, energies)
 
 def main():
     # setup 
@@ -144,7 +125,7 @@ def main():
     Le = EnergyLagrangian()
     w0 = 1.0
     r0 = 2.0
-    a0 = 1.0/3.0 * np.pi
+    a0 = 1.0 / 3.0 * np.pi
     q0 = r0 * np.array([np.cos(a0), np.sin(a0)])
     q0_dot = np.array([-r0 * w0 * np.sin(a0), r0 * w0 * np.cos(a0)])
     t = np.arange(0.0, 20.00, 0.01)
@@ -163,14 +144,19 @@ def main():
     energies_en = Le.energies(sol_en)
     plotEnergies(energies, ax[1][0], t)
     plotEnergies(energies_en, ax[1][1], t)
+    animation_data = [
+        [line, line2],
+        [point, point2],
+        [{'x': x, 'y': y}, {'x': x2, 'y': y2}]
+    ]
     ani = animation.FuncAnimation(
         fig, update, len(x),
-        fargs=[x, x2, y, y2, line, line2, point, point2],
+        fargs=animation_data,
         interval=25, blit=True
     )
     plt.show()
 
 
 if __name__ == "__main__":
-    #cProfile.run('main()', 'restats_with')
+    # cProfile.run('main()', 'restats_with')
     main()

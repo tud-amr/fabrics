@@ -4,6 +4,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
+from utlis_tutorial import plotTraj, update, plotMultipleTraj
 
 EPS = 1e-5
 
@@ -17,12 +18,11 @@ h_b_fun = ca.Function("h_b", [q, qdot], [h_b])
 M_b = np.identity(n)
 M_b_fun = ca.Function("M_b", [q, qdot], [M_b])
 
-
 # define the forcing potential
 # There is an implicit Finsler energy linked to this potential
 # but I do not know how to measure it
 q_d = np.array([-2.5, -3.75])
-k = 5.0 # paper : 5.0
+k = 5.0  # paper : 5.0
 alpha_psi = 10.0
 alpha_m = 0.75
 m = np.array([0.3, 2.0])
@@ -30,8 +30,8 @@ m = np.array([0.3, 2.0])
 # goal reaching potential
 phi = q - q_d
 phi_fun = ca.Function("phi", [q], [phi])
-psi1 = k * (ca.norm_2(phi) + 1/alpha_psi * ca.log(1 + ca.exp(-2*alpha_psi * ca.norm_2(phi))))
-M_psi = ((m[1] - m[0]) * ca.exp(-(alpha_m * ca.norm_2(phi))**2) + m[0]) * np.identity(n)
+psi1 = k * (ca.norm_2(phi) + 1 / alpha_psi * ca.log(1 + ca.exp(-2 * alpha_psi * ca.norm_2(phi))))
+M_psi = ((m[1] - m[0]) * ca.exp(-(alpha_m * ca.norm_2(phi)) ** 2) + m[0]) * np.identity(n)
 der_psi = ca.mtimes(M_psi, ca.gradient(psi1, q))
 M_psi_fun = ca.Function("M_psi", [q, qdot], [M_psi])
 der_psi_fun = ca.Function("der_psi", [q, qdot], [der_psi])
@@ -40,9 +40,9 @@ der_psi_fun = ca.Function("der_psi", [q, qdot], [der_psi])
 q_min = np.array([-5.0, -1.0])
 phi_lim = q[0] - q_min[0]
 a = np.array([0.4, 0.2, 20.0, 5.0])
-psi2 = a[0] / (phi_lim**2) + a[1] * (ca.exp(-a[2] * (phi_lim - a[3])) + 1)
+psi2 = a[0] / (phi_lim ** 2) + a[1] * (ca.exp(-a[2] * (phi_lim - a[3])) + 1)
 lam_lim = 0.5
-der_psi2 = qdot[0]**2 * lam_lim * ca.gradient(phi_lim, q)
+der_psi2 = qdot[0] ** 2 * lam_lim * ca.gradient(phi_lim, q)
 
 # damping functions
 b = np.array([0.01, 6.5])
@@ -61,6 +61,7 @@ beta = beta_switch * b[1] + b[0] + maxExp
 beta_fun = ca.Function("beta", [q, qdot, maxExp], [beta])
 eta_switch_fun = ca.Function("beta_switch", [q, qdot, energy, energy_des], [eta_switch])
 
+
 def generateLagrangian(Lg, name):
     L = 0.5 * Lg ** 2
     L_fun = ca.Function("L_" + name, [q, qdot], [L])
@@ -76,10 +77,11 @@ def generateLagrangian(Lg, name):
     f_e = -dL_dq
     f = ca.mtimes(ca.transpose(F), qdot) + f_e
 
-    M_fun = ca.Function("M_" + name , [q, qdot], [M])
+    M_fun = ca.Function("M_" + name, [q, qdot], [M])
     f_fun = ca.Function("f_" + name, [q, qdot], [f])
-    return(L, M, f)
-    #return (L_fun, M_fun, f_fun)
+    return (L, M, f)
+    # return (L_fun, M_fun, f_fun)
+
 
 Lg = 0.5 * ca.norm_2(qdot)
 (Lex, Mex, fex) = generateLagrangian(Lg, "ex")
@@ -100,8 +102,9 @@ class Energy(object):
     def alpha(self, h, q, qdot):
         a1 = ca.dot(qdot, ca.mtimes(self._M, qdot))
         a2 = ca.dot(qdot, ca.mtimes(self._M, h) - self._f)
-        alpha = a2/a1
+        alpha = a2 / a1
         return alpha
+
 
 class ForcingPotential(object):
     def __init__(self, M, der_psi):
@@ -110,6 +113,7 @@ class ForcingPotential(object):
 
     def derPsi(self):
         return ca.mtimes(ca.inv(self._M), self._dPsi)
+
 
 class SpeedController(object):
     def __init__(self, execEnergy, metricEnergy, beta_fun, eta_switch_fun):
@@ -120,23 +124,24 @@ class SpeedController(object):
         a_shift = 0.5
         a_eta = 0.5
         r = 1.5
-        self._eta = 0.5 * (ca.tanh(-a_eta*(metricEnergy.L() - execEnergy.L()) - a_shift) + 1)
+        self._eta = 0.5 * (ca.tanh(-a_eta * (metricEnergy.L() - execEnergy.L()) - a_shift) + 1)
         self._beta_switch = 0.5 * (ca.tanh(-a_beta * (ca.norm_2(q - q_d) - r)) + 1)
 
     def alpha_ex(self, h, derPsi, q, qdot):
         self._a_ex0 = self._execEnergy.alpha(h, q, qdot)
         self._a_expsi = self._execEnergy.alpha(h + derPsi, q, qdot)
         self._alpha_le = self._metricEnergy.alpha(h, q, qdot)
-        self._alpha_ex = self._eta * self._a_ex0 +  (1 - self._eta) * self._a_expsi
+        self._alpha_ex = self._eta * self._a_ex0 + (1 - self._eta) * self._a_expsi
         return self._alpha_ex
 
     def beta(self, q, qdot):
         beta = self._beta_switch * b[1] + b[0] + ca.fmax(0.0, self._alpha_ex - self._alpha_le)
         return beta
 
+
 class Geometry(object):
 
-    def __init__(self, h, Le = None, Forcing=None, SpeedController=None):
+    def __init__(self, h, Le=None, Forcing=None, SpeedController=None):
         self._rhs = ca.vertcat(0.0, 0.0)
         self._q = q
         self._qdot = qdot
@@ -182,10 +187,10 @@ class Geometry(object):
         ode = {}
         ode['x'] = self._z
         ode['ode'] = self._rhs_aug
-        self._int_fun = ca.integrator("int_fun", 'idas', ode, {'tf':dt})
+        self._int_fun = ca.integrator("int_fun", 'idas', ode, {'tf': dt})
 
     def computePath(self, z0, T):
-        num_steps = int(T/self._dt)
+        num_steps = int(T / self._dt)
         z = z0
         sols = np.zeros((num_steps, 4))
         max_step = num_steps
@@ -199,7 +204,7 @@ class Geometry(object):
                     max_step = i
                 break
             z = np.array(res['xf'])[:, 0]
-            qdot = z[n:2*n]
+            qdot = z[n:2 * n]
             qdot_norm = np.linalg.norm(qdot)
             sols[i, :] = z
             if qdot_norm < 0.030:
@@ -210,34 +215,6 @@ class Geometry(object):
         print("finished")
         return sols[:max_step, :]
 
-def update(num, x1, x2, y1, y2, line1, line2,  point1, point2):
-    start = max(0, num - 100)
-    line1.set_data(x1[start:num], y1[start:num])
-    point1.set_data(x1[num], y1[num])
-    line2.set_data(x2[start:num], y2[start:num])
-    point2.set_data(x2[num], y2[num])
-    return line1, point1, line2, point2
-
-def plotTraj(sol, ax, fig):
-    x = sol[:, 0]
-    y = sol[:, 1]
-    ax.set_xlim([-10, 5])
-    ax.set_ylim([-10, 5])
-    ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k")
-    (point,) = ax.plot(x, y, "rx")
-    return (x, y, line, point)
-
-def plotMultipleTraj(sols, ax, fig):
-    for sol in sols:
-        x = sol[:, 0]
-        y = sol[:, 1]
-        ax.set_xlim([-4, 4])
-        ax.set_ylim([-4, 4])
-        ax.plot(x, y)
-
-def plotEnergies(energies, ax, t):
-    ax.plot(t, energies)
 
 def main():
     # setup 
@@ -246,15 +223,15 @@ def main():
     forcing = ForcingPotential(M_b, der_psi)
     limit_forcing = ForcingPotential(M_b, der_psi2)
     speedController = SpeedController(lex, le, beta, eta_switch)
-    geo1 = Geometry(h = h_b, Forcing=forcing)
+    geo1 = Geometry(h=h_b, Forcing=forcing)
     geo1.createSolver(dt=0.01)
-    geo2 = Geometry(h = h_b, Forcing=forcing, SpeedController=speedController)
+    geo2 = Geometry(h=h_b, Forcing=forcing, SpeedController=speedController)
     geo2.createSolver(dt=0.01)
-    #geo3 = Geometry(h_fun = h_b_fun, Forcing=forcing, SpeedController=speedController)
+    # geo3 = Geometry(h_fun = h_b_fun, Forcing=forcing, SpeedController=speedController)
     geos = [geo1, geo2]
     q0 = np.array([2.0, 3.0])
     v0 = 1.5
-    a0s = [(i * np.pi)/7 for i in range(14)]
+    a0s = [(i * np.pi) / 7 for i in range(14)]
     T = 20.0
     # solving
     sols = []
@@ -274,22 +251,27 @@ def main():
     sol2 = sols[1][0]
     sol3 = sols[1][0]
     # plotting
-    fig, ax = plt.subplots(1, 2, figsize=(10, 10))
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     fig.suptitle("Example for goal attraction")
     ax[0].set_title("No Damping")
     ax[1].set_title("With Damping")
-    plotMultipleTraj(sols[0], ax[0], fig)
-    plotMultipleTraj(sols[1], ax[1], fig)
+    plotMultipleTraj(sols[0], ax[0], fig, int(T / 0.01 / 25))
+    plotMultipleTraj(sols[1], ax[1], fig, int(T / 0.01 / 25))
     (x, y, line, point) = plotTraj(sol1, ax[0], fig)
     (x2, y2, line2, point2) = plotTraj(sol2, ax[1], fig)
+    animation_data = [
+        [line, line2],
+        [point, point2],
+        [{'x': x, 'y': y}, {'x': x2, 'y': y2}]
+    ]
     ani = animation.FuncAnimation(
         fig, update, len(x),
-        fargs=[x, x2, y, y2, line, line2, point, point2],
-        interval=10, blit=True
+        fargs=animation_data,
+        interval=25, blit=True
     )
     plt.show()
 
 
 if __name__ == "__main__":
-    #cProfile.run('main()', 'restats_with')
+    # cProfile.run('main()', 'restats_with')
     main()

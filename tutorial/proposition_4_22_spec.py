@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
-from utlis_tutorial import update
+from utlis_tutorial import plotTraj, plotEnergies, update
 
 n = 2
 q = ca.SX.sym("q", n)
@@ -116,21 +116,6 @@ class ConservativeSpec(object):
     def computePath(self, z0, t, Gen=None):
         sol, info = odeint(self.contDynamics, z0, t, args=(Gen,), full_output=True)
         return sol
-
-
-def plotTraj(sol, ax, fig):
-    x = sol[:, 0]
-    y = sol[:, 1]
-    ax.set_xlim([-4, 4])
-    ax.set_ylim([-4, 4])
-    ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k")
-    (point,) = ax.plot(x, y, "rx")
-    return (x, y, line, point)
-
-
-def plotEnergies(energies, ax, t):
-    ax.plot(t, energies)
 
 
 def main():

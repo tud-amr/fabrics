@@ -3,6 +3,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import casadi as ca
+from utlis_tutorial import plotTraj, plotEnergies, update
 
 """ pull back of energized, generic generator
 PAY ATTENTION TO THE DEFINITION OF PHI
@@ -50,24 +51,26 @@ def generateLagrangian(Lg, name):
     f = ca.mtimes(ca.transpose(F), xdot) + f_e
     P = ca.mtimes(M, (ca.inv(M) - ca.mtimes(xdot, ca.transpose(xdot)) / ca.dot(xdot, ca.mtimes(M, xdot))))
 
-    M_fun = ca.Function("M_" + name , [x, xdot], [M])
+    M_fun = ca.Function("M_" + name, [x, xdot], [M])
     f_fun = ca.Function("f_" + name, [x, xdot], [f])
     P_fun = ca.Function("P_" + name, [x, xdot], [P])
     return (L_fun, M_fun, f_fun, P_fun)
 
+
 x0 = np.array([-2.00, -0.0])
-L_g = 10.0* ca.norm_2(xdot) * ca.norm_2(x - x0)
+# L_g = 10.0 * ca.norm_2(xdot) * ca.norm_2(x - x0)
 L_g = ca.norm_2(xdot)
 (L_fun, M_fun, f_fun, P_fun) = generateLagrangian(L_g, "g")
 
 r = ca.norm_2(x)
 a = ca.arctan2(x[1], x[0])
-w = ca.norm_2(xdot)/ca.norm_2(x)
+w = ca.norm_2(xdot) / ca.norm_2(x)
 h = ca.SX.sym("h", 2)
 b = r
-h[0] = b * r * w**2 * ca.cos(a)
-h[1] = b * r * w**2 * ca.sin(a)
+h[0] = b * r * w ** 2 * ca.cos(a)
+h[1] = b * r * w ** 2 * ca.sin(a)
 h_fun = ca.Function("h", [x, xdot], [h])
+
 
 class Pulling(object):
     def __init__(self):
@@ -119,6 +122,7 @@ class Pulling(object):
         f2 = np.dot(np.dot(self._Jt, M), np.dot(self._Jdot, self._qdot))
         return f2
 
+
 class EnergyLagrangian(object):
 
     def __init__(self, Pulling=None):
@@ -160,17 +164,17 @@ class EnergyLagrangian(object):
         if self._pulling:
             a1 = np.dot(xdot, np.dot(self._Me, xdot))
             a2 = np.dot(xdot, h - self._fe)
-            alpha = -a2/a1
+            alpha = -a2 / a1
             J = self._pulling.J()
             return alpha * np.dot(np.dot(np.transpose(J), J), xdot)
         else:
             a1 = np.dot(xdot, np.dot(self._Me, xdot))
             a2 = np.dot(xdot, np.dot(self._Me, h) - self._fe)
-            alpha = -a2/a1
+            alpha = -a2 / a1
             return alpha * xdot
 
-class Spec(object):
 
+class Spec(object):
     """Spec as in Optimization fabrics
         M xddot + f(x, xdot) = 0
         In this specific case f = M h
@@ -188,8 +192,8 @@ class Spec(object):
         self._f = np.zeros(n)
         self._M = np.zeros((n, n))
         self._rhs = np.zeros(n)
-        self._M_aug = np.identity(2*n)
-        self._rhs_aug = np.zeros(2*n)
+        self._M_aug = np.identity(2 * n)
+        self._rhs_aug = np.zeros(2 * n)
         self._x = np.zeros(n)
         self._xdot = np.zeros(n)
 
@@ -201,7 +205,7 @@ class Spec(object):
         self._rhs_aug[1] = self._xdot[1]
         self._rhs_aug[2] = self._rhs[0]
         self._rhs_aug[3] = self._rhs[1]
-        self._M_aug [n:, n:] = self._M
+        self._M_aug[n:, n:] = self._M
 
     def addNominal(self, Gen):
         P = P_fun(self._x, self._xdot)
@@ -222,7 +226,7 @@ class Spec(object):
 
     def updateSystem(self, z):
         self._x = z[0:n]
-        self._xdot = z[n:2*n]
+        self._xdot = z[n:2 * n]
         if self._pulling:
             # Update pulling
             self._pulling.update(self._x, self._xdot)
@@ -250,31 +254,9 @@ class Spec(object):
         return zdot
 
     def computePath(self, z0, t, Le=None):
-        sol, info = odeint(self.contDynamics, z0, t, args = (Le,), full_output=True)
+        sol, info = odeint(self.contDynamics, z0, t, args=(Le,), full_output=True)
         return sol
 
-def update(num, x, x1, x2, y, y1, y2, line, line1, line2, point, point1, point2):
-    start = max(0, num - 100)
-    line.set_data(x[start:num], y[start:num])
-    point.set_data(x[num], y[num])
-    line1.set_data(x1[start:num], y1[start:num])
-    point1.set_data(x1[num], y1[num])
-    line2.set_data(x2[start:num], y2[start:num])
-    point2.set_data(x2[num], y2[num])
-    return line, point, line1, point1, line2, point2
-
-def plotTraj(sol, ax, fig):
-    x = sol[:, 0]
-    y = sol[:, 1]
-    ax.set_xlim([-4, 4])
-    ax.set_ylim([-4, 4])
-    ax.plot(x, y)
-    (line,) = ax.plot(x, y, color="k")
-    (point,) = ax.plot(x, y, "rx")
-    return (x, y, line, point)
-
-def plotEnergies(energies, ax, t):
-    ax.plot(t, energies)
 
 def main():
     spec = Spec()
@@ -285,7 +267,7 @@ def main():
     spec_pull_order = Spec(Pulling=pull, first="pull")
     w0 = 1.0
     r0 = 2.0
-    a0 = 1.5/3.0 * np.pi
+    a0 = 1.5 / 3.0 * np.pi
     x0 = r0 * np.array([np.cos(a0), np.sin(a0)])
     x0_dot = np.array([-r0 * w0 * np.sin(a0), r0 * w0 * np.cos(a0)])
     t = np.arange(0.0, 10.02, 0.01)
@@ -303,7 +285,7 @@ def main():
     sol_p2 = spec_pull_order.computePath(z0_pull, t, Le=le_pull)
     sol_p2_t = pull.qs2xs(sol_p2)
     # plotting
-    fig, ax = plt.subplots(2, 3, figsize=(10, 10))
+    fig, ax = plt.subplots(2, 3, figsize=(15, 10))
     fig.suptitle("Commuting energization : Cartesian vs Polar")
     ax[0][0].set_title("Energized")
     ax[0][1].set_title("Energized and pulled")
@@ -316,10 +298,15 @@ def main():
     energies_p2 = le.energies(sol_p2_t)
     plotEnergies(energies, ax[1][0], t)
     plotEnergies(energies_p, ax[1][1], t)
-    plotEnergies(energies_p, ax[1][2], t)
+    plotEnergies(energies_p2, ax[1][2], t)
+    animation_data = [
+        [line, line2, line3],
+        [point, point2, point3],
+        [{'x': x, 'y': y}, {'x': x2, 'y': y2}, {'x': x3, 'y': y3}]
+    ]
     ani = animation.FuncAnimation(
         fig, update, len(x),
-        fargs=[x, x2, x3, y, y2, y3, line, line2, line3, point, point2, point3],
+        fargs=animation_data,
         interval=25, blit=True
     )
     plt.show()
