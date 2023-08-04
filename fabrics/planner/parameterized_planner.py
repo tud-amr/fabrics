@@ -618,7 +618,6 @@ class ParameterizedFabricPlanner(object):
         Essentially, only the casadiFunctionWrapper is serialized using
         pickle.
         """
-        self.concretize()
         self._funs.serialize(file_name)
  
     """ RUNTIME METHODS """
