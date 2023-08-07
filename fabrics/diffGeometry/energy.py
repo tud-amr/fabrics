@@ -26,11 +26,14 @@ class Lagrangian(object):
     """description"""
 
     def __init__(self, l: ca.SX, **kwargs):
+        assert isinstance(l, ca.SX)
         self._l = l
+        self.process_arguments(**kwargs)
+
+    def process_arguments(self, **kwargs):
         self._x_ref_name = "x_ref"
         self._xdot_ref_name = "xdot_ref"
         self._xddot_ref_name = "xddot_ref"
-        assert isinstance(l, ca.SX)
         if 'x' in kwargs:
             self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
         elif 'var' in kwargs:
@@ -51,7 +54,26 @@ class Lagrangian(object):
             self._J_ref = kwargs.get("J_ref")
             logging.warning("Casadi pseudo inverse is used in Lagrangian")
             self._J_ref_inv = ca.mtimes(ca.transpose(self._J_ref), ca.inv(ca.mtimes(self._J_ref, ca.transpose(self._J_ref)) + np.identity(self.x_ref().size()[0]) * eps))
-        self.applyEulerLagrange()
+
+    @classmethod
+    def from_pure_energy(cls, lagrangian: ca.SX, **kwargs):
+        energy = Lagrangian(lagrangian, **kwargs)
+        energy.applyEulerLagrange()
+        return energy
+
+
+    @classmethod
+    def from_spec(cls,
+        lagrangian: ca.SX,
+        spec: Spec,
+        hamiltonian: ca.SX,
+        **kwargs,
+    ) -> None:
+        energy = Lagrangian(lagrangian, **kwargs)
+        energy._S = spec
+        energy._H = hamiltonian
+        return energy
+
 
 
     def x_ref(self):
@@ -88,7 +110,7 @@ class Lagrangian(object):
         else:
             ref_arguments = {}
         new_vars = self._vars + b._vars
-        return Lagrangian(self._l + b._l, var=new_vars, **ref_arguments)
+        return Lagrangian.from_pure_energy(self._l + b._l, var=new_vars, **ref_arguments)
 
     def is_dynamic(self) -> bool:
         logging.debug(f"Lagrangian is dynamic: {self._x_ref_name in self._vars.parameters()}")
@@ -156,22 +178,23 @@ class Lagrangian(object):
             refTrajs = [refTraj.pull(dm) for refTraj in self._refTrajs]
         J_ref = dm._J
         if self.is_dynamic():
-            return Lagrangian(l_subst2, var=new_vars, J_ref=J_ref, ref_names=self.ref_names())
+            return Lagrangian.from_pure_energy(l_subst2, var=new_vars, J_ref=J_ref, ref_names=self.ref_names())
         else:
-            return Lagrangian(l_subst2, var=new_vars, ref_names=self.ref_names())
+            return Lagrangian.from_pure_energy(l_subst2, var=new_vars, ref_names=self.ref_names())
 
     def dynamic_pull(self, dm: DynamicDifferentialMap):
         l_pulled = self._l
         l_pulled_subst_x = ca.substitute(l_pulled, self.x(), dm._phi)
         l_pulled_subst_x_xdot = ca.substitute(l_pulled_subst_x, self.xdot(), dm.phidot())
-        return Lagrangian(l_pulled_subst_x_xdot, var=dm._vars, ref_names=dm.ref_names())
+        return Lagrangian.from_pure_energy(l_pulled_subst_x_xdot, var=dm._vars, ref_names=dm.ref_names())
 
 
 class FinslerStructure(Lagrangian):
     def __init__(self, lg: ca.SX, **kwargs):
         self._lg = lg
         l = 0.5 * lg ** 2
-        super().__init__(l, **kwargs)
+        self = super().from_pure_energy(l, **kwargs)
+        breakpoint()
 
     def concretize(self):
         super().concretize()
