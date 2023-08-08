@@ -14,7 +14,7 @@ def simple_lagrangian():
     xdot = ca.SX.sym("xdot", 1)
     lam = 0.25
     l = 0.5 * lam / x * xdot ** 2
-    lagrangian = Lagrangian.from_pure_energy(l, x=x, xdot=xdot)
+    lagrangian = Lagrangian(l, x=x, xdot=xdot)
     return lagrangian
 
 
@@ -36,7 +36,7 @@ def two_dimensional_lagrangian():
     xdot = ca.SX.sym("xdot", 2)
     lam = 0.25
     l = 0.5 * lam / (ca.norm_2(x)**2) * ca.norm_2(xdot)
-    lg = Lagrangian.from_pure_energy(l, x=x, xdot=xdot)
+    lg = Lagrangian(l, x=x, xdot=xdot)
     phi = ca.vertcat(ca.cos(q[1]) * q[0], ca.sin(q[1]) * q[0])
     variables = Variables(state_variables={'q': q, 'qdot': qdot})
     dm = DifferentialMap(phi, variables, Jdot_sign=+1)
@@ -67,7 +67,6 @@ def test_simple_finsler_struct(simple_finsler_structure):
     lg_man = (0.25 / x) * xdot
     l_man = 0.5 * lg_man ** 2
     f_man = -2 * 0.25 ** 2 / (x ** 3) * xdot ** 2 * (1 - 1 / 2)
-    breakpoint()
     M, f, l, lg = simple_finsler_structure.evaluate(x=x, xdot=xdot)
     assert isinstance(M, np.ndarray)
     assert isinstance(f, np.ndarray)
