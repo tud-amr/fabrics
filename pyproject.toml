@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.8.5"
+version = "0.8.6"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ keywords = ["robotics", "motion-planning", "geometry"]
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.10"
-casadi = "^3.6"
+casadi = ">=3.5.5"
 numpy = "^1.15.3"
 geomdl = "^5.3.1"
 pyquaternion = "^0.9.9"
