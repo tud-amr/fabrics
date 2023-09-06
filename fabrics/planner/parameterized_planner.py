@@ -619,6 +619,24 @@ class ParameterizedFabricPlanner(object):
         pickle.
         """
         self._funs.serialize(file_name)
+
+    def export_as_xml(self, file_name: str):
+        """
+        Exports the pure casadi function in xml format.
+
+        The generated file can be loaded in python, cpp or Matlab.
+        You can use that using the syntax ca.Function.load(file_name).
+        Note that passing arguments as dictionary is not supported then.
+        """
+        function = self._funs.function()
+        function.save(file_name)
+
+    def export_as_c(self, file_name: str):
+        """
+        Export the planner as c source code.
+        """
+        function = self._funs.function()
+        function.generate(file_name)
  
     """ RUNTIME METHODS """
 

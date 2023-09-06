@@ -27,6 +27,9 @@ class CasadiFunctionWrapper(object):
         input_expressions = [self._inputs[i] for i in self._input_keys]
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)
 
+    def function(self) -> ca.Function:
+        return self._function
+
     def serialize(self, file_name):
         with bz2.BZ2File(file_name, 'w') as f:
             pickle.dump(self._function.serialize(), f)
