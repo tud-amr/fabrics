@@ -1,20 +1,18 @@
-import pdb
-import gym
+import os
+import gymnasium as gym
+import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-import os
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.obstacles.dynamic_sphere_obstacle import DynamicSphereObstacle
 
-import numpy as np
-import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-
-# TODO hardcoding the indices for subgoal_1 is undesired
-
 
 def initalize_environment(render=True):
     """
@@ -114,12 +112,14 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     collision_finsler: str = (
         "2.0/(x**2) * xdot**2"
     )
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink='panda_link0',
+        end_link='panda_link9',
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        'panda',
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_link9',
+        forward_kinematics,
         collision_finsler=collision_finsler,
     )
     q = planner.variables.position_variable()

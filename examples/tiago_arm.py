@@ -1,18 +1,20 @@
-import gym
+import logging
 import os
-from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from copy import deepcopy
+import gymnasium as gym
+import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.sensors.full_sensor import FullSensor
-import logging
-from copy import deepcopy
-from pyquaternion import Quaternion
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
-from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+from mpscenes.goals.goal_composition import GoalComposition
 
-import numpy as np
-import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -140,35 +142,17 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         Degrees of freedom of the robot (default = 7)
     """
 
-    robot_type = 'tiago'
-
-    ## Optional reconfiguration of the planner
-    # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     robot_type,
-    #     base_inertia=base_inertia,
-    #     attractor_potential=attractor_potential,
-    #     damper=damper,
-    # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/tiago_dual_fk.urdf", "r") as file:
+    with open(absolute_path + "/tiago_dual_fk.urdf", "r", encoding="utf-8") as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink='torso_lift_link',
+        end_link=f'gripper_{arm}_link',
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        'tiago',
-        urdf=urdf,
-        root_link='torso_lift_link',
-        end_link=f'gripper_{arm}_link',
+        forward_kinematics,
     )
     q = planner.variables.position_variable()
     collision_links = [f'arm_{arm}_{i}_link' for i in [3, 4, 5, 6, 7]]

@@ -1,24 +1,29 @@
 import os
 import time
-import gym
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
 from urdfenvs.sensors.free_space_decomposition import FreeSpaceDecompositionSensor
+
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.obstacles.box_obstacle import BoxObstacle
 from mpscenes.goals.goal_composition import GoalComposition
-#from examples.point_robot_sensors import get_goal_sensors, get_obstacles_sensors
+
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
-NUMBER_OF_RAYS = 100
+NUMBER_OF_RAYS = 10
+NUMBER_OF_CONSTRAINTS = 10
 
 
 def get_goal_fsd():
     goal_dict = {
             "subgoal0": {
-                "weight": 2.5,
+                "weight": 5,
                 "is_primary_goal": True,
                 "indices": [0, 1],
                 "parent_link" : 'world',
@@ -76,8 +81,18 @@ def initalize_environment(render):
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.1, 0.0, 0.0])
-    full_sensor = FullSensor(goal_mask=["position", "weight"], obstacle_mask=["position", "size"])
-    fsd_sensor = FreeSpaceDecompositionSensor('lidar_sensor_joint', max_radius=5, plotting_interval=100, nb_rays=NUMBER_OF_RAYS)
+    full_sensor = FullSensor(
+        goal_mask=["position", "weight"],
+        obstacle_mask=["position", "size"],
+        variance=0.0,
+    )
+    fsd_sensor = FreeSpaceDecompositionSensor(
+            'lidar_sensor_joint',
+            max_radius=5,
+            plotting_interval=100,
+            nb_rays=NUMBER_OF_RAYS,
+            number_constraints=NUMBER_OF_CONSTRAINTS,
+    )
     # Definition of the obstacle.
     obstacles = get_obstacles_fsd()
     # Definition of the goal.
@@ -107,32 +122,33 @@ def set_planner(goal: GoalComposition):
     goal: StaticSubGoal
         The goal to the motion planning problem.
     """
-    degrees_of_freedom = 3
-    robot_type = "xyz"
-    # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/point_robot.urdf", "r") as file:
+    with open(absolute_path + "/point_robot.urdf", "r", encoding="utf-8") as file:
         urdf = file.read()
-    planner = ParameterizedFabricPlanner(
-            degrees_of_freedom,
-            robot_type,
-            urdf=urdf,
-            root_link='world',
-            end_link='base_link',
-            collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler
+    collision_links = ["base_link"]
+    degrees_of_freedom = 3
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="world",
+        end_link="base_link",
     )
-    collision_links = ['base_link']
+    planner = ParameterizedFabricPlanner(
+        degrees_of_freedom,
+        forward_kinematics,
+        geometry_plane_constraint=collision_geometry,
+        finsler_plane_constraint=collision_finsler
+    )
+    collision_links = ["base_link"]
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
         number_obstacles=0,
-        number_plane_constraints=10,
+        number_plane_constraints=NUMBER_OF_CONSTRAINTS,
     )
-    planner.concretize(mode='vel', time_step=0.01)
+    planner.concretize(mode="vel", time_step=0.01)
     return planner
 
 
@@ -160,25 +176,17 @@ def run_point_robot_urdf(n_steps=10000, render=True):
         t0 = time.perf_counter()
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
-        q = ob_robot['joint_state']['position']
 
-        action = planner.compute_action(
+        arguments = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][2]['position'][0:2],
             weight_goal_0=ob_robot['FullSensor']['goals'][2]['weight'],
             radius_body_base_link=np.array([0.35]),
-            constraint_0=ob_robot['FreeSpaceDecompSensor']['constraint_0'],
-            constraint_1=ob_robot['FreeSpaceDecompSensor']['constraint_1'],
-            constraint_2=ob_robot['FreeSpaceDecompSensor']['constraint_2'],
-            constraint_3=ob_robot['FreeSpaceDecompSensor']['constraint_3'],
-            constraint_4=ob_robot['FreeSpaceDecompSensor']['constraint_4'],
-            constraint_5=ob_robot['FreeSpaceDecompSensor']['constraint_5'],
-            constraint_6=ob_robot['FreeSpaceDecompSensor']['constraint_6'],
-            constraint_7=ob_robot['FreeSpaceDecompSensor']['constraint_7'],
-            constraint_8=ob_robot['FreeSpaceDecompSensor']['constraint_8'],
-            constraint_9=ob_robot['FreeSpaceDecompSensor']['constraint_9'],
         )
+        for i in range(NUMBER_OF_CONSTRAINTS):
+            arguments[f"constraint_{i}"] = ob_robot["FreeSpaceDecompSensor"][f"constraint_{i}"]
+        action = planner.compute_action(**arguments)
         ob, *_, = env.step(action)
         t1 = time.perf_counter()
         print(t1-t0)

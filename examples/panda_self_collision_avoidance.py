@@ -1,5 +1,8 @@
-import gym
 import os
+import gymnasium as gym
+import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
@@ -8,8 +11,6 @@ from urdfenvs.sensors.full_sensor import FullSensor
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
-import numpy as np
-import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 
@@ -95,38 +96,18 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-
-    robot_type = 'panda'
-
-    ## Optional reconfiguration of the planner
-    # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     robot_type,
-    #     base_inertia=base_inertia,
-    #     attractor_potential=attractor_potential,
-    #     damper=damper,
-    # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
+    with open(absolute_path + "/panda_for_fk.urdf", "r", encoding="utf-8") as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="panda_link0",
+        end_link="panda_link9",
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        'panda',
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_link9',
+        forward_kinematics,
     )
-    q = planner.variables.position_variable()
 
     collision_links = [f"panda_link{i}" for i in range(0,8)]
     self_collision_pairs = {"panda_hand": ["panda_link2"]}

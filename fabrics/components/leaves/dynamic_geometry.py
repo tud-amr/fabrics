@@ -3,7 +3,7 @@ import numpy as np
 
 from fabrics.diffGeometry.diffMap import DifferentialMap
 from fabrics.components.maps.parameterized_maps import (
-    ParameterizedObstacleMap,
+    SphereSphereMap,
 )
 from fabrics.diffGeometry.geometry import Geometry
 from fabrics.diffGeometry.energy import Lagrangian
@@ -102,10 +102,10 @@ class DynamicObstacleLeaf(GenericDynamicGeometryLeaf):
         }
         self._parent_variables.add_parameters(geo_parameters)
         self._forward_map = DifferentialMap(self._forward_kinematics, self._parent_variables)
-        self._geometry_map = ParameterizedObstacleMap(
+        self._geometry_map = SphereSphereMap(
             self._relative_variables,
             self._relative_variables.position_variable(),
-            np.zeros(self._dim_ref),
+            ca.SX(np.zeros(self._dim_ref)),
             radius_variable,
             radius_body_variable,
         )

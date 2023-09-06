@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Optional
 import logging
 import casadi as ca
+from forwardkinematics.fksCommon.fk import ForwardKinematics
 from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
@@ -25,7 +26,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
+from fabrics.components.leaves.geometry import CapsuleSphereLeaf, ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
@@ -104,23 +105,13 @@ class FabricPlannerConfig:
         "0.5 * (ca.tanh(-sym('alpha_eta') * sym('ex_lag') * (1 - sym('ex_factor')) - 0.5) + 1)"
     )
     """
-    urdf: str = None
-    root_link: str = 'base_link'
-    end_link: str = 'ee_link'
 
 
 class ParameterizedFabricPlanner(object):
-    def __init__(self, dof: int, robot_type: str, **kwargs):
+    def __init__(self, dof: int, forward_kinematics: ForwardKinematics, **kwargs):
         self._dof = dof
         self._config = FabricPlannerConfig(**kwargs)
-        if self._config.urdf:
-            self._forward_kinematics = GenericURDFFk(
-                self._config.urdf,
-                rootLink=self._config.root_link,
-                end_link=self._config.end_link,
-            )
-        else:
-            self._forward_kinematics = FkCreator(robot_type).fk()
+        self._forward_kinematics = forward_kinematics
         self.initialize_joint_variables()
         self.set_base_geometry()
         self._target_velocity = np.zeros(self._geometry.x().size()[0])
@@ -292,10 +283,10 @@ class ParameterizedFabricPlanner(object):
     def get_forward_kinematics(self, link_name) -> ca.SX:
         if isinstance(link_name, ca.SX):
             return link_name
-        if self._config.urdf:
+        if isinstance(self._forward_kinematics, GenericURDFFk):
             fk = self._forward_kinematics.fk(
                 self._variables.position_variable(),
-                self._config.root_link,
+                self._forward_kinematics._rootLink,
                 link_name,
                 positionOnly=True
             )
@@ -307,26 +298,185 @@ class ParameterizedFabricPlanner(object):
             )
         return fk
 
+    def add_capsule_sphere_geometry(
+            self,
+            obstacle_name: str,
+            capsule_name: str,
+            tf_capsule_origin: ca.SX,
+            capsule_length: float
+            ) -> None:
+        tf_origin_center_0 = np.identity(4)
+        tf_origin_center_0[2][3] = capsule_length / 2
+        tf_center_0 = ca.mtimes(tf_capsule_origin, tf_origin_center_0)
+        tf_origin_center_1 = np.identity(4)
+        tf_origin_center_1[2][3] = - capsule_length / 2
+        tf_center_1 = ca.mtimes(tf_capsule_origin, tf_origin_center_1)
+        capsule_sphere_leaf = CapsuleSphereLeaf(
+            self._variables,
+            capsule_name,
+            obstacle_name,
+            tf_center_0[0:3,3],
+            tf_center_1[0:3,3],
+        )
+        capsule_sphere_leaf.set_geometry(self.config.collision_geometry)
+        capsule_sphere_leaf.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(capsule_sphere_leaf)
 
-    """ DEFAULT COMPOSITION """
+
+
+
+    def add_spherical_obstacle_geometry(
+            self,
+            obstacle_name: str,
+            collision_link_name: str,
+            forward_kinematics: ca.SX,
+            ) -> None:
+        """
+        Add a spherical obstacle geometry to the fabrics planner.
+
+        Parameters
+        ----------
+        obstacle_name : str
+            The name of the obstacle to be added.
+        collision_link_name : str
+            The name of the robot's collision link that the obstacle is associated with.
+        forward_kinematics : ca.SX
+            The forward kinematics expression representing the obstacle's position.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        - The `forward_kinematics` should be a symbolic
+            expression using CasADi SX for the obstacle's position.
+        - The `collision_geometry` and `collision_finsler` configurations
+            must be set before adding the obstacle.
+        - After adding the obstacle, it will be included in the robot's
+            configuration and affect its motion planning.
+
+        Example
+        -------
+        obstacle_name = "Sphere_Obstacle"
+        collision_link_name = "Link1"
+        forward_kinematics = ca.SX([fk_x, fk_y, fk_z])
+        robot.add_spherical_obstacle_geometry(
+            obstacle_name,
+            collision_link_name,
+            forward_kinematics
+        )
+        """
+        geometry = ObstacleLeaf(
+            self._variables,
+            forward_kinematics,
+            obstacle_name,
+            collision_link_name,
+        )
+        geometry.set_geometry(self.config.collision_geometry)
+        geometry.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(geometry)
+
+    def add_dynamic_spherical_obstacle_geometry(
+            self,
+            obstacle_name: str,
+            collision_link_name: str,
+            forward_kinematics: ca.SX,
+            reference_parameters: dict,
+            dynamic_obstacle_dimension: int = 3,
+            ) -> None:
+        geometry = DynamicObstacleLeaf(
+            self._variables,
+            forward_kinematics[0:dynamic_obstacle_dimension],
+            obstacle_name,
+            collision_link_name,
+            reference_parameters=reference_parameters
+        )
+        geometry.set_geometry(self.config.collision_geometry)
+        geometry.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(geometry)
+
+    def add_plane_constraint(
+            self,
+            constraint_name: str,
+            collision_link_name: str,
+            forward_kinematics: ca.SX,
+            ) -> None:
+
+        geometry = PlaneConstraintGeometryLeaf(
+            self._variables,
+            constraint_name,
+            collision_link_name,
+            forward_kinematics,
+        )
+        geometry.set_geometry(self.config.geometry_plane_constraint)
+        geometry.set_finsler_structure(self.config.finsler_plane_constraint)
+        self.add_leaf(geometry)
+    
+    def add_esdf_geometry(
+            self,
+            collision_link_name: str,
+            ) -> None:
+        fk = self.get_forward_kinematics(collision_link_name)
+        geometry = ESDFGeometryLeaf(self._variables, collision_link_name, fk)
+        geometry.set_geometry(self.config.collision_geometry)
+        geometry.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(geometry)
+
+    def add_spherical_self_collision_geometry(
+            self,
+            collision_link_1: str,
+            collision_link_2: str,
+            ) -> None:
+        fk_1 = self.get_forward_kinematics(collision_link_1)
+        fk_2 = self.get_forward_kinematics(collision_link_2)
+        fk = fk_2 - fk_1
+        if is_sparse(fk):
+            message = (
+                    f"Expression {fk} for links {collision_link_1} "
+                    "and {collision_link_2} is sparse and thus skipped."
+            )
+            logging.warning(message.format_map(locals()))
+        self_collision_name = (
+                f"self_collision_{collision_link_1}_"
+                "{collision_link_2}"
+        )
+        geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
+        geometry.set_geometry(self.config.self_collision_geometry)
+        geometry.set_finsler_structure(self.config.self_collision_finsler)
+        self.add_leaf(geometry)
+
+    def add_limit_geometry(
+            self,
+            joint_index: int,
+            limits: list,
+            ) -> None:
+        lower_limit_geometry = LimitLeaf(self._variables, joint_index, limits[0], 0)
+        lower_limit_geometry.set_geometry(self.config.limit_geometry)
+        lower_limit_geometry.set_finsler_structure(self.config.limit_finsler)
+        upper_limit_geometry = LimitLeaf(self._variables, joint_index, limits[1], 1)
+        upper_limit_geometry.set_geometry(self.config.limit_geometry)
+        upper_limit_geometry.set_finsler_structure(self.config.limit_finsler)
+        self.add_leaf(lower_limit_geometry)
+        self.add_leaf(upper_limit_geometry)
+
+
     def set_components(
         self,
-        collision_links: list = None,
-        self_collision_pairs: dict = None,
-        collision_links_esdf: list = None,
-        goal: GoalComposition = None,
-        limits: list = None,
+        collision_links: Optional[list] = None,
+        self_collision_pairs: Optional[dict] = None,
+        collision_links_esdf: Optional[list] = None,
+        goal: Optional[GoalComposition] = None,
+        limits: Optional[list] = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
         number_plane_constraints: int = 0,
         dynamic_obstacle_dimension: int = 3,
     ):
-        if collision_links is None:
-            collision_links = []
-        if collision_links_esdf is None:
-            collision_links_esdf = []
-        if self_collision_pairs is None:
-            self_collision_pairs = {}
+        collision_links = collision_links or []
+        collision_links_esdf = collision_links_esdf or []
+        self_collision_pairs = self_collision_pairs or {}
+
         reference_parameter_list = []
         for i in range(number_dynamic_obstacles):
             reference_parameters = {
@@ -338,59 +488,42 @@ class ParameterizedFabricPlanner(object):
         for collision_link in collision_links:
             fk = self.get_forward_kinematics(collision_link)
             if is_sparse(fk):
-                logging.warning(f"Expression {fk} for link {collision_link} is sparse and thus skipped.")
+                message = (
+                        f"Expression {fk} for link {collision_link} "
+                        "is sparse and thus skipped."
+                )
+                logging.warning(message.format_map(locals()))
                 continue
             for i in range(number_obstacles):
                 obstacle_name = f"obst_{i}"
-                geometry = ObstacleLeaf(self._variables, fk, obstacle_name, collision_link)
-                geometry.set_geometry(self.config.collision_geometry)
-                geometry.set_finsler_structure(self.config.collision_finsler)
-                self.add_leaf(geometry)
+                self.add_spherical_obstacle_geometry(obstacle_name, collision_link, fk)
             for i in range(number_dynamic_obstacles):
                 obstacle_name = f"obst_dynamic_{i}"
-                geometry = DynamicObstacleLeaf(self._variables, fk, obstacle_name, collision_link, reference_parameters=reference_parameter_list[i])
-                geometry.set_geometry(self.config.collision_geometry)
-                geometry.set_finsler_structure(self.config.collision_finsler)
-                self.add_leaf(geometry)
+                self.add_dynamic_spherical_obstacle_geometry(
+                        obstacle_name,
+                        collision_link,
+                        fk,
+                        reference_parameter_list[i],
+                        dynamic_obstacle_dimension=dynamic_obstacle_dimension,
+                )
             for i in range(number_plane_constraints):
                 constraint_name = f"constraint_{i}"
-                geometry = PlaneConstraintGeometryLeaf(self._variables, constraint_name, collision_link, fk)
-                geometry.set_geometry(self.config.geometry_plane_constraint)
-                geometry.set_finsler_structure(self.config.finsler_plane_constraint)
-                self.add_leaf(geometry)
+                self.add_plane_constraint(constraint_name, collision_link, fk)
 
 
         for collision_link in collision_links_esdf:
-            fk = self.get_forward_kinematics(collision_link)
-            geometry = ESDFGeometryLeaf(self._variables, collision_link, fk)
-            geometry.set_geometry(self.config.collision_geometry)
-            geometry.set_finsler_structure(self.config.collision_finsler)
-            self.add_leaf(geometry)
+            self.add_esdf_geometry(collision_link)
 
         for self_collision_key, self_collision_list in self_collision_pairs.items():
-            fk_key = self.get_forward_kinematics(self_collision_key)
             for self_collision_link in self_collision_list:
-                fk_link = self.get_forward_kinematics(self_collision_link)
-                fk = fk_link - fk_key
-                if is_sparse(fk):
-                    logging.warning(f"Expression {fk} for links {self_collision_key} and {self_collision_link} is sparse and thus skipped.")
-                    continue
-                self_collision_name = f"self_collision_{self_collision_key}_{self_collision_link}"
-                geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
-                geometry.set_geometry(self.config.self_collision_geometry)
-                geometry.set_finsler_structure(self.config.self_collision_finsler)
-                self.add_leaf(geometry)
+                self.add_spherical_self_collision_geometry(
+                        self_collision_key,
+                        self_collision_link
+                )
 
         if limits:
             for joint_index in range(len(limits)):
-                lower_limit_geometry = LimitLeaf(self._variables, joint_index, limits[joint_index][0], 0)
-                lower_limit_geometry.set_geometry(self.config.limit_geometry)
-                lower_limit_geometry.set_finsler_structure(self.config.limit_finsler)
-                upper_limit_geometry = LimitLeaf(self._variables, joint_index, limits[joint_index][1], 1)
-                upper_limit_geometry.set_geometry(self.config.limit_geometry)
-                upper_limit_geometry.set_finsler_structure(self.config.limit_finsler)
-                self.add_leaf(lower_limit_geometry)
-                self.add_leaf(upper_limit_geometry)
+                self.add_limit_geometry(joint_index, limits[joint_index])
 
         execution_energy = ExecutionLagrangian(self._variables)
         self.set_execution_energy(execution_energy)
@@ -485,7 +618,6 @@ class ParameterizedFabricPlanner(object):
         Essentially, only the casadiFunctionWrapper is serialized using
         pickle.
         """
-        self.concretize()
         self._funs.serialize(file_name)
 
     def export_as_xml(self, file_name: str):

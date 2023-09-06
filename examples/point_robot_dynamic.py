@@ -1,11 +1,16 @@
-import gym
-from mpscenes.obstacles.dynamic_sphere_obstacle import DynamicSphereObstacle
+import os
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+
 from mpscenes.goals.goal_composition import GoalComposition
+from mpscenes.obstacles.dynamic_sphere_obstacle import DynamicSphereObstacle
+
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 # Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
@@ -57,8 +62,8 @@ def initalize_environment(render):
                 "weight": 0.5,
                 "is_primary_goal": True,
                 "indices": [0, 1],
-                "parent_link" : 0,
-                "child_link" : 1,
+                "parent_link" : 'world',
+                "child_link" : 'base_link',
                 "desired_position": [3.5, 0.5],
                 "epsilon" : 0.1,
                 "type": "staticSubGoal"
@@ -89,18 +94,24 @@ def set_planner(goal: GoalComposition):
     goal: StaticSubGoal
         The goal to the motion planning problem.
     """
-    degrees_of_freedom = 2
-    robot_type = "pointRobot"
-    # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
+    degrees_of_freedom = 3
+    absolute_path = os.path.dirname(os.path.abspath(__file__))
+    with open(absolute_path + "/point_robot.urdf", "r", encoding="utf-8") as file:
+        urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="world",
+        end_link="base_link",
+    )
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     planner = ParameterizedFabricPlanner(
-            degrees_of_freedom,
-            robot_type,
-            collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler
+        degrees_of_freedom,
+        forward_kinematics,
+        collision_geometry=collision_geometry,
+        collision_finsler=collision_finsler
     )
-    collision_links = [1]
+    collision_links = ['base_link']
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links=collision_links,
@@ -134,23 +145,23 @@ def run_point_robot_urdf(n_steps=10000, render=True):
 
     for _ in range(n_steps):
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
-        ob_robot = ob['robot_0']
+        ob_robot = ob["robot_0"]
         arguments = dict(
-            q=ob_robot["joint_state"]["position"][0:2],
-            qdot=ob_robot["joint_state"]["velocity"][0:2],
-            x_goal_0=ob_robot['FullSensor']['goals'][2]['position'][0:2],
-            weight_goal_0=ob_robot['FullSensor']['goals'][2]['weight'],
-            x_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['position'][0:2],
-            xdot_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['velocity'][0:2],
-            xddot_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['acceleration'][0:2],
-            radius_obst_dynamic_0=ob_robot['FullSensor']['obstacles'][3]['size'],
-            x_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['position'][0:2],
-            xdot_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['velocity'][0:2],
-            xddot_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['acceleration'][0:2],
-            radius_obst_dynamic_1=ob_robot['FullSensor']['obstacles'][4]['size'],
-            radius_body_1=np.array([0.4])
+            q=ob_robot["joint_state"]["position"],
+            qdot=ob_robot["joint_state"]["velocity"],
+            x_goal_0=ob_robot["FullSensor"]["goals"][2]["position"][0:2],
+            weight_goal_0=ob_robot["FullSensor"]["goals"][2]["weight"],
+            x_obst_dynamic_0=ob_robot["FullSensor"]["obstacles"][3]["position"][0:2],
+            xdot_obst_dynamic_0=ob_robot["FullSensor"]["obstacles"][3]["velocity"][0:2],
+            xddot_obst_dynamic_0=ob_robot["FullSensor"]["obstacles"][3]["acceleration"][0:2],
+            radius_obst_dynamic_0=ob_robot["FullSensor"]["obstacles"][3]["size"],
+            x_obst_dynamic_1=ob_robot["FullSensor"]["obstacles"][4]["position"][0:2],
+            xdot_obst_dynamic_1=ob_robot["FullSensor"]["obstacles"][4]["velocity"][0:2],
+            xddot_obst_dynamic_1=ob_robot["FullSensor"]["obstacles"][4]["acceleration"][0:2],
+            radius_obst_dynamic_1=ob_robot["FullSensor"]["obstacles"][4]["size"],
+            radius_body_base_link=np.array([0.4])
         )
-        action[0:2] = planner.compute_action(**arguments)
+        action = planner.compute_action(**arguments)
 
         ob, *_, = env.step(action)
     env.close()

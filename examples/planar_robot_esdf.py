@@ -1,20 +1,21 @@
+import os
+import sys
 from copy import deepcopy
-import pdb
 import math
-import gym
-import casadi as ca
 import logging
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-import os
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
-import os
-import pybullet as p
+import pybullet
 from scipy import ndimage
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
@@ -52,14 +53,18 @@ def edf(pos, proj_rgb) -> tuple:
 
 def get_top_view_image(save=False, load_only=False):
     try:
-        proj_rgb = np.load("proj_rgb_planar_arm.npy")
-        proj_depth = np.load("proj_depth_planar_arm.npy")
+        rgb_file = os.path.dirname(os.path.abspath(__file__)) + "/proj_rgb_planar_arm.npy"
+        depth_file = os.path.dirname(os.path.abspath(__file__)) + "/proj_depth_planar_arm.npy"
+        proj_rgb = np.load(rgb_file)
+        proj_depth = np.load(depth_file)
     except FileNotFoundError as e:
         if load_only:
             raise(e)
         width_res = 130
         height_res = 100
-        img = p.getCameraImage(width_res, height_res, renderer=p.ER_BULLET_HARDWARE_OPENGL)
+        img = pybullet.getCameraImage(
+            width_res, height_res, renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
+        )
         proj_rgb = np.reshape(img[2], (height_res, width_res, 4)) * 1. / 255.
         proj_depth = img[3]
         if save:
@@ -74,8 +79,9 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
+    urdf_file = os.path.dirname(os.path.abspath(__file__)) + "/planar_urdf_2_joints.urdf"
     robots = [
-        GenericUrdfReacher(urdf="planar_urdf_2_joints.urdf", mode="acc"),
+        GenericUrdfReacher(urdf=urdf_file, mode="acc"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
@@ -144,23 +150,24 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-    robot_type = "xyz"
     collision_geometry = "-1.0 / (x ** 2) * xdot ** 2"
     collision_finsler = "0.2/(x ** 2) * (1 - ca.heaviside(xdot))* xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/planar_urdf_2_joints.urdf", "r") as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="panda_link0",
+        end_link="panda_link4",
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        robot_type,
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_link4',
+        forward_kinematics,
         collision_geometry=collision_geometry,
         collision_finsler=collision_finsler
     )
     collision_links = ['panda_link4']
-    geometry = planner.set_components(
+    planner.set_components(
         collision_links_esdf=collision_links,
         goal=goal,
     )
@@ -174,7 +181,7 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
     action = -np.zeros(env.n())
     ob, *_ = env.step(action)
     if render:
-        p.resetDebugVisualizerCamera(5, 90, 0, [0, 0, 0])
+        env.reconfigure_camera(5.0, 90.0, 0.0, (0.0, 0.0, 0.0))
         input("Make sure that the pybullet window is in default window size. Then press any key.")
         proj_rgb, proj_depth = get_top_view_image(save=True)
 
@@ -182,8 +189,11 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
         ob_robot = ob['robot_0']
         pos_joints = ob_robot['joint_state']['position'][0:2]
 
-        pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
-        pos_link4 = pos_link4_fun(pos_joints)[1:3, 3]  # only return (y, z)
+        #pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
+        #pos_link4 = pos_link4_fun(pos_joints)[1:3, 3]  # only return (y, z)
+        pos_link4 = planner._forward_kinematics.numpy(
+            pos_joints, 'panda_link0', 'panda_link4', positionOnly=True
+        )[1:3]
         proj_rgb, _ = get_top_view_image(save=False, load_only=True)
         edf_phi, edf_gradient_x, edf_gradient_y = edf(
             pos_link4,
@@ -207,4 +217,4 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_planar_robot_esdf(n_steps=5000, render=False)
+    res = run_planar_robot_esdf(n_steps=5000, render=bool(sys.argv[1]))

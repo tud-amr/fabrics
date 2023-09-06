@@ -26,11 +26,14 @@ class Lagrangian(object):
     """description"""
 
     def __init__(self, l: ca.SX, **kwargs):
+        assert isinstance(l, ca.SX)
         self._l = l
+        self.process_arguments(**kwargs)
+
+    def process_arguments(self, **kwargs):
         self._x_ref_name = "x_ref"
         self._xdot_ref_name = "xdot_ref"
         self._xddot_ref_name = "xddot_ref"
-        assert isinstance(l, ca.SX)
         if 'x' in kwargs:
             self._vars = Variables(state_variables={"x": kwargs.get('x'), "xdot": kwargs.get('xdot')})
         elif 'var' in kwargs:
@@ -49,9 +52,13 @@ class Lagrangian(object):
             self._J_ref_inv = np.identity(self.x_ref().size()[0])
         if "J_ref" in kwargs:
             self._J_ref = kwargs.get("J_ref")
-            logging.warning("Casadi pseudo inverse is used in Lagrangian")
+            logging.info("Casadi pseudo inverse is used in Lagrangian")
             self._J_ref_inv = ca.mtimes(ca.transpose(self._J_ref), ca.inv(ca.mtimes(self._J_ref, ca.transpose(self._J_ref)) + np.identity(self.x_ref().size()[0]) * eps))
-        self.applyEulerLagrange()
+        if not self.is_dynamic() and 'spec' in kwargs and 'hamiltonian' in kwargs:
+            self._H = kwargs.get('hamiltonian')
+            self._S = kwargs.get('spec')
+        else:
+            self.applyEulerLagrange()
 
 
     def x_ref(self):
@@ -88,7 +95,7 @@ class Lagrangian(object):
         else:
             ref_arguments = {}
         new_vars = self._vars + b._vars
-        return Lagrangian(self._l + b._l, var=new_vars, **ref_arguments)
+        return Lagrangian(self._l + b._l, spec=self._S + b._S, hamiltonian=self._H + b._H, var=new_vars, **ref_arguments)
 
     def is_dynamic(self) -> bool:
         logging.debug(f"Lagrangian is dynamic: {self._x_ref_name in self._vars.parameters()}")

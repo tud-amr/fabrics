@@ -1,22 +1,26 @@
 import logging
 import time
 import os
-
-import gym
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
 from urdfenvs.sensors.lidar import Lidar
+
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
-from examples.point_robot_fsd import get_goal_fsd, get_obstacles_fsd
 from mpscenes.goals.goal_composition import GoalComposition
+
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-import pybullet as p
+
+from point_robot_fsd import get_obstacles_fsd, get_goal_fsd
 
 logging.basicConfig(level=logging.ERROR)
 
-NUMBER_OF_RAYS = 2000
+NUMBER_OF_RAYS = 20
 
 def get_goal_sensors():
     goal_dict = {
@@ -75,7 +79,11 @@ def initalize_environment(render):
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.0, 0.0, 0.0])
-    full_sensor = FullSensor(goal_mask=["weight", "position"], obstacle_mask=["position", "size"])
+    full_sensor = FullSensor(
+        goal_mask=["weight", "position"],
+        obstacle_mask=["position", "size"],
+        variance=0.0,
+    )
     lidar = Lidar(4, nb_rays=NUMBER_OF_RAYS, raw_data=False)
     # Definition of the obstacle.
     obstacles = get_obstacles_fsd()
@@ -107,23 +115,21 @@ def set_planner(goal: GoalComposition):
         The goal to the motion planning problem.
     """
     degrees_of_freedom = 3
-    robot_type = "xyz"
-    # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-0.2 / (x ** 2) * xdot ** 2"
     collision_finsler = "0.1 / (x ** 2) * (1 - ca.heaviside(xdot))* xdot**2"
-    #collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
-    #collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/point_robot.urdf", "r") as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="world",
+        end_link="base_link",
+    )
     planner = ParameterizedFabricPlanner(
-            degrees_of_freedom,
-            robot_type,
-            urdf=urdf,
-            root_link='world',
-            end_link='base_link',
-            collision_geometry=collision_geometry,
-            collision_finsler=collision_finsler
+        degrees_of_freedom,
+        forward_kinematics,
+        collision_geometry=collision_geometry,
+        collision_finsler=collision_finsler
     )
     collision_links = ['base_link']
     planner.set_components(
@@ -136,7 +142,7 @@ def set_planner(goal: GoalComposition):
 
 def set_lidar_runtime_arguments(robot_position, lidar_observation: np.ndarray) -> dict:
     lidar_runtime_arguments = {}
-    relative_positions = np.concatenate((np.reshape(lidar_observation, (NUMBER_OF_RAYS, 2)), np.zeros((36, 1))), axis=1)
+    relative_positions = np.concatenate((np.reshape(lidar_observation, (NUMBER_OF_RAYS, 2)), np.zeros((NUMBER_OF_RAYS, 1))), axis=1)
     absolute_ray_end_positions = relative_positions + np.repeat(robot_position[np.newaxis, :], NUMBER_OF_RAYS, axis=0)
     for ray_id in range(NUMBER_OF_RAYS):
         lidar_runtime_arguments[f'x_obst_{ray_id}'] = absolute_ray_end_positions[ray_id]
@@ -162,7 +168,7 @@ def run_point_robot_sensor(n_steps=10000, render=True):
 
     action = np.array([0.0, 0.0, 0.0])
     ob, *_ = env.step(action)
-    p.resetDebugVisualizerCamera(5, 0, 270.1, [0, 0, 0])
+    env.reconfigure_camera(5, 0, 270.1, [0, 0, 0])
 
 
     for _ in range(n_steps):

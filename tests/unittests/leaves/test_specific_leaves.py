@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from fabrics.helpers.variables import Variables
 
-from fabrics.components.leaves.geometry import LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf
+from fabrics.components.leaves.geometry import CapsuleSphereLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf
 
 
 def test_limit_leaf():
@@ -50,3 +50,29 @@ def test_plane_constraint_leaf():
         x_plane=np.array([-1.0, 0.0, 0.0, 1.0]),
     )
     assert x == pytest.approx(0.35)
+
+def test_capsule_sphere_leaf():
+    q = ca.SX.sym("q", 2)
+    qdot = ca.SX.sym("qdot", 2)
+    root_variables = Variables(
+        state_variables={"q": q, "qdot": qdot}
+    )
+    fk_1 = ca.vcat([q[0] + q[1], 0.2, 0])
+    fk_2 = ca.vcat([q[0] + q[1], -0.2, 0])
+    capsule_sphere_leaf = CapsuleSphereLeaf(
+        root_variables,
+        "capsule",
+        "sphere", 
+        fk_1,
+        fk_2,
+    )
+    capsule_sphere_leaf._map.concretize()
+    value = np.array([0.2, 0.1])
+    x, J, Jdot = capsule_sphere_leaf._map.forward(
+        q=value,
+        qdot=np.zeros(2),
+        radius_capsule=0.15,
+        x_sphere=np.array([0.7, 0.0, 0.0]),
+        radius_sphere=0.2,
+    )
+    assert x == pytest.approx(0.05)

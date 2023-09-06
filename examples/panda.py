@@ -1,19 +1,17 @@
-import pdb
-import gym
+import os
+import gymnasium as gym
+import numpy as np
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-import os
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
-import numpy as np
-import os
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-
-# TODO hardcoding the indices for subgoal_1 is undesired
-
 
 def initalize_environment(render=True):
     """
@@ -98,8 +96,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         Degrees of freedom of the robot (default = 7)
     """
 
-    robot_type = 'panda'
-
     ## Optional reconfiguration of the planner
     # base_inertia = 0.03
     # attractor_potential = "20 * ca.norm_2(x)**4"
@@ -113,22 +109,23 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     # }
     # planner = ParameterizedFabricPlanner(
     #     degrees_of_freedom,
-    #     robot_type,
+    #     forward_kinematics,
     #     base_inertia=base_inertia,
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda_for_fk.urdf", "r") as file:
+    with open(absolute_path + "/panda_for_fk.urdf", "r", encoding="utf-8") as file:
         urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        rootLink="panda_link0",
+        end_link="panda_link9",
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
-        'panda',
-        urdf=urdf,
-        root_link='panda_link0',
-        end_link='panda_link9',
+        forward_kinematics,
     )
-    q = planner.variables.position_variable()
     collision_links = ['panda_link9', 'panda_link7', 'panda_link3', 'panda_link4']
     panda_limits = [
             [-2.8973, 2.8973],
@@ -156,9 +153,9 @@ def run_panda_example(n_steps=5000, render=True):
     planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
-    env.add_collision_link(0, 3, 'sphere', [0.10])
-    env.add_collision_link(0, 4, 'sphere', [0.10])
-    env.add_collision_link(0, 7, 'sphere', [0.10])
+    env.add_collision_link(0, 3, shape_type='sphere', size=[0.10])
+    env.add_collision_link(0, 4, shape_type='sphere', size=[0.10])
+    env.add_collision_link(0, 7, shape_type='sphere', size=[0.10])
 
 
     for _ in range(n_steps):

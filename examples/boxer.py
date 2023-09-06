@@ -1,11 +1,16 @@
-import gym
 import logging
+import gymnasium as gym
 import numpy as np
+
+from forwardkinematics.fksCommon.fk_creator import FkCreator
+
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.sensors.full_sensor import FullSensor
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
+
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
+
 from fabrics.planner.non_holonomic_parameterized_planner import NonHolonomicParameterizedFabricPlanner
 
 logging.basicConfig(level=logging.INFO)
@@ -101,9 +106,10 @@ def set_planner(goal: GoalComposition):
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 2) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
+    forward_kinematics = FkCreator(robot_type).fk()
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
-            robot_type,
+            forward_kinematics,
             collision_geometry=collision_geometry,
             collision_finsler=collision_finsler,
             l_offset="0.1/ca.norm_2(xdot)",
