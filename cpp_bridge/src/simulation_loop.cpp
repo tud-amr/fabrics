@@ -1,5 +1,5 @@
 #include <iostream>
-#include "panda_planner.c"
+#include "planner.c"
 #include <chrono>
 
 void print_array(const char* intro, double* array, unsigned int length) {
@@ -27,19 +27,24 @@ int main(int argc, char *argv[])
   int setting_2 = 0;
 
   // Define inputs and outputs
-  unsigned int nb_inputs = 4;
+  // Potential Segmentation Faults can be caused by the wrong number of arguments.
+  unsigned int nb_inputs = 6;
   unsigned int nb_outputs = 1;
 
   double joint_positions[] = {0.1, 0.5, 0.1, 0.1, 0.1, 0.1, 0.1};
   double joint_velocities[] = {0.4, 1.0, 0.1, 0.1, 0.1, 0.1, 0.1};
-  double goal_position[] = {0.3, 0.2, 0.1};
-  double weight_goal[] = {0.1};
+  double goal_position_0[] = {0.3, 0.2, 0.1};
+  double weight_goal_0[] = {0.1};
+  double goal_position_1[] = {0.0, 0.0, 0.107};
+  double weight_goal_1[] = {0.1};
 
   const double** input = new const double*[nb_inputs];
   input[0] = joint_positions;
   input[1] = joint_velocities;
-  input[2] = weight_goal;
-  input[3] = goal_position;
+  input[2] = weight_goal_0;
+  input[3] = goal_position_0;
+  input[4] = weight_goal_1;
+  input[5] = goal_position_1;
   double** output = new double*[nb_outputs];
   output[0] = new double[7];
 
@@ -57,7 +62,7 @@ int main(int argc, char *argv[])
   std::chrono::microseconds duration = std::chrono::duration_cast<std::chrono::microseconds>((end - start)/N);
 
   // Print the elapsed time in microseconds, milliseconds, or seconds
-  std::cout << "Elapsed time: " << duration.count() * 0.001 << " milliseconds" << std::endl;
+  std::cout << "Average compute time: " << duration.count() * 0.001 << " milliseconds" << std::endl;
   print_array("Output of motion planning : ", output[0], 7);
 
 
