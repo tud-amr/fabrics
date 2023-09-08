@@ -196,7 +196,7 @@ files = [
 name = "attrs"
 version = "23.1.0"
 description = "Classes Without Boilerplate"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -336,7 +336,7 @@ numpy = "*"
 name = "certifi"
 version = "2023.5.7"
 description = "Python package for providing Mozilla's CA Bundle."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -425,7 +425,7 @@ pycparser = "*"
 name = "chardet"
 version = "5.1.0"
 description = "Universal encoding detector for Python 3"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -437,7 +437,7 @@ files = [
 name = "charset-normalizer"
 version = "3.2.0"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7.0"
 files = [
@@ -522,7 +522,7 @@ files = [
 name = "cloudpickle"
 version = "2.2.1"
 description = "Extended pickling support for Python objects"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -534,7 +534,7 @@ files = [
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 files = [
@@ -546,7 +546,7 @@ files = [
 name = "colorlog"
 version = "6.7.0"
 description = "Add colours to the output of Python's logging module."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -783,7 +783,7 @@ files = [
 name = "deprecation"
 version = "2.1.0"
 description = "A library to handle automated deprecations"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -796,14 +796,14 @@ packaging = "*"
 
 [[package]]
 name = "dill"
-version = "0.3.6"
-description = "serialize all of python"
-category = "dev"
+version = "0.3.7"
+description = "serialize all of Python"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "dill-0.3.6-py3-none-any.whl", hash = "sha256:a07ffd2351b8c678dfc4a856a3005f8067aea51d6ba6c700796a4d9e280f39f0"},
-    {file = "dill-0.3.6.tar.gz", hash = "sha256:e5db55f3687856d8fbdab002ed78544e1c4559a130302693d839dfe8f93f2373"},
+    {file = "dill-0.3.7-py3-none-any.whl", hash = "sha256:76b122c08ef4ce2eedcd4d1abd8e641114bfc6c2867f49f3c41facf65bf19f5e"},
+    {file = "dill-0.3.7.tar.gz", hash = "sha256:cc1c8b182eb3013e24bd475ff2e9295af86c1a38eb1aff128dac8962a9ce3c03"},
 ]
 
 [package.extras]
@@ -813,7 +813,7 @@ graph = ["objgraph (>=1.7.2)"]
 name = "embreex"
 version = "2.17.7.post1"
 description = "Python binding for Intel's Embree ray engine"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -885,7 +885,7 @@ tests = ["asttokens", "littleutils", "pytest", "rich"]
 name = "farama-notifications"
 version = "0.0.4"
 description = "Notifications for all Farama Foundation maintained libraries."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -1052,7 +1052,7 @@ files = [
 name = "gymnasium"
 version = "0.28.1"
 description = "A standard API for reinforcement learning and a diverse set of reference environments (formerly Gym)."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1085,7 +1085,7 @@ toy-text = ["pygame (==2.1.3)", "pygame (==2.1.3)"]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 files = [
@@ -1117,7 +1117,7 @@ testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs
 name = "importlib-resources"
 version = "6.0.0"
 description = "Read resources from Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -1267,7 +1267,7 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 name = "jax-jumpy"
 version = "1.0.0"
 description = "Common backend for Jax or Numpy."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1351,7 +1351,7 @@ files = [
 name = "jsonschema"
 version = "4.18.4"
 description = "An implementation of JSON Schema validation for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -1383,7 +1383,7 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 name = "jsonschema-specifications"
 version = "2023.7.1"
 description = "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -1920,7 +1920,7 @@ source = ["Cython (>=0.29.35)"]
 name = "mapbox-earcut"
 version = "1.0.1"
 description = "Python bindings for the mapbox earcut C++ polygon triangulation library."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -2173,14 +2173,14 @@ tests = ["pytest (>=4.6)"]
 
 [[package]]
 name = "mpscenes"
-version = "0.4.2"
+version = "0.4.4"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "mpscenes-0.4.2-py3-none-any.whl", hash = "sha256:1e90584f8d274cd03c753a7c47b8884ce202f0fc95870a71d124c3709fcd12b6"},
-    {file = "mpscenes-0.4.2.tar.gz", hash = "sha256:d83f19268f295b9f853bc15a0bda41d2f1ef297d41a19a98bf80646a0754930c"},
+    {file = "mpscenes-0.4.4-py3-none-any.whl", hash = "sha256:aad280b4169cd2336291af9d63743e05a479f6b6bf0700ff93ce56274122fb72"},
+    {file = "mpscenes-0.4.4.tar.gz", hash = "sha256:ede3cbe49ecce2b1eb472eb05e1da745149de1a3239d1937346e346db53d2054"},
 ]
 
 [package.dependencies]
@@ -2327,7 +2327,7 @@ files = [
 name = "networkx"
 version = "3.1"
 description = "Python package for creating and manipulating graphs and networks"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -2504,7 +2504,7 @@ files = [
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2582,7 +2582,7 @@ files = [
 name = "pillow"
 version = "10.0.0"
 description = "Python Imaging Library (Fork)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -2652,7 +2652,7 @@ tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "pa
 name = "pkgutil-resolve-name"
 version = "1.3.10"
 description = "Resolve a name to an object."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -2814,7 +2814,7 @@ files = [
 name = "pybullet"
 version = "3.2.5"
 description = "Official Python Interface for the Bullet Physics SDK specialized for Robotics Simulation and Reinforcement Learning"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -2832,7 +2832,7 @@ files = [
 name = "pycollada"
 version = "0.7.2"
 description = "python library for reading and writing collada documents"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -3163,7 +3163,7 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtuale
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 files = [
@@ -3265,6 +3265,7 @@ files = [
     {file = "PyYAML-6.0.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:69b023b2b4daa7548bcfbd4aa3da05b3a74b772db9e23b982788168117739938"},
     {file = "PyYAML-6.0.1-cp310-cp310-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:81e0b275a9ecc9c0c0c07b4b90ba548307583c125f54d5b6946cfee6360c733d"},
     {file = "PyYAML-6.0.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ba336e390cd8e4d1739f42dfe9bb83a3cc2e80f567d8805e11b46f4a943f5515"},
+    {file = "PyYAML-6.0.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:326c013efe8048858a6d312ddd31d56e468118ad4cdeda36c719bf5bb6192290"},
     {file = "PyYAML-6.0.1-cp310-cp310-win32.whl", hash = "sha256:bd4af7373a854424dabd882decdc5579653d7868b8fb26dc7d0e99f823aa5924"},
     {file = "PyYAML-6.0.1-cp310-cp310-win_amd64.whl", hash = "sha256:fd1592b3fdf65fff2ad0004b5e363300ef59ced41c2e6b3a99d4089fa8c5435d"},
     {file = "PyYAML-6.0.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6965a7bc3cf88e5a1c3bd2e0b5c22f8d677dc88a455344035f03399034eb3007"},
@@ -3272,8 +3273,15 @@ files = [
     {file = "PyYAML-6.0.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:42f8152b8dbc4fe7d96729ec2b99c7097d656dc1213a3229ca5383f973a5ed6d"},
     {file = "PyYAML-6.0.1-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:062582fca9fabdd2c8b54a3ef1c978d786e0f6b3a1510e0ac93ef59e0ddae2bc"},
     {file = "PyYAML-6.0.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d2b04aac4d386b172d5b9692e2d2da8de7bfb6c387fa4f801fbf6fb2e6ba4673"},
+    {file = "PyYAML-6.0.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:e7d73685e87afe9f3b36c799222440d6cf362062f78be1013661b00c5c6f678b"},
     {file = "PyYAML-6.0.1-cp311-cp311-win32.whl", hash = "sha256:1635fd110e8d85d55237ab316b5b011de701ea0f29d07611174a1b42f1444741"},
     {file = "PyYAML-6.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:bf07ee2fef7014951eeb99f56f39c9bb4af143d8aa3c21b1677805985307da34"},
+    {file = "PyYAML-6.0.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:855fb52b0dc35af121542a76b9a84f8d1cd886ea97c84703eaa6d88e37a2ad28"},
+    {file = "PyYAML-6.0.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:40df9b996c2b73138957fe23a16a4f0ba614f4c0efce1e9406a184b6d07fa3a9"},
+    {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c22bec3fbe2524cde73d7ada88f6566758a8f7227bfbf93a408a9d86bcc12a0"},
+    {file = "PyYAML-6.0.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:8d4e9c88387b0f5c7d5f281e55304de64cf7f9c0021a3525bd3b1c542da3b0e4"},
+    {file = "PyYAML-6.0.1-cp312-cp312-win32.whl", hash = "sha256:d483d2cdf104e7c9fa60c544d92981f12ad66a457afae824d146093b8c294c54"},
+    {file = "PyYAML-6.0.1-cp312-cp312-win_amd64.whl", hash = "sha256:0d3304d8c0adc42be59c5f8a4d9e3d7379e6955ad754aa9d6ab7a398b59dd1df"},
     {file = "PyYAML-6.0.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:50550eb667afee136e9a77d6dc71ae76a44df8b3e51e41b77f6de2932bfe0f47"},
     {file = "PyYAML-6.0.1-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1fe35611261b29bd1de0070f0b2f47cb6ff71fa6595c077e42bd0c419fa27b98"},
     {file = "PyYAML-6.0.1-cp36-cp36m-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:704219a11b772aea0d8ecd7058d0082713c3562b4e271b849ad7dc4a5c90c13c"},
@@ -3290,6 +3298,7 @@ files = [
     {file = "PyYAML-6.0.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a0cd17c15d3bb3fa06978b4e8958dcdc6e0174ccea823003a106c7d4d7899ac5"},
     {file = "PyYAML-6.0.1-cp38-cp38-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:28c119d996beec18c05208a8bd78cbe4007878c6dd15091efb73a30e90539696"},
     {file = "PyYAML-6.0.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7e07cbde391ba96ab58e532ff4803f79c4129397514e1413a7dc761ccd755735"},
+    {file = "PyYAML-6.0.1-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:49a183be227561de579b4a36efbb21b3eab9651dd81b1858589f796549873dd6"},
     {file = "PyYAML-6.0.1-cp38-cp38-win32.whl", hash = "sha256:184c5108a2aca3c5b3d3bf9395d50893a7ab82a38004c8f61c258d4428e80206"},
     {file = "PyYAML-6.0.1-cp38-cp38-win_amd64.whl", hash = "sha256:1e2722cc9fbb45d9b87631ac70924c11d3a401b2d7f410cc0e3bbf249f2dca62"},
     {file = "PyYAML-6.0.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:9eb6caa9a297fc2c2fb8862bc5370d0303ddba53ba97e71f08023b6cd73d16a8"},
@@ -3297,6 +3306,7 @@ files = [
     {file = "PyYAML-6.0.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5773183b6446b2c99bb77e77595dd486303b4faab2b086e7b17bc6bef28865f6"},
     {file = "PyYAML-6.0.1-cp39-cp39-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:b786eecbdf8499b9ca1d697215862083bd6d2a99965554781d0d8d1ad31e13a0"},
     {file = "PyYAML-6.0.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bc1bf2925a1ecd43da378f4db9e4f799775d6367bdb94671027b73b393a7c42c"},
+    {file = "PyYAML-6.0.1-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:04ac92ad1925b2cff1db0cfebffb6ffc43457495c9b3c39d3fcae417d7125dc5"},
     {file = "PyYAML-6.0.1-cp39-cp39-win32.whl", hash = "sha256:faca3bdcf85b2fc05d06ff3fbc1f83e1391b3e724afa3feba7d13eeab355484c"},
     {file = "PyYAML-6.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:510c9deebc5c0225e8c96813043e62b680ba2f9c50a08d3724c7f28a747d1486"},
     {file = "PyYAML-6.0.1.tar.gz", hash = "sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43"},
@@ -3418,7 +3428,7 @@ pymdown-extensions = ["pymdown-extensions (>=8,<9)"]
 name = "referencing"
 version = "0.30.0"
 description = "JSON Referencing + Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -3434,7 +3444,7 @@ rpds-py = ">=0.7.0"
 name = "requests"
 version = "2.31.0"
 description = "Python HTTP for Humans."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3483,7 +3493,7 @@ files = [
 name = "rpds-py"
 version = "0.9.2"
 description = "Python bindings to Rust's persistent data structures (rpds)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -3590,7 +3600,7 @@ files = [
 name = "rtree"
 version = "1.0.1"
 description = "R-Tree spatial index for Python GIS"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3701,7 +3711,7 @@ win32 = ["pywin32"]
 name = "setuptools"
 version = "68.0.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3718,7 +3728,7 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 name = "shapely"
 version = "2.0.1"
 description = "Manipulation and analysis of geometric objects"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3829,7 +3839,7 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 name = "svg-path"
 version = "6.3"
 description = "SVG path objects and parser"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -3972,7 +3982,7 @@ test = ["argcomplete (>=2.0)", "pre-commit", "pytest", "pytest-mock"]
 name = "trimesh"
 version = "3.22.5"
 description = "Import, export, process, analyze and view triangular meshes."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -4009,7 +4019,7 @@ test = ["autopep8 (<2)", "coveralls", "ezdxf", "pyinstrument", "pymeshlab", "pyt
 name = "typing-extensions"
 version = "4.7.1"
 description = "Backported and Experimental Type Hints for Python 3.7+"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4034,9 +4044,9 @@ pyyaml = "*"
 
 [[package]]
 name = "urdfenvs"
-version = "0.8.1"
+version = "0.8.15"
 description = "Simple simulation environment for robots, based on the urdf files."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "^3.8"
 files = []
@@ -4044,8 +4054,9 @@ develop = false
 
 [package.dependencies]
 deprecation = "^2.1.0"
+dill = "^0.3.7"
 gymnasium = "^0.28.1"
-mpscenes = "^0.4.2"
+mpscenes = "^0.4.4"
 numpy = "^1.19,<1.24"
 pybullet = "^3.2.1"
 yourdfpy = "^0.0.52"
@@ -4057,7 +4068,7 @@ keyboard = []
 type = "git"
 url = "https://github.com/maxspahn/gym_envs_urdf.git"
 reference = "develop"
-resolved_reference = "fd3add9bec8171c3607c0465bf7da3e698519c4f"
+resolved_reference = "c7f7cb6bb22083695d625bbb20952db45574f95d"
 
 [[package]]
 name = "uri-template"
@@ -4078,7 +4089,7 @@ dev = ["flake8", "flake8-annotations", "flake8-bandit", "flake8-bugbear", "flake
 name = "urllib3"
 version = "2.0.4"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4238,7 +4249,7 @@ files = [
 name = "xxhash"
 version = "3.2.0"
 description = "Python binding for xxHash"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -4422,7 +4433,7 @@ files = [
 name = "yourdfpy"
 version = "0.0.52"
 description = "A simpler and easier-to-use library for loading, manipulating, saving, and visualizing URDF files."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4478,4 +4489,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.10"
-content-hash = "6142b6e8b5849fddb43be834c70b582ee5923ef441393070c299e114da3705b6"
+content-hash = "6ba6c5915e6e62a666d5ebf6ba41064a0e6addc48701fd4f1690173603465eef"
