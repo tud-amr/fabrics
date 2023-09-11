@@ -3,9 +3,9 @@ import casadi as ca
 from fabrics.diffGeometry.diffMap import (
     DifferentialMap,
 )
-from fabrics.helpers.distances import capsule_to_sphere, sphere_to_plane
+from fabrics.helpers.distances import capsule_to_sphere, sphere_to_plane, sphere_to_rectangle, rectangle_struct
 from fabrics.helpers.variables import Variables
-
+import numpy as np
 
 class ParameterizedGoalMap(DifferentialMap):
     def __init__(self, var, fk, reference_variable):
@@ -14,7 +14,6 @@ class ParameterizedGoalMap(DifferentialMap):
 
 class ParameterizedGeometryMap(DifferentialMap):
     pass
-
 
 class SphereSphereMap(ParameterizedGeometryMap):
     def __init__(
@@ -47,8 +46,6 @@ class CapsuleSphereMap(ParameterizedGeometryMap):
         )
         super().__init__(phi, var)
 
-
-
 class PlaneSphereMap(ParameterizedGeometryMap):
     def __init__(
         self,
@@ -58,6 +55,20 @@ class PlaneSphereMap(ParameterizedGeometryMap):
         constraint: ca.SX,
     ):
         phi = sphere_to_plane(sphere_center, constraint, sphere_radius)
+
+        super().__init__(phi, var)
+
+class RectangleSphereMap(ParameterizedGeometryMap):
+    def __init__(
+        self,
+        var: Variables,
+        sphere_center: ca.SX,
+        sphere_radius: ca.SX,
+        center: ca.SX,
+        size: ca.SX,
+    ):
+        rect = rectangle_struct(center, size)
+        phi = sphere_to_rectangle(sphere_center, rect, sphere_radius)
 
         super().__init__(phi, var)
 

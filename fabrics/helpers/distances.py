@@ -88,3 +88,89 @@ def capsule_to_sphere(
         sphere_center, capsule_centers[0], capsule_centers[1]
     )
     return distance_line_center - capsule_radius - sphere_radius
+
+def compute_rectangle_edges(
+        center: ca.SX,
+        size: ca.SX):
+    half_length = size[0] / 2
+    half_width = size[1] / 2
+    half_height = size[2] / 2
+
+    # Define the equations for the six planes of the rectangle
+    # Define the corners of the rectangle relative to the center
+    corners = []
+    for i_x in range(2):
+        dx = (2*i_x - 1) * size[0] / 2
+        for i_y in range(2):
+            dy = (2 * i_y - 1) * size[1] / 2
+            for i_z in range(2):
+                dz = (2 * i_z - 1) * size[2] / 2
+                corner = [center[0]+dx, center[1]+dy, center[2]+dz]
+                corners.append(corner)
+
+    # corner_lines = [
+    #     [center[0] - half_length, center[1] + half_width, center[2] - half_height],
+    #     [center[0] + half_length, center[1] + half_width, center[2] - half_height],
+    #     [center[0] - half_length, center[1] - half_width, center[2] - half_height],
+    #     [center[0] + half_length, center[1] - half_width, center[2] - half_height],
+    #     [center[0] - half_length, center[1] + half_width, center[2] + half_height],
+    #     [center[0] + half_length, center[1] + half_width, center[2] + half_height],
+    #     [center[0] - half_length, center[1] - half_width, center[2] + half_height],
+    #     [center[0] + half_length, center[1] - half_width, center[2] + half_height]
+    # ]
+    kkk=1
+    corner_lines = [[corners[0], corners[1]],
+                    [corners[0], corners[2]],
+                    [corners[0], corners[4]],
+                    [corners[1], corners[3]],
+                    [corners[1], corners[5]],
+                    [corners[2], corners[3]],
+                    [corners[2], corners[6]],
+                    [corners[7], corners[5]],
+                    [corners[7], corners[6]],
+                    [corners[7], corners[3]],
+                    [corners[4], corners[5]],
+                    [corners[4], corners[6]]
+                    ]
+
+    return corner_lines
+
+def rectangle_struct(
+        center: ca.SX,
+        size: ca.SX,
+):
+    min_point = center - size/2
+    max_point = center + size/2
+    corner_lines = compute_rectangle_edges(center, size)
+    rect = {"max":max_point,
+            "min":min_point,
+            "corner_lines":corner_lines}
+    return rect
+
+def point_to_rectangle(
+        p: ca.SX,
+        rect: dict,
+):
+    dx = max(rect["min"][0] - p[0], 0, p[0] - rect["max"][0])
+    dy = max(rect["min"][1] - p[1], 0, p[1] - rect["max"][1])
+    dz = max(rect["min"][2] - p[2], 0, p[2] - rect["max"][2])
+    return ca.sqrt(dx * dx + dy * dy + dz * dz)
+
+def sphere_to_rectangle(
+    sphere_center: ca.SX,
+    rect: dict,
+    sphere_radius: ca.SX,
+) -> ca.SX:
+    distance = point_to_rectangle(sphere_center, rect) - sphere_radius
+    return distance
+
+def capsule_to_rectangle(
+        capsule_centers: List[ca.SX],
+        rect: dict,
+        capsule_radius: ca.SX
+):
+    min_distance = ca.inf
+    for corner_line in rect["corner_lines"]:
+        dist = line_to_line(corner_line[0], corner_line[1], capsule_centers[0], capsule_centers[1]) - capsule_radius
+        min_distance = min(dist, min_distance)
+    return min_distance
