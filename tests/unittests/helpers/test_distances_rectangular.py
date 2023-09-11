@@ -3,9 +3,6 @@ import pytest
 import numpy as np
 from fabrics.helpers.distances import (
     point_to_line,
-    point_to_plane,
-    line_to_plane,
-    capsule_to_sphere,
     point_to_rectangle,
     rectangle_struct,
     sphere_to_rectangle,

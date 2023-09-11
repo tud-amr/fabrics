@@ -108,17 +108,6 @@ def compute_rectangle_edges(
                 corner = [center[0]+dx, center[1]+dy, center[2]+dz]
                 corners.append(corner)
 
-    # corner_lines = [
-    #     [center[0] - half_length, center[1] + half_width, center[2] - half_height],
-    #     [center[0] + half_length, center[1] + half_width, center[2] - half_height],
-    #     [center[0] - half_length, center[1] - half_width, center[2] - half_height],
-    #     [center[0] + half_length, center[1] - half_width, center[2] - half_height],
-    #     [center[0] - half_length, center[1] + half_width, center[2] + half_height],
-    #     [center[0] + half_length, center[1] + half_width, center[2] + half_height],
-    #     [center[0] - half_length, center[1] - half_width, center[2] + half_height],
-    #     [center[0] + half_length, center[1] - half_width, center[2] + half_height]
-    # ]
-    kkk=1
     corner_lines = [[corners[0], corners[1]],
                     [corners[0], corners[2]],
                     [corners[0], corners[4]],
