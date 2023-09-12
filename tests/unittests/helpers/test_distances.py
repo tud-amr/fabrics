@@ -2,12 +2,32 @@ import casadi as ca
 import pytest
 import numpy as np
 from fabrics.helpers.distances import (
+    closest_point_to_line,
+    line_to_line,
     point_to_line,
     point_to_plane,
     line_to_plane,
     capsule_to_sphere,
 )
 
+def test_closest_point_line():
+    line_start = ca.SX.sym("line_start", 3)
+    line_end = ca.SX.sym("line_end", 3)
+    point = ca.SX.sym("point", 3)
+    closest_point_expression = closest_point_to_line(point, line_start, line_end)
+    function_arguments = [point, line_start, line_end]
+    closest_point_function = ca.Function(
+        "distance_function", function_arguments, [closest_point_expression]
+    )
+    line_start_numpy = np.array([1, 2, 0])
+    line_end_numpy = np.array([1, -1, 0])
+    point_numpy = np.array([3.0, 1.2, 0.0])
+    closest_point_numpy = np.array(
+        closest_point_function(point_numpy, line_start_numpy, line_end_numpy)
+    )[:, 0]
+    assert closest_point_numpy[0] == pytest.approx(1.0)
+    assert closest_point_numpy[1] == pytest.approx(1.2)
+    assert closest_point_numpy[2] == pytest.approx(0.0)
 
 def test_distance_point_line():
     line_start = ca.SX.sym("line_start", 3)
@@ -38,6 +58,38 @@ def test_distance_point_line():
         distance_function(point_numpy, line_start_numpy, line_end_numpy)
     )
     assert distance_numpy == np.sqrt(2)
+
+def test_distance_line_line():
+    line_1_start = ca.SX.sym("line_1_start", 3)
+    line_1_end = ca.SX.sym("line_1_end", 3)
+    line_2_start = ca.SX.sym("line_2_start", 3)
+    line_2_end = ca.SX.sym("line_2_end", 3)
+    distance_expression = line_to_line(
+        line_1_start,
+        line_1_end,
+        line_2_start,
+        line_2_end,
+        samples=500,
+    )
+    function_arguments = [line_1_start, line_1_end, line_2_start, line_2_end]
+    distance_function = ca.Function(
+        "distance_function", function_arguments, [distance_expression]
+    )
+
+    line_1_start_numpy = np.array([1, 0, 0])
+    line_1_end_numpy = np.array([-1, 0, 0])
+    line_2_start_numpy = np.array([0, 1, 3])
+    line_2_end_numpy = np.array([0, 1, -3])
+    distance_numpy = np.array(
+        distance_function(
+            line_1_start_numpy,
+            line_1_end_numpy,
+            line_2_start_numpy,
+            line_2_end_numpy,
+        )
+    )
+    assert distance_numpy == pytest.approx(1)
+
 
 
 def test_distance_point_plane():

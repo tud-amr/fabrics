@@ -1,5 +1,14 @@
 import casadi as ca
-from typing import List
+import numpy as np
+from typing import List, Union
+
+def closest_point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
+    line_vector = line_end - line_start
+    point_vector = point - line_start
+    t = ca.dot(point_vector, line_vector) / ca.dot(line_vector, line_vector)
+    t = ca.fmax(0, ca.fmin(1, t))
+    return line_start + t * line_vector
+
 
 
 def point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
@@ -22,7 +31,12 @@ def point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
     )
     return distance
 
-def line_to_line(line_1_start: ca.SX, line_1_end: ca.SX, line_2_start: ca.SX, line_2_end: ca.SX) -> ca.SX:
+def line_to_line(
+    line_1_start: ca.SX,
+    line_1_end: ca.SX,
+    line_2_start: ca.SX,
+    line_2_end: ca.SX,
+    samples: int = 100) -> ca.SX:
     """
     Computes the distance between two lines ignoring the case that they are 
     intersecting.
@@ -31,6 +45,11 @@ def line_to_line(line_1_start: ca.SX, line_1_end: ca.SX, line_2_start: ca.SX, li
         point_to_line(line_1_start, line_2_start, line_2_end), 
         point_to_line(line_1_end, line_2_start, line_2_end), 
     )
+    for i in range(samples):
+        eta = 1/samples * i
+        line_point = (1-eta) * line_1_start + eta * line_1_end
+        distance = ca.fmin(distance, point_to_line(line_point, line_2_start, line_2_end))
+
     return distance
 
 
@@ -87,79 +106,90 @@ def capsule_to_sphere(
     distance_line_center = point_to_line(
         sphere_center, capsule_centers[0], capsule_centers[1]
     )
-    return distance_line_center - capsule_radius - sphere_radius
+    return ca.fmax(distance_line_center - capsule_radius - sphere_radius, 0.0)
 
-def compute_rectangle_edges(
-        center: ca.SX,
-        size: ca.SX):
-    half_length = size[0] / 2
-    half_width = size[1] / 2
-    half_height = size[2] / 2
 
-    # Define the equations for the six planes of the rectangle
-    # Define the corners of the rectangle relative to the center
-    corners = []
-    for i_x in range(2):
-        dx = (2*i_x - 1) * size[0] / 2
-        for i_y in range(2):
-            dy = (2 * i_y - 1) * size[1] / 2
-            for i_z in range(2):
-                dz = (2 * i_z - 1) * size[2] / 2
-                corner = [center[0]+dx, center[1]+dy, center[2]+dz]
-                corners.append(corner)
+def cuboid_to_point_half_distances(
+        rectangle_center: ca.SX,
+        rectangle_size: ca.SX,
+        point: ca.SX,
+    ) -> List[ca.SX]:
+    half_distances = []
+    for i in range(point.size()[0]):
+        half_distances.append(
+            ca.fmax(ca.fabs(point[i] - rectangle_center[i]) - rectangle_size[i]/2, 0.0))
+    return half_distances
 
-    corner_lines = [[corners[0], corners[1]],
-                    [corners[0], corners[2]],
-                    [corners[0], corners[4]],
-                    [corners[1], corners[3]],
-                    [corners[1], corners[5]],
-                    [corners[2], corners[3]],
-                    [corners[2], corners[6]],
-                    [corners[7], corners[5]],
-                    [corners[7], corners[6]],
-                    [corners[7], corners[3]],
-                    [corners[4], corners[5]],
-                    [corners[4], corners[6]]
-                    ]
+def rectangle_to_point(
+        rectangle_center: ca.SX,
+        rectangle_size: ca.SX,
+        point: ca.SX,
+    ) -> ca.SX:
+    half_distances = cuboid_to_point_half_distances(
+        rectangle_center,
+        rectangle_size,
+        point
+    )
+    return ca.sqrt(half_distances[0] ** 2 + half_distances[1] ** 2)
 
-    return corner_lines
+def rectangle_to_line(
+        rectangle_center: ca.SX,
+        rectangle_size: ca.SX,
+        line_start: ca.SX,
+        line_end: ca.SX,
+    ) -> ca.SX:
+    min_distance = ca.fmin(
+        rectangle_to_point(rectangle_center, rectangle_size, line_start), 
+        rectangle_to_point(rectangle_center, rectangle_size, line_end), 
+    )
+    for i in [-1, 1]:
+        for j in [-1, 1]:
+            index = [i, j]
+            corner_transform = rectangle_size / 2 * index
+            corner = rectangle_center + corner_transform
+            min_distance = ca.fmin(min_distance, point_to_line(corner, line_start, line_end))
+    return min_distance
 
-def rectangle_struct(
-        center: ca.SX,
-        size: ca.SX,
-):
-    min_point = center - size/2
-    max_point = center + size/2
-    corner_lines = compute_rectangle_edges(center, size)
-    rect = {"max":max_point,
-            "min":min_point,
-            "corner_lines":corner_lines}
-    return rect
+def cuboid_to_point(
+        cuboid_center: ca.SX,
+        cuboid_size: ca.SX,
+        point: ca.SX,
+    ) -> ca.SX:
+    half_distances = cuboid_to_point_half_distances(
+        cuboid_center,
+        cuboid_size,
+        point
+    )
+    return ca.sqrt(
+        half_distances[0] ** 2 + half_distances[1] ** 2 + half_distances[2] ** 2
+    )
 
-def point_to_rectangle(
-        p: ca.SX,
-        rect: dict,
-):
-    dx = max(rect["min"][0] - p[0], 0, p[0] - rect["max"][0])
-    dy = max(rect["min"][1] - p[1], 0, p[1] - rect["max"][1])
-    dz = max(rect["min"][2] - p[2], 0, p[2] - rect["max"][2])
-    return ca.sqrt(dx * dx + dy * dy + dz * dz)
-
-def sphere_to_rectangle(
-    sphere_center: ca.SX,
-    rect: dict,
-    sphere_radius: ca.SX,
-) -> ca.SX:
-    distance = point_to_rectangle(sphere_center, rect) - sphere_radius
+def cuboid_to_line(
+        cuboid_center: ca.SX,
+        cuboid_size: ca.SX,
+        line_start: ca.SX,
+        line_end: ca.SX,
+        samples: int = 100,
+    ) -> ca.SX:
+    distance = ca.SX(ca.inf)
+    for i in range(samples+1):
+        eta = 1/samples * i
+        line_point = (1-eta) * line_start + eta * line_end
+        distance = ca.fmin(distance, cuboid_to_point(cuboid_center, cuboid_size, line_point))
     return distance
 
-def capsule_to_rectangle(
+def cuboid_to_sphere(
+        cuboid_center: ca.SX,
+        sphere_center: ca.SX,
+        cuboid_size: ca.SX,
+        sphere_size: ca.SX,
+    ) -> ca.SX:
+    return ca.fmax(0.0, cuboid_to_point(cuboid_center, cuboid_size, sphere_center) - sphere_size)
+
+def cuboid_to_capsule(
+        cuboid_center: ca.SX,
         capsule_centers: List[ca.SX],
-        rect: dict,
-        capsule_radius: ca.SX
-):
-    min_distance = ca.inf
-    for corner_line in rect["corner_lines"]:
-        dist = line_to_line(corner_line[0], corner_line[1], capsule_centers[0], capsule_centers[1]) - capsule_radius
-        min_distance = min(dist, min_distance)
-    return min_distance
+        cuboid_size: ca.SX,
+        capsule_radius: ca.SX,
+    ) -> ca.SX:
+    return ca.fmax(cuboid_to_line(cuboid_center, cuboid_size, capsule_centers[0], capsule_centers[1]) - capsule_radius, 0.0)
