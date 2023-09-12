@@ -69,15 +69,14 @@ def test_distance_line_line():
         line_1_end,
         line_2_start,
         line_2_end,
-        samples=500,
     )
     function_arguments = [line_1_start, line_1_end, line_2_start, line_2_end]
     distance_function = ca.Function(
         "distance_function", function_arguments, [distance_expression]
     )
 
-    line_1_start_numpy = np.array([1, 0, 0])
-    line_1_end_numpy = np.array([-1, 0, 0])
+    line_1_start_numpy = np.array([1, -0.2, 0])
+    line_1_end_numpy = np.array([-1, -0.2, 0])
     line_2_start_numpy = np.array([0, 1, 3])
     line_2_end_numpy = np.array([0, 1, -3])
     distance_numpy = np.array(
@@ -88,7 +87,7 @@ def test_distance_line_line():
             line_2_end_numpy,
         )
     )
-    assert distance_numpy == pytest.approx(1)
+    assert distance_numpy == 1.2
 
 
 

@@ -9,6 +9,9 @@ def closest_point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> c
     t = ca.fmax(0, ca.fmin(1, t))
     return line_start + t * line_vector
 
+def clamp(a: ca.SX, a_min: float, a_max: float):
+    return ca.fmin(a_max, ca.fmax(a, a_min))
+
 
 
 def point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
@@ -31,7 +34,7 @@ def point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
     )
     return distance
 
-def line_to_line(
+def line_to_line_sampled(
     line_1_start: ca.SX,
     line_1_end: ca.SX,
     line_2_start: ca.SX,
@@ -52,6 +55,67 @@ def line_to_line(
 
     return distance
 
+def line_to_line(
+    line_1_start: ca.SX,
+    line_1_end: ca.SX,
+    line_2_start: ca.SX,
+    line_2_end: ca.SX) -> ca.SX:
+    """
+    Computes the distance between two lines according to 
+    Real-Time Collision Detection by Christer Ericson, page 148
+    """
+    eps = 1e-5
+    d1 = line_1_end - line_1_start
+    d2 = line_2_end - line_2_start
+    r = line_1_start - line_2_start
+    a = ca.dot(d1, d1)
+    e = ca.dot(d2, d2)
+    f = ca.dot(d2, r)
+    c = ca.dot(d1, r)
+    b = ca.dot(d1, d2)
+    denom = a*e-b*b
+    s = ca.if_else(
+        a <= eps,
+        0.0,
+        ca.if_else(
+            e <= eps,
+            clamp(-c/a, 0.0, f),
+            ca.if_else(
+                denom != 0.0,
+                clamp((b*f- c*e)/denom, 0.0, f),
+                0.0
+            )
+        )
+    )
+
+    t = ca.if_else(
+        a <= eps,
+        clamp(f / e, 0.0, f),
+        ca.if_else(
+            e <= eps,
+            0.0,
+            (b*s+f)/e
+        )
+    )
+    s_1 = ca.if_else(
+        t < 0.0,
+        clamp(-c / a, 0.0, f),
+        s
+    )
+    s_2 = ca.if_else(
+        t > f,
+        clamp((b*f-c*e)/denom, 0.0, f),
+        s_1
+    )
+    t_1 = clamp(t, 0.0, f)
+    c1 = line_1_start + d1 * s_2
+    c2 = line_2_start + d2 * t_1
+    distance = ca.if_else(
+        ca.logic_and(a <= eps, e<=eps),
+        ca.sqrt(ca.dot(line_1_start - line_2_start, line_1_start - line_2_start)),
+        ca.dot(c1-c2, c1-c2)
+    )
+    return ca.sqrt(distance)
 
 def point_to_plane(point: ca.SX, plane: ca.SX) -> ca.SX:
     distance = ca.fabs(ca.dot(plane[0:3], point) + plane[3]) / ca.norm_2(
