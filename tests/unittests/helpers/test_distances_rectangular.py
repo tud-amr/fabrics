@@ -3,7 +3,6 @@ import casadi as ca
 import pytest
 import numpy as np
 from fabrics.helpers.distances import (
-    rectangle_struct,
     rectangle_to_point,
     rectangle_to_line,
     cuboid_to_sphere,
