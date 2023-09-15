@@ -26,7 +26,8 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import CapsuleSphereLeaf, ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
+from fabrics.components.leaves.geometry import (CapsuleSphereLeaf, ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf,
+                                                SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf, ObstacleCuboidLeaf)
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
@@ -322,9 +323,6 @@ class ParameterizedFabricPlanner(object):
         capsule_sphere_leaf.set_finsler_structure(self.config.collision_finsler)
         self.add_leaf(capsule_sphere_leaf)
 
-
-
-
     def add_spherical_obstacle_geometry(
             self,
             obstacle_name: str,
@@ -412,6 +410,23 @@ class ParameterizedFabricPlanner(object):
         geometry.set_geometry(self.config.geometry_plane_constraint)
         geometry.set_finsler_structure(self.config.finsler_plane_constraint)
         self.add_leaf(geometry)
+
+    def add_cuboid_obstacle_geometry(
+            self,
+            obstacle_name: str,
+            collision_link_name: str,
+            forward_kinematics: ca.SX,
+            ) -> None:
+
+        geometry = ObstacleCuboidLeaf(
+            self._variables,
+            forward_kinematics,
+            obstacle_name,
+            collision_link_name,
+        )
+        geometry.set_geometry(self.config.collision_geometry)
+        geometry.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(geometry)
     
     def add_esdf_geometry(
             self,
@@ -465,11 +480,13 @@ class ParameterizedFabricPlanner(object):
         self,
         collision_links: Optional[list] = None,
         self_collision_pairs: Optional[dict] = None,
+        # collisions_capsules: Optional[list] = None,
         collision_links_esdf: Optional[list] = None,
         goal: Optional[GoalComposition] = None,
         limits: Optional[list] = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
+        number_obstacles_cuboid: int = 0,
         number_plane_constraints: int = 0,
         dynamic_obstacle_dimension: int = 3,
     ):
@@ -509,6 +526,10 @@ class ParameterizedFabricPlanner(object):
             for i in range(number_plane_constraints):
                 constraint_name = f"constraint_{i}"
                 self.add_plane_constraint(constraint_name, collision_link, fk)
+
+            for i in range(number_obstacles_cuboid):
+                obstacle_name = f"obst_cuboid_{i}"
+                self.add_cuboid_obstacle_geometry(obstacle_name, collision_link, fk)
 
 
         for collision_link in collision_links_esdf:

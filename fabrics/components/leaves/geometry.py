@@ -4,6 +4,7 @@ from fabrics.components.maps.parameterized_maps import (
     CapsuleSphereMap,
     ParameterizedPlaneConstraintMap,
     SphereSphereMap,
+    CuboidSphereMap
 )
 from fabrics.diffGeometry.diffMap import DifferentialMap, ExplicitDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
@@ -303,7 +304,6 @@ class CapsuleSphereLeaf(GenericGeometryLeaf):
         self._sphere_name = sphere_name
         self.set_forward_map()
 
-
     def set_forward_map(self):
         sphere_radius_name = f"radius_{self._sphere_name}"
         sphere_center_name = f"x_{self._sphere_name}"
@@ -324,6 +324,45 @@ class CapsuleSphereLeaf(GenericGeometryLeaf):
             sphere_center,
             capsule_radius,
             sphere_radius,
+        )
+
+class ObstacleCuboidLeaf(GenericGeometryLeaf):
+    """
+    Leaf for geometry of a cuboid (3D) obstacle with respect to the collision sphere.
+    """
+    def __init__(
+            self,
+            parent_variables: Variables,
+            forward_kinematics: ca.SX,
+            obstacle_name: str,
+            collision_link: str,
+    ):
+        super().__init__(
+            parent_variables, f"{obstacle_name}_{collision_link}_leaf", forward_kinematics
+        )
+        self.set_forward_map(obstacle_name, collision_link)
+
+    def set_forward_map(self, obstacle_name, collision_link):
+        cuboid_size_name = f"size_{obstacle_name}"
+        cuboid_center_name = f"x_{obstacle_name}"
+        radius_body_name = f"radius_body_{collision_link}"
+        obstacle_dimension = self._forward_kinematics.size()[0]
+        size_cuboid = self.extract_or_create_variable(cuboid_size_name, 3)
+        radius_body = self.extract_or_create_variable(radius_body_name, 1)
+        cuboid_center = self.extract_or_create_variable(cuboid_center_name, 3)
+        geo_parameters = {
+            cuboid_size_name: size_cuboid,
+            radius_body_name: radius_body,
+            cuboid_center_name: cuboid_center,
+
+        }
+        self._parent_variables.add_parameters(geo_parameters)
+        self._map = CuboidSphereMap(
+            self._parent_variables,
+            self._forward_kinematics,
+            cuboid_center,
+            radius_body,
+            size_cuboid,
         )
 
 

@@ -21,8 +21,8 @@ class SphereSphereMap(ParameterizedGeometryMap):
         var: Variables,
         sphere_1_position: ca.SX,
         sphere_2_position: ca.SX,
-        sphere_1_radius : ca.SX,
-        sphere_2_radius : ca.SX,
+        sphere_1_radius: ca.SX,
+        sphere_2_radius: ca.SX,
     ):
         phi = (
             ca.norm_2(sphere_1_position - sphere_2_position)
@@ -63,11 +63,11 @@ class CuboidSphereMap(ParameterizedGeometryMap):
         self,
         var: Variables,
         sphere_center: ca.SX,
-        sphere_radius: ca.SX,
         cuboid_center: ca.SX,
+        sphere_radius: ca.SX,
         cuboid_size: ca.SX,
     ):
-        phi = cuboid_to_sphere(cuboid_center, sphere_center, cuboid_size, sphere_size)
+        phi = cuboid_to_sphere(cuboid_center, sphere_center, cuboid_size, sphere_radius)
 
         super().__init__(phi, var)
 
