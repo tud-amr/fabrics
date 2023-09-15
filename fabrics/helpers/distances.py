@@ -33,30 +33,30 @@ def point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
     )
     return distance
 
-def line_to_line_sampled(
-    line_1_start: ca.SX,
-    line_1_end: ca.SX,
-    line_2_start: ca.SX,
-    line_2_end: ca.SX,
-    samples: int = 100,
-) -> ca.SX:
-    """
-    Computes the distance between two lines ignoring the case that they are
-    intersecting.
-
-    """
-    distance = ca.fmin(
-        point_to_line(line_1_start, line_2_start, line_2_end),
-        point_to_line(line_1_end, line_2_start, line_2_end),
-    )
-    for i in range(samples):
-        eta = 1 / samples * i
-        line_point = (1 - eta) * line_1_start + eta * line_1_end
-        distance = ca.fmin(
-            distance, point_to_line(line_point, line_2_start, line_2_end)
-        )
-
-    return distance
+# def line_to_line_sampled(
+#     line_1_start: ca.SX,
+#     line_1_end: ca.SX,
+#     line_2_start: ca.SX,
+#     line_2_end: ca.SX,
+#     samples: int = 100,
+# ) -> ca.SX:
+#     """
+#     Computes the distance between two lines ignoring the case that they are
+#     intersecting.
+#
+#     """
+#     distance = ca.fmin(
+#         point_to_line(line_1_start, line_2_start, line_2_end),
+#         point_to_line(line_1_end, line_2_start, line_2_end),
+#     )
+#     for i in range(samples):
+#         eta = 1 / samples * i
+#         line_point = (1 - eta) * line_1_start + eta * line_1_end
+#         distance = ca.fmin(
+#             distance, point_to_line(line_point, line_2_start, line_2_end)
+#         )
+#
+#     return distance
 
 def line_to_line(
     line_1_start: ca.SX,
@@ -124,6 +124,9 @@ def sphere_to_plane(
 
 
 def line_to_plane(line_start: ca.SX, line_end: ca.SX, plane: ca.SX):
+    """
+    Assume that the line and the plane do not intersect
+    """
     distance_line_start = point_to_plane(line_start, plane)
     distance_line_end = point_to_plane(line_end, plane)
     min_distance_ends = ca.fmin(distance_line_start, distance_line_end)
@@ -177,15 +180,15 @@ def capsule_to_sphere(
 
 
 def cuboid_to_point_half_distances(
-    rectangle_center: ca.SX,
-    rectangle_size: ca.SX,
+    cuboid_center: ca.SX,
+    cuboid_size: ca.SX,
     point: ca.SX,
 ) -> List[ca.SX]:
     half_distances = []
     for i in range(point.size()[0]):
         half_distances.append(
             ca.fmax(
-                ca.fabs(point[i] - rectangle_center[i]) - rectangle_size[i] / 2,
+                ca.fabs(point[i] - cuboid_center[i]) - cuboid_size[i] / 2,
                 0.0,
             )
         )

@@ -227,6 +227,24 @@ def test_distance_capsule_sphere():
     )
     assert distance_numpy == np.sqrt(2) - 0.3 - 0.4
 
+    capsule_centers_numpy = [
+        np.array([-1.0,  1.0, 0.0]),
+        np.array([ 1.0, -1.0, 0.0]),
+    ]
+    sphere_center_numpy = np.array([1.0, 1.0, 0.0])
+    sphere_radius_numpy = 0.0
+    capsule_radius_numpy = 0.0
+    distance_numpy = np.array(
+        distance_function(
+            capsule_centers_numpy[0],
+            capsule_centers_numpy[1],
+            sphere_center_numpy,
+            capsule_radius_numpy,
+            sphere_radius_numpy,
+        )
+    )
+    assert distance_numpy == pytest.approx(np.sqrt(2.0) - 0.0 - 0.0)
+
 def test_edges_of_cuboid():
     cuboid_center = ca.SX.sym("cuboid_center", 3)
     cuboid_size = ca.SX.sym("cuboid_size", 3)
@@ -250,6 +268,9 @@ def test_edges_of_cuboid():
 
 
 def test_distance_rectangle_point():
+    """
+    Compute distance between rectangle (2D) and a point (2D)
+    """
     rectangle_center = ca.SX.sym("rectangle_center", 2)
     rectangle_size = ca.SX.sym("rectangle_size", 2)
     point = ca.SX.sym("point", 2)
@@ -273,6 +294,9 @@ def test_distance_rectangle_point():
     assert distance_numpy == (2.5**2+1.5**2)**0.5
 
 def test_distance_rectangle_line():
+    """
+    Computes distance between rectangle (2D!) and line (2D)
+    """
     rectangle_center = ca.SX.sym("rectangle_center", 2)
     rectangle_size = ca.SX.sym("rectangle_size", 2)
     line_start = ca.SX.sym("line_start", 2)
@@ -325,37 +349,43 @@ def test_distance_rectangle_line():
     assert distance_numpy == pytest.approx(1.0)
 
 def test_distance_cuboid_point():
-    rectangle_center = ca.SX.sym("rectangle_center", 3)
-    rectangle_size = ca.SX.sym("rectangle_size", 3)
+    """
+    Test distance of a cuboid (3D) to a point (3D)
+    """
+    cuboid_center = ca.SX.sym("cuboid_center", 3)
+    cuboid_size = ca.SX.sym("cuboid_size", 3)
     point = ca.SX.sym("point", 3)
-    distance_expression = rectangle_to_point(rectangle_center, rectangle_size, point)
-    function_arguments = [rectangle_center, rectangle_size, point]
+    distance_expression = cuboid_to_point(cuboid_center, cuboid_size, point)
+    function_arguments = [cuboid_center, cuboid_size, point]
     distance_function = ca.Function(
         "distance_function", function_arguments, [distance_expression]
     )
-    rectangle_center_numpy = np.array([0.0, 0.0, 0.0])
-    rectangle_size_numpy = np.array([1.0, 1.0, 0.0])
+    cuboid_center_numpy = np.array([0.0, 0.0, 0.0])
+    cuboid_size_numpy = np.array([1.0, 1.0, 0.0])
 
     point_numpy = np.array([3.0, 0.0, 0.0])
     distance_numpy = np.array(
-        distance_function(rectangle_center_numpy, rectangle_size_numpy, point_numpy)
+        distance_function(cuboid_center_numpy, cuboid_size_numpy, point_numpy)
     )
     assert distance_numpy == 2.5
-    rectangle_center_numpy = np.array([0.5, 0.5, 0.5])
-    rectangle_size_numpy = np.array([1.0, 1.0, 1.0])
+    cuboid_center_numpy = np.array([0.5, 0.5, 0.5])
+    cuboid_size_numpy = np.array([1.0, 1.0, 1.0])
 
     point_numpy = np.array([1.5, 0.5, 0.0])
     distance_numpy = np.array(
-        distance_function(rectangle_center_numpy, rectangle_size_numpy, point_numpy)
+        distance_function(cuboid_center_numpy, cuboid_size_numpy, point_numpy)
     )
     assert distance_numpy == 0.5
     point_numpy = np.array([0.5, 0.5, 1.0])
     distance_numpy = np.array(
-        distance_function(rectangle_center_numpy, rectangle_size_numpy, point_numpy)
+        distance_function(cuboid_center_numpy, cuboid_size_numpy, point_numpy)
     )
     assert distance_numpy == 0.0
 
 def test_distance_cuboid_sphere():
+    """
+    Test distance of a cuboid (3D) to a sphere (3D)
+    """
     cuboid_center = ca.SX.sym("cuboid_center", 3)
     cuboid_size = ca.SX.sym("cuboid_size", 3)
     sphere_center = ca.SX.sym("sphere_center", 3)
@@ -407,6 +437,9 @@ def test_distance_cuboid_sphere():
     assert distance_numpy == 0.0
 
 def test_distance_cuboid_capsule():
+    """
+    Test distance of a cuboid (3D) to a capsule (3D)
+    """
     cuboid_center = ca.SX.sym("cuboid_center", 3)
     cuboid_size = ca.SX.sym("cuboid_size", 3)
     capsule_centers = [
