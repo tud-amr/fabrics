@@ -23,7 +23,7 @@ def setup_collision_links_panda(i) -> Tuple[np.ndarray, str, int, float, float]:
     nr_links = 9
     link_translations = [np.array([0.0, 0.0, 0.0])]*nr_links
     link_rotations = [np.identity(3)] * nr_links
-    links = [1, 2, 3, 4, 5, 6, 7, 8]
+    links = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     link_names = [f"panda_link{link_id + 1}" for link_id in links]
     link_names[8] = "panda_hand"
     lengths = [0]*nr_links
@@ -128,27 +128,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
 
     robot_type = 'panda'
 
-    ## Optional reconfiguration of the planner
-    # base_inertia = 0.03
-    # attractor_potential = "5.0 * (ca.norm_2(x) + 1 /10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     robot_type,
-    #     base_inertia=base_inertia,
-    #     attractor_potential=attractor_potential,
-    #     damper=damper,
-    # )
-    # attractor_potential = "15.0 * (ca.norm_2(x) + 1 /10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
-    # collision_geometry= "-0.1 / (x ** 2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
-    # collision_finsler= "0.1/(x**1) * xdot**2"
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/albert_polluted_2.urdf", "r", encoding='utf-8') as file:
         urdf = file.read()
