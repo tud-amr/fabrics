@@ -69,6 +69,16 @@ class CasadiFunctionWrapper(object):
                 for j, radius_obst_dyn_j in enumerate(kwargs[key]):
                     radius_dyn_dictionary[f'radius_obst_dynamic_{j}'] = radius_obst_dyn_j
                 argument_dictionary.update(radius_dyn_dictionary)
+            if key == 'x_obst_cuboid' or key == 'x_obsts_cuboid':
+                x_obst_cuboid_dictionary = {}
+                for j, x_obst_cuboid_j in enumerate(kwargs[key]):
+                    x_obst_cuboid_dictionary[f'x_obst_cuboid_{j}'] = x_obst_cuboid_j
+                argument_dictionary.update(x_obst_cuboid_dictionary)
+            if key == 'size_obst_cuboid' or key == 'size_obsts_cuboid':
+                size_obst_cuboid_dictionary = {}
+                for j, size_obst_cuboid_j in enumerate(kwargs[key]):
+                    size_obst_cuboid_dictionary[f'size_obst_cuboid_{j}'] = size_obst_cuboid_j
+                argument_dictionary.update(size_obst_cuboid_dictionary)
             if key.startswith('radius_body') and key.endswith('links'):
                 # Radius bodies can be passed using a dictionary where the keys are simple integers.
                 radius_body_dictionary = {}
@@ -80,16 +90,6 @@ class CasadiFunctionWrapper(object):
                         logging.warning(f"No body link with index {link_nr} in the inputs. Body link {link_nr} is ignored.")
                     radius_body_dictionary[key] = radius_body_j
                 argument_dictionary.update(radius_body_dictionary)
-            if key == 'x_obst_cuboid' or key == 'x_obsts_cuboid':
-                x_obst_cuboid_dictionary = {}
-                for j, x_obst_cuboid_j in enumerate(kwargs[key]):
-                    x_obst_cuboid_dictionary[f'x_obst_cuboid_{j}'] = x_obst_cuboid_j
-                argument_dictionary.update(x_obst_cuboid_dictionary)
-            if key == 'size_obst_cuboid' or key == 'size_obsts_cuboid':
-                size_obst_cuboid_dictionary = {}
-                for j, size_obst_cuboid_j in enumerate(kwargs[key]):
-                    size_obst_cuboid_dictionary[f'size_obst_cuboid_{j}'] = size_obst_cuboid_j
-                argument_dictionary.update(size_obst_cuboid_dictionary)
             else:
                 argument_dictionary[key] = kwargs[key]
         input_arrays = []

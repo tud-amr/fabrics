@@ -150,6 +150,9 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         planner.add_capsule_sphere_geometry(
             "obst_1", f"capsule_{i}", tf_capsule_origin, length
         )
+        # planner.add_capsule_cuboid_geometry(
+        #     "obst_cuboid_1", f"capsule_{i}", tf_capsule_origin, length
+        # )
 
     panda_limits = [
             [-2.8973, 2.8973],
@@ -160,23 +163,24 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
             [-0.0175, 3.7525],
             [-2.8973, 2.8973]
         ]
-    # planner.set_goal_component(goal)
-    # execution_energy = ExecutionLagrangian(planner.variables)
-    # planner.set_execution_energy(execution_energy)
-    # planner.set_speed_control()
-    planner.set_components(
-        collision_links=None,
-        goal=goal,
-        number_obstacles=0,
-        number_obstacles_cuboid=obstacle_resolution,
-        limits=panda_limits,
-    )
+    planner.set_goal_component(goal)
+    execution_energy = ExecutionLagrangian(planner.variables)
+    planner.set_execution_energy(execution_energy)
+    planner.set_speed_control()
+    # planner.set_components(
+    #     collision_links=None,
+    #     goal=goal,
+    #     number_obstacles=0,
+    #     number_obstacles_cuboid=obstacle_resolution,
+    #     # limits=panda_limits,
+    # )
     planner.concretize()
     return planner
 
 
 def run_panda_capsule_example(n_steps=5000, render=True):
-    nr_obstacles_cuboid = 10
+    nr_obstacles_sphere = 1
+    nr_obstacles_cuboid = 1
     (env, goal) = initalize_environment(render, obstacle_resolution=nr_obstacles_cuboid)
     planner = set_planner(goal, obstacle_resolution=nr_obstacles_cuboid)
     action = np.zeros(7)
@@ -196,11 +200,11 @@ def run_panda_capsule_example(n_steps=5000, render=True):
     for _ in range(n_steps):
         ob_robot = ob["robot_0"]
         ind_goal = list(ob_robot["FullSensor"]["goals"].keys())[0]
-        x_obsts = [
-            ob_robot['FullSensor']['obstacles'][i+2]['position'] for i in range(nr_obstacles_cuboid)
+        x_obsts_cuboids = [
+            ob_robot['FullSensor']['obstacles'][i+2+nr_obstacles_sphere]['position'] for i in range(nr_obstacles_cuboid)
         ]
-        size_obsts = [
-            ob_robot['FullSensor']['obstacles'][i+2]['size'] for i in range(nr_obstacles_cuboid)
+        size_obsts_cuboids = [
+            ob_robot['FullSensor']['obstacles'][i+2+nr_obstacles_sphere]['size'] for i in range(nr_obstacles_cuboid)
         ]
         args = dict(
             q=ob_robot["joint_state"]["position"],
@@ -209,12 +213,31 @@ def run_panda_capsule_example(n_steps=5000, render=True):
             weight_goal_0=ob_robot["FullSensor"]["goals"][ind_goal]["weight"],
             x_obst_1=ob_robot["FullSensor"]["obstacles"][2]["position"],
             radius_obst_1=ob_robot["FullSensor"]["obstacles"][2]["size"],
-            x_obsts_cuboid=x_obsts,
-            size_obsts_cuboid=size_obsts,
+            x_obst_cuboid_1=x_obsts_cuboids[0],
+            size_obst_cuboid_1=size_obsts_cuboids[0],
             **static_args
         )
         action = planner.compute_action(**args)
+        # action = np.zeros((7,))
         ob, *_ = env.step(action)
+
+        # symbolic_planner_fun = planner._funs.function()
+        # www = symbolic_planner_fun(
+        #     np.zeros((7,)), #q
+        #     np.zeros((7,)), #qdot
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     np.zeros((3,)),
+        #     10.0,
+        #     [0.1, 0.6, 0.8],
+        #     [10, 10, 10],
+        #     [11, 11, 11]
+        # )
     env.close()
     return {}
 
