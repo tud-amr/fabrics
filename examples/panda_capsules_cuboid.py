@@ -150,6 +150,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         planner.add_capsule_sphere_geometry(
             "obst_1", f"capsule_{i}", tf_capsule_origin, length
         )
+        #todo:  WHEN UNCOMMENTING THIS, i GET ACTIONS NAN, AN ERROR SOMEWHERE!
         # planner.add_capsule_cuboid_geometry(
         #     "obst_cuboid_1", f"capsule_{i}", tf_capsule_origin, length
         # )
