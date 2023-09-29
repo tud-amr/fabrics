@@ -5,7 +5,7 @@ from fabrics.components.maps.parameterized_maps import (
     ParameterizedPlaneConstraintMap,
     SphereSphereMap,
     CuboidSphereMap,
-    CapsuleCuboidMap,
+    #todo: CapsuleCuboidMap,
 )
 from fabrics.diffGeometry.diffMap import DifferentialMap, ExplicitDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
@@ -327,47 +327,48 @@ class CapsuleSphereLeaf(GenericGeometryLeaf):
             sphere_radius,
         )
 
-class CapsuleCuboidLeaf(GenericGeometryLeaf):
-    def __init__(
-        self,
-        parent_variables: Variables,
-        capsule_name: str,
-        cuboid_name: str,
-        capsule_center_1: ca.SX,
-        capsule_center_2: ca.SX,
-    ):
-        super().__init__(
-            parent_variables, f"{capsule_name}_{cuboid_name}_leaf", None
-        )
-        self._capsule_centers = [
-            capsule_center_1,
-            capsule_center_2,
-        ]
-        self._capsule_name = capsule_name
-        self._cuboid_name = cuboid_name
-        self.set_forward_map()
-
-    def set_forward_map(self):
-        cuboid_size_name = f"size_{self._cuboid_name}"
-        cuboid_center_name = f"x_{self._cuboid_name}"
-        capsule_radius_name = f"radius_{self._capsule_name}"
-        obstacle_dimension = self._capsule_centers[0].size()[0]
-        cuboid_size = self.extract_or_create_variable(cuboid_size_name, 3)
-        capsule_radius = self.extract_or_create_variable(capsule_radius_name, 1)
-        cuboid_center = self.extract_or_create_variable(cuboid_center_name, obstacle_dimension)
-        geo_parameters = {
-            cuboid_size_name: cuboid_size,
-            capsule_radius_name: capsule_radius,
-            cuboid_center_name: cuboid_center,
-        }
-        self._parent_variables.add_parameters(geo_parameters)
-        self._map = CapsuleCuboidMap(
-            self._parent_variables,
-            self._capsule_centers,
-            cuboid_center,
-            capsule_radius,
-            cuboid_size,
-        )
+#todo: uncomment
+# class CapsuleCuboidLeaf(GenericGeometryLeaf):
+#     def __init__(
+#         self,
+#         parent_variables: Variables,
+#         capsule_name: str,
+#         cuboid_name: str,
+#         capsule_center_1: ca.SX,
+#         capsule_center_2: ca.SX,
+#     ):
+#         super().__init__(
+#             parent_variables, f"{capsule_name}_{cuboid_name}_leaf", None
+#         )
+#         self._capsule_centers = [
+#             capsule_center_1,
+#             capsule_center_2,
+#         ]
+#         self._capsule_name = capsule_name
+#         self._cuboid_name = cuboid_name
+#         self.set_forward_map()
+#
+#     def set_forward_map(self):
+#         cuboid_size_name = f"size_{self._cuboid_name}"
+#         cuboid_center_name = f"x_{self._cuboid_name}"
+#         capsule_radius_name = f"radius_{self._capsule_name}"
+#         obstacle_dimension = self._capsule_centers[0].size()[0]
+#         cuboid_size = self.extract_or_create_variable(cuboid_size_name, 3)
+#         capsule_radius = self.extract_or_create_variable(capsule_radius_name, 1)
+#         cuboid_center = self.extract_or_create_variable(cuboid_center_name, obstacle_dimension)
+#         geo_parameters = {
+#             cuboid_size_name: cuboid_size,
+#             capsule_radius_name: capsule_radius,
+#             cuboid_center_name: cuboid_center,
+#         }
+#         self._parent_variables.add_parameters(geo_parameters)
+#         self._map = CapsuleCuboidMap(
+#             self._parent_variables,
+#             self._capsule_centers,
+#             cuboid_center,
+#             capsule_radius,
+#             cuboid_size,
+#         )
 
 class SphereCuboidLeaf(GenericGeometryLeaf):
     """
