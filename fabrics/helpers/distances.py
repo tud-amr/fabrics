@@ -295,17 +295,16 @@ def cuboid_to_sphere(
         - sphere_size,
     )
 
-#todo: uncomment
-# def cuboid_to_capsule(
-#     cuboid_center: ca.SX,
-#     capsule_centers: List[ca.SX],
-#     cuboid_size: ca.SX,
-#     capsule_radius: ca.SX,
-# ) -> ca.SX:
-#     return ca.fmax(
-#         cuboid_to_line(
-#             cuboid_center, cuboid_size, capsule_centers[0], capsule_centers[1]
-#         )
-#         - capsule_radius,
-#         0.0,
-#     )
+def cuboid_to_capsule(
+    cuboid_center: ca.SX,
+    capsule_centers: List[ca.SX],
+    cuboid_size: ca.SX,
+    capsule_radius: ca.SX,
+) -> ca.SX:
+    return ca.fmax(
+        cuboid_to_line(
+            cuboid_center, cuboid_size, capsule_centers[0], capsule_centers[1]
+        )
+        - capsule_radius,
+        0.0,
+    )
