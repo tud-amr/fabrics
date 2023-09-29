@@ -295,7 +295,6 @@ def cuboid_to_sphere(
         - sphere_size,
     )
 
-
 def cuboid_to_capsule(
     cuboid_center: ca.SX,
     capsule_centers: List[ca.SX],
