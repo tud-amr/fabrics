@@ -109,6 +109,32 @@ def test_distance_line_line():
         )
     )
     assert distance_numpy == 1.0
+    line_1_start_numpy = np.array([0, -1, 0])
+    line_1_end_numpy = np.array([0, 1, 0])
+    line_2_start_numpy = np.array([-2, 0, 0])
+    line_2_end_numpy = np.array([-1, 0, 0])
+    distance_numpy = np.array(
+        distance_function(
+            line_1_start_numpy,
+            line_1_end_numpy,
+            line_2_start_numpy,
+            line_2_end_numpy,
+        )
+    )
+    assert distance_numpy == 1.0
+    line_1_start_numpy = np.array([-2.0, 1.5, 0])
+    line_1_end_numpy = np.array([-2.0, 3.5, 0])
+    line_2_start_numpy = np.array([0, -5, 0])
+    line_2_end_numpy = np.array([0, 5, 0])
+    distance_numpy = np.array(
+        distance_function(
+            line_1_start_numpy,
+            line_1_end_numpy,
+            line_2_start_numpy,
+            line_2_end_numpy,
+        )
+    )
+    assert distance_numpy == 2.0
     edges = [
         [[0, 0, 0], [1, 0, 0]],
         [[0, 0, 0], [0, 1, 0]],
