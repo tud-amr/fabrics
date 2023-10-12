@@ -59,8 +59,6 @@ class CapsuleCuboidMap(ParameterizedGeometryMap):
             cuboid_center, capsule_centers, cuboid_size, capsule_radius
         )
         super().__init__(phi, var)
-        dim = cuboid_center.size()[0]
-        self._Jdot = ca.SX([[0.0] * dim])
 
 class PlaneSphereMap(ParameterizedGeometryMap):
     def __init__(

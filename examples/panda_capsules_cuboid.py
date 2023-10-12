@@ -19,6 +19,9 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 absolute_path = os.path.dirname(os.path.abspath(__file__))
 URDF_FILE = absolute_path + "/panda_collision_links.urdf"
 CAPSULE_LINKS = list(range(2,4)) + list(range(5,9))
+# TODO: BUG: Crashesh when all capsule links are used because Jdot becomes nan.
+# This is probably related to phi being not differentiable at the position.
+CAPSULE_LINKS = [2, 3, 5, 7, 8]
 
 def setup_collision_links_panda(i) -> Tuple[np.ndarray, str, int, float, float]:
     link_translations = [
@@ -147,13 +150,13 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         tf_capsule_origin =  forward_kinematics.casadi(
             q, "panda_link0", link_name, tf
         ) 
-        planner.add_capsule_sphere_geometry(
-            "obst_1", f"capsule_{i}", tf_capsule_origin, length
-        )
-        #todo:  WHEN UNCOMMENTING THIS, i GET ACTIONS NAN, AN ERROR SOMEWHERE!
-        # planner.add_capsule_cuboid_geometry(
-        #     "obst_cuboid_1", f"capsule_{i}", tf_capsule_origin, length
+        # planner.add_capsule_sphere_geometry(
+        #     "obst_1", f"capsule_{i}", tf_capsule_origin, length
         # )
+        #todo:  WHEN UNCOMMENTING THIS, i GET ACTIONS NAN, AN ERROR SOMEWHERE!
+        planner.add_capsule_cuboid_geometry(
+            "obst_cuboid_1", f"capsule_{i}", tf_capsule_origin, length
+        )
 
     panda_limits = [
             [-2.8973, 2.8973],
@@ -179,7 +182,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     return planner
 
 
-def run_panda_capsule_example(n_steps=5000, render=True):
+def run_panda_capsule_cuboid_example(n_steps=5000, render=True):
     nr_obstacles_sphere = 1
     nr_obstacles_cuboid = 1
     (env, goal) = initalize_environment(render, obstacle_resolution=nr_obstacles_cuboid)
@@ -219,29 +222,10 @@ def run_panda_capsule_example(n_steps=5000, render=True):
             **static_args
         )
         action = planner.compute_action(**args)
-        # action = np.zeros((7,))
         ob, *_ = env.step(action)
-
-        # symbolic_planner_fun = planner._funs.function()
-        # www = symbolic_planner_fun(
-        #     np.zeros((7,)), #q
-        #     np.zeros((7,)), #qdot
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     np.zeros((3,)),
-        #     10.0,
-        #     [0.1, 0.6, 0.8],
-        #     [10, 10, 10],
-        #     [11, 11, 11]
-        # )
     env.close()
     return {}
 
 
 if __name__ == "__main__":
-    res = run_panda_capsule_example(n_steps=5000)
+    res = run_panda_capsule_cuboid_example(n_steps=5000, render=True)
