@@ -1,4 +1,5 @@
 import casadi as ca
+import numpy as np
 from fabrics.diffGeometry.diffMap import DynamicDifferentialMap
 from fabrics.helpers.variables import Variables
 from fabrics.components.leaves.dynamic_leaf import DynamicLeaf
@@ -25,7 +26,13 @@ def test_leaf_generation():
     phi_leaf = q
     static_leaf = Leaf(root_variables, "static_leaf", phi_leaf, dim=2)
     static_map = static_leaf.map()
-    assert not static_map
+    assert static_map
+    static_leaf.concretize()
+    leaf_eval = static_leaf.evaluate(q=np.array([0.1, 0.1]), qdot=np.array([0.3, -0.7]))
+    assert leaf_eval['x'][0] == 0.1
+
+
+
 
 
 

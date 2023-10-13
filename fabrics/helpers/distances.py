@@ -97,7 +97,7 @@ def line_to_line(
     )
     s_1 = ca.if_else(t < 0.0, clamp(-c / a, 0.0, 1.0), s)
     s_2 = ca.if_else(t > f, clamp((b * f - c * e) / denom, 0.0, 1.0), s_1)
-    t_1 = clamp(t, 0.0, f)
+    t_1 = clamp(t, 0.0, 1.0)
     c1 = line_1_start + d1 * s_2
     c2 = line_2_start + d2 * t_1
     distance = ca.if_else(
