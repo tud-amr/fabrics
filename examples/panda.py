@@ -13,6 +13,29 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
+absolute_path = os.path.dirname(os.path.abspath(__file__))
+URDF_FILE = absolute_path + "/panda_dual_vacuum.urdf"
+
+def get_rotation_matrix(angle: float, axis: str = 'z') -> np.ndarray:
+    if axis == 'z':
+        return np.array([
+            [np.cos(angle), -np.sin(angle), 0],
+            [np.sin(angle), np.cos(angle), 0],
+            [0, 0, 1]
+        ])
+    if axis == 'x':
+        return np.array([
+            [1, 0, 0],
+            [0, np.cos(angle), np.sin(angle)],
+            [0, -np.sin(angle), np.cos(angle)]
+        ])
+    if axis == 'y':
+        return np.array([
+            [np.cos(angle), 0, np.sin(angle)],
+            [0, 1, 0],
+            [-np.sin(angle), 0, np.cos(angle)]
+        ])
+
 def initalize_environment(render=True):
     """
     Initializes the simulation environment.
@@ -21,7 +44,7 @@ def initalize_environment(render=True):
     steps the simulation once.
     """
     robots = [
-        GenericUrdfReacher(urdf="panda.urdf", mode="acc"),
+        GenericUrdfReacher(urdf=URDF_FILE, mode="acc"),
     ]
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
@@ -35,33 +58,45 @@ def initalize_environment(render=True):
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
+        "geometry": {"position": [1000.5, -0.3, 0.3], "radius": 0.1},
     }
     obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
+        "geometry": {"position": [-1000.7, 0.0, 0.5], "radius": 0.1},
     }
     obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
-            "weight": 1.0,
+            "weight": 0.0,
             "is_primary_goal": True,
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
-            "child_link": "panda_hand",
+            "child_link": "vacuum1_link",
             "desired_position": [0.1, -0.6, 0.4],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "weight": 5.0,
+            "weight": 20,
             "is_primary_goal": False,
             "indices": [0, 1, 2],
-            "parent_link": "panda_link7",
-            "child_link": "panda_hand",
-            "desired_position": [0.1, 0.0, 0.0],
+            "parent_link": "vacuum1_link",
+            "child_link": "vacuum2_link",
+            "desired_position": [-0.0875, 0, 0.0],
+            "angle": [0] * 4,
+            "epsilon": 0.05,
+            "type": "staticSubGoal",
+        },
+        "subgoal2": {
+            "weight": 20,
+            "is_primary_goal": False,
+            "indices": [0, 1, 2],
+            "parent_link": "panda_link6",
+            "child_link": "vacuum_support_link",
+            "desired_position": [0.097, 0., 0.],
+            "angle": [0] * 4,
             "epsilon": 0.05,
             "type": "staticSubGoal",
         }
@@ -114,19 +149,18 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
-    absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda_for_fk.urdf", "r", encoding="utf-8") as file:
+    with open(URDF_FILE, "r", encoding="utf-8") as file:
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
         rootLink="panda_link0",
-        end_link="panda_link9",
+        end_link=["vacuum1_link", "vacuum2_link"],
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
     )
-    collision_links = ['panda_link9', 'panda_link7', 'panda_link3', 'panda_link4']
+    collision_links = ['panda_link7', 'panda_link3', 'panda_link4']
     panda_limits = [
             [-2.8973, 2.8973],
             [-1.7628, 1.7628],
@@ -140,9 +174,9 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        number_obstacles=2,
-        number_plane_constraints=1,
-        limits=panda_limits,
+        number_obstacles=0,
+        number_plane_constraints=0,
+        #limits=panda_limits,
     )
     planner.concretize()
     return planner
@@ -151,6 +185,10 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
 def run_panda_example(n_steps=5000, render=True):
     (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
+    goal_2_leaf = planner.get_leaves(["goal_2_leaf"])[0]
+    goal_1_leaf = planner.get_leaves(["goal_1_leaf"])[0]
+    goal_2_leaf.concretize()
+    goal_1_leaf.concretize()
     # planner.export_as_c("planner.c")
     action = np.zeros(7)
     ob, *_ = env.step(action)
@@ -159,22 +197,33 @@ def run_panda_example(n_steps=5000, render=True):
     env.add_collision_link(0, 7, shape_type='sphere', size=[0.10])
 
 
+    yaw_1 = np.pi/4 * 1
+    yaw_2 = np.pi/2 * 0
+    sub_goal_1_rotation_matrix = get_rotation_matrix(yaw_1, axis='z') #z->z 
+    sub_goal_2_rotation_matrix = get_rotation_matrix(yaw_2, axis='y') #y->y
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
-        action = planner.compute_action(
+        args = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][4]['position'],
             weight_goal_0=ob_robot['FullSensor']['goals'][4]['weight'],
             x_goal_1=ob_robot['FullSensor']['goals'][5]['position'],
             weight_goal_1=ob_robot['FullSensor']['goals'][5]['weight'],
+            x_goal_2=ob_robot['FullSensor']['goals'][6]['position'],
+            weight_goal_2=ob_robot['FullSensor']['goals'][6]['weight'] * 0,
             x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
-            radius_body_links={3: 0.1, 4: 0.1, 9: 0.1, 7: 0.1},
+            radius_body_links={3: 0.1, 4: 0.1, 7: 0.1},
             constraint_0=np.array([0, 0, 1, 0.0]),
+            angle_goal_1=sub_goal_1_rotation_matrix,
+            angle_goal_2=sub_goal_2_rotation_matrix,
         )
+        leaf_eval = goal_1_leaf.evaluate(**args)
+        print(leaf_eval['x'])
+        action = planner.compute_action(**args)
         ob, *_ = env.step(action)
     env.close()
     return {}
