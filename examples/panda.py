@@ -67,6 +67,10 @@ def initalize_environment(render=True):
     }
     obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     # Definition of the goal.
+    angle = -np.pi/4
+    rot_matrix = get_rotation_matrix(angle, axis='z')
+    goal_1 = np.dot(rot_matrix, np.array([-0.0325, 0, 0]))
+    goal_1 = np.array([0, 0.0325, 0])
     goal_dict = {
         "subgoal0": {
             "weight": 0.0,
@@ -84,8 +88,7 @@ def initalize_environment(render=True):
             "indices": [0, 1, 2],
             "parent_link": "vacuum1_link",
             "child_link": "vacuum2_link",
-            "desired_position": [-0.0875, 0, 0.0],
-            "angle": [0] * 4,
+            "desired_position": goal_1.tolist(),
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -96,7 +99,6 @@ def initalize_environment(render=True):
             "parent_link": "panda_link6",
             "child_link": "vacuum_support_link",
             "desired_position": [0.097, 0., 0.],
-            "angle": [0] * 4,
             "epsilon": 0.05,
             "type": "staticSubGoal",
         }
@@ -216,13 +218,13 @@ def run_panda_example(n_steps=5000, render=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
-            radius_body_links={3: 0.1, 4: 0.1, 7: 0.1},
+            #radius_body_links={3: 0.1, 4: 0.1, 7: 0.1},
             constraint_0=np.array([0, 0, 1, 0.0]),
             angle_goal_1=sub_goal_1_rotation_matrix,
             angle_goal_2=sub_goal_2_rotation_matrix,
         )
         leaf_eval = goal_1_leaf.evaluate(**args)
-        print(leaf_eval['x'])
+        #print(leaf_eval['x'])
         action = planner.compute_action(**args)
         ob, *_ = env.step(action)
     env.close()
@@ -230,4 +232,4 @@ def run_panda_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    res = run_panda_example(n_steps=5000, render=True)
