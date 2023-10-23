@@ -627,7 +627,7 @@ class ParameterizedFabricPlanner(object):
 
     def concretize(self, mode='acc', time_step=None):
         self._mode = mode
-        if mode == 'vel':
+        if mode == 'vel' or mode == 'pos_vel':
             if not time_step:
                 raise Exception("No time step passed in velocity mode.")
         try:
@@ -656,6 +656,12 @@ class ParameterizedFabricPlanner(object):
             action = self._geometry.xdot() + time_step * xddot
             self._funs = CasadiFunctionWrapper(
                 "funs", self.variables.asDict(), {"action": action}
+            )
+        elif mode == 'pos_vel':
+            vel_action = self._geometry.xdot() + time_step * xddot
+            pos_action = self._geometry.x() + vel_action * time_step
+            self._funs = CasadiFunctionWrapper(
+                "funs", self.variables.asDict(), {"vel_action": vel_action, "pos_action": pos_action}
             )
             
 
@@ -697,19 +703,24 @@ class ParameterizedFabricPlanner(object):
         The action is nullified if its magnitude is very large or very small.
         """
         evaluations = self._funs.evaluate(**kwargs)
-        action = evaluations["action"]
-        # Debugging
-        #logging.debug(f"a_ex: {evaluations['a_ex']}")
-        #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
-        #logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
-        #logging.debug(f"beta : {evaluations['beta']}")
-        action_magnitude = np.linalg.norm(action)
-        if action_magnitude < eps:
-            logging.warning(f"Fabrics: Avoiding small action with magnitude {action_magnitude}")
-            action *= 0.0
-        elif action_magnitude > 1/eps:
-            logging.warning(f"Fabrics: Avoiding large action with magnitude {action_magnitude}")
-            action *= 0.0
-        return action
+
+        if hasattr(evaluations, "pos_action") and hasattr(evaluations, "vel_action"):
+            return evaluations["pos_action"], evaluations["vel_action"]
+        else:
+            action = evaluations["action"]
+            # Debugging
+            #logging.debug(f"a_ex: {evaluations['a_ex']}")
+            #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
+            #logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
+            #logging.debug(f"beta : {evaluations['beta']}")
+            action_magnitude = np.linalg.norm(action)
+            if action_magnitude < eps:
+                logging.warning(f"Fabrics: Avoiding small action with magnitude {action_magnitude}")
+                action *= 0.0
+            elif action_magnitude > 1/eps:
+                logging.warning(f"Fabrics: Avoiding large action with magnitude {action_magnitude}")
+                action *= 0.0
+
+            return action
 
 
