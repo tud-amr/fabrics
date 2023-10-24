@@ -269,7 +269,7 @@
     <child link="vacuum_support_link"/>
     <origin rpy="0 0 0" xyz="0 0.0 0.185"/>
   </joint>
-  <link name="vacuum1_link">
+  <link name="vacuum_link">
     <inertial>
       <mass value="0.00"/>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -291,37 +291,10 @@
       </geometry>
     </collision>
   </link>
-  <joint name="panda_vacuum1_joint" type="fixed">
+  <joint name="panda_vacuum_joint" type="fixed">
     <parent link="panda_link7"/>
-    <child link="vacuum1_link"/>
-    <origin rpy="0 0 0" xyz="0.0275 0 0.37"/>
-  </joint>
-  <link name="vacuum2_link">
-    <inertial>
-      <mass value="0.00"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.02" radius="0.02"/>
-      </geometry>
-      <material name="vacuum">
-        <color rgba="0 0 1 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.02" radius="0.02"/>
-      </geometry>
-    </collision>
-  </link>
-  <joint name="panda_vacuum2_joint" type="fixed">
-    <parent link="panda_link7"/>
-    <child link="vacuum2_link"/>
-    <origin rpy="0 0 0" xyz="-0.0275 0 0.37"/>
+    <child link="vacuum_link"/>
+    <origin rpy="0 0 0" xyz="0.0 0 0.37"/>
   </joint>
 </robot>
 
