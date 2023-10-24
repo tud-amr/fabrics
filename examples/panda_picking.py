@@ -15,6 +15,7 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 import numpy as np
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+from fabrics.helpers.functions import get_rotation_matrix
 
 URDF_FILE = os.path.dirname(os.path.abspath(__file__)) + "/panda_with_finger.urdf"
 GRIPPER_ACTION = 0
@@ -70,6 +71,10 @@ def create_scene() -> List[CollisionObstacle]:
 def create_dummy_goal() -> GoalComposition:
     goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
     whole_position = [0.1, 0.6, 0.8]
+    angle = np.pi/2 * 1
+    rot_matrix = get_rotation_matrix(angle, axis='y')
+    goal_1 = np.array([0.107, 0, 0])
+    goal_1 = np.dot(rot_matrix, goal_1)
     goal_dict = {
         "subgoal0": {
             "weight": 1.0,
@@ -87,8 +92,7 @@ def create_dummy_goal() -> GoalComposition:
             "indices": [0, 1, 2],
             "parent_link": "panda_link7",
             "child_link": "panda_hand",
-            "desired_position": [0.107, 0.0, 0.0],
-            "angle": goal_orientation,
+            "desired_position": goal_1.tolist(),
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -185,14 +189,6 @@ def run_panda_example(n_steps=5000, render=True):
     env = initalize_environment(render)
     planner = set_planner()
     action = np.zeros(9)
-    goal_orientation = [0.0, 0.707, 0.707, 0.0]
-    yaw = -np.pi/4
-    rotation_matrix_2 = np.array([
-        [np.cos(yaw), -np.sin(yaw), 0], 
-        [np.sin(yaw), np.cos(yaw), 0],
-        [0, 0, 1]
-        ])
-    rotation_matrix = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
     ob, *_ = env.step(action)
     listener = keyboard.Listener(on_press=key_press_callback)
     listener.start()
@@ -202,6 +198,10 @@ def run_panda_example(n_steps=5000, render=True):
     print("Press 'd' to go to the object again.")
 
     env.reconfigure_camera(1.4, 85.0, -25.0, (0.0, 0.0, 0.0))
+    angle = np.pi/2 * 1
+    rot_matrix = get_rotation_matrix(angle, axis='y')
+    goal_1 = np.array([0.107, 0, 0])
+    goal_1 = np.dot(rot_matrix, goal_1)
 
 
     for _ in range(n_steps):
@@ -217,8 +217,7 @@ def run_panda_example(n_steps=5000, render=True):
             qdot=qdot,
             x_goal_0 = np.array(object_position),
             weight_goal_0=0.7,
-            angle_goal_1=rotation_matrix,
-            x_goal_1 = np.array([0.107, 0.0, 0.0]),
+            x_goal_1 = goal_1,
             weight_goal_1=6.0,
             x_goal_2 = np.array([np.pi/4]),
             weight_goal_2=6.0,

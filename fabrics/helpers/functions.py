@@ -27,9 +27,9 @@ def symbolic(name: str):
 def sym(name: str):
     return symbolic(name)
 
-def parse_symbolic_input(expression: str, x: ca.SX, xdot: ca.SX, name: str = '') -> tuple:
+def parse_symbolic_input(expression: str, x: ca.SX, xdot: ca.SX, name: str = "") -> tuple:
     if len(name) > 0:
-        name = '_' + name
+        name = "_" + name
     new_parameters = {}
     parameters = re.findall(r"\(\'(\w*)\'\)", expression)
     for i, _ in enumerate(parameters):
@@ -61,3 +61,25 @@ def joinRefTrajs(refTrajs1, refTrajs2):
         if not already_exists:
             unique_items.append(item)
     return unique_items
+
+def get_rotation_matrix(angle: float, axis: str = "z") -> np.ndarray:
+    if axis == "z":
+        return np.array([
+            [np.cos(angle), -np.sin(angle), 0],
+            [np.sin(angle), np.cos(angle), 0],
+            [0, 0, 1]
+        ])
+    if axis == "x":
+        return np.array([
+            [1, 0, 0],
+            [0, np.cos(angle), np.sin(angle)],
+            [0, -np.sin(angle), np.cos(angle)]
+        ])
+    if axis == "y":
+        return np.array([
+            [np.cos(angle), 0, np.sin(angle)],
+            [0, 1, 0],
+            [-np.sin(angle), 0, np.cos(angle)]
+        ])
+    return np.identity(3)
+

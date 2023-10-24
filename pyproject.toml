@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.8.7"
+version = "0.8.8"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 readme = "README.md"
@@ -21,6 +21,7 @@ mpscenes = "^0.4"
 pynput = "^1.7.6"
 vector = "^1.1.1"
 pytest = "6.2.5"
+deprecation = "^2.1.0"
 
 [tool.poetry.group.dev]
 optional = true
