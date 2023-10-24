@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+import deprecation
+from typing import Dict, Optional, List
 import logging
 import casadi as ca
 from forwardkinematics.fksCommon.fk import ForwardKinematics
@@ -7,7 +8,7 @@ from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
 from fabrics.helpers.exceptions import ExpressionSparseError
-from typing import List
+from fabrics import __version__
 
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.constants import eps
@@ -48,6 +49,10 @@ class InvalidRotationAnglesError(Exception):
 class LeafNotFoundError(Exception):
     pass
 
+
+@deprecation.deprecated(deprecated_in="0.8.8", removed_in="0.9",
+                        current_version=__version__,
+                        details="Remove the goal attribute angle and rotate the position before passing it into compute_action.")
 def compute_rotation_matrix(angles) -> np.ndarray:
     if isinstance(angles, float):
         angle = angles
@@ -594,7 +599,14 @@ class ParameterizedFabricPlanner(object):
             except LinkNotInURDFError as e:
                 fk_parent = ca.SX(np.zeros(3))
             angles = sub_goal.angle()
+
             if angles and isinstance(angles, list) and len(angles) == 4:
+                logging.warning(
+                    "Subgoal attribute 'angle' deprecated. " \
+                    +"Remove the goal attribute angle and rotate the" \
+                    +"position before passing it into"\
+                    +"compute_action."
+                )
                 angles = ca.SX.sym(f"angle_goal_{sub_goal_index}", 3, 3)
                 self._variables.add_parameter(f'angle_goal_{sub_goal_index}', angles)
                 # rotation
@@ -602,6 +614,12 @@ class ParameterizedFabricPlanner(object):
                 fk_child = ca.mtimes(R, fk_child)
                 fk_parent = ca.mtimes(R, fk_parent)
             elif angles:
+                logging.warning(
+                    "Subgoal attribute 'angle' deprecated. " \
+                    +"Remove the goal attribute angle and rotate the" \
+                    +"position before passing it into"\
+                    +"compute_action."
+                )
                 R = compute_rotation_matrix(angles)
                 fk_child = ca.mtimes(R, fk_child)
                 fk_parent = ca.mtimes(R, fk_parent)
