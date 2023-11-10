@@ -38,7 +38,7 @@ class CasadiFunctionWrapper(object):
 
     def evaluate(self, **kwargs):
         argument_dictionary = {}
-        for key in kwargs:
+        for key in kwargs: # pragma no cover
             if key == 'x_obst' or key == 'x_obsts':
                 obstacle_dictionary = {}
                 for j, x_obst_j in enumerate(kwargs[key]):
