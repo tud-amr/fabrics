@@ -93,18 +93,41 @@ class SelfCollisionLeaf(GenericGeometryLeaf):
         self,
         parent_variables: Variables,
         forward_kinematics: ca.SX,
-        self_collision_name: str,
-        self_collision_body_radius: float=0.10,
+        collision_link_1: str,
+        collision_link_2: str,
     ):
+        self_collision_name = (
+                f"self_collision_{collision_link_1}_"
+                "{collision_link_2}"
+        )
         super().__init__(
             parent_variables, self_collision_name, forward_kinematics
         )
-        self.set_forward_map(self_collision_body_radius)
+        self.set_forward_map(collision_link_1, collision_link_2)
 
-    def set_forward_map(self, self_collision_body_radius):
+    def set_forward_map(self, collision_link_1, collision_link_2):
+        radius_body_1_name = f"radius_body_{collision_link_1}"
+        radius_body_2_name = f"radius_body_{collision_link_2}"
+        if radius_body_1_name in self._parent_variables.parameters():
+            radius_body_1_variable = self._parent_variables.parameters()[
+                radius_body_1_name
+            ]
+        else:
+            radius_body_1_variable = ca.SX.sym(radius_body_1_name, 1)
+        if radius_body_2_name in self._parent_variables.parameters():
+            radius_body_2_variable = self._parent_variables.parameters()[
+                radius_body_2_name
+            ]
+        else:
+            radius_body_2_variable = ca.SX.sym(radius_body_2_name, 1)
+        geo_parameters = {
+            radius_body_1_name: radius_body_1_variable,
+            radius_body_2_name: radius_body_2_variable,
+        }
+        self._parent_variables.add_parameters(geo_parameters)
         phi = (
             ca.norm_2(self._forward_kinematics)
-            / (2 * self_collision_body_radius) - 1
+            / (radius_body_1_variable + radius_body_2_variable) - 1
         )
         self._map = DifferentialMap(phi, self._parent_variables)
 

@@ -486,11 +486,7 @@ class ParameterizedFabricPlanner(object):
                     "and {collision_link_2} is sparse and thus skipped."
             )
             logging.warning(message.format_map(locals()))
-        self_collision_name = (
-                f"self_collision_{collision_link_1}_"
-                "{collision_link_2}"
-        )
-        geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
+        geometry = SelfCollisionLeaf(self._variables, fk, collision_link_1, collision_link_2)
         geometry.set_geometry(self.config.self_collision_geometry)
         geometry.set_finsler_structure(self.config.self_collision_finsler)
         self.add_leaf(geometry)
@@ -571,8 +567,8 @@ class ParameterizedFabricPlanner(object):
         for self_collision_key, self_collision_list in self_collision_pairs.items():
             for self_collision_link in self_collision_list:
                 self.add_spherical_self_collision_geometry(
+                        self_collision_link,
                         self_collision_key,
-                        self_collision_link
                 )
 
         if limits:

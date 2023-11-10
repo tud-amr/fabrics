@@ -126,7 +126,8 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         degrees_of_freedom,
         forward_kinematics,
     )
-    collision_links = ['panda_link9', 'panda_link7', 'panda_link3', 'panda_link4']
+    collision_links = ['panda_link7', 'panda_link3', 'panda_link4']
+    self_collision_pairs = {"panda_link7": ['panda_link3', 'panda_link4', 'panda_link2', 'panda_link1']}
     panda_limits = [
             [-2.8973, 2.8973],
             [-1.7628, 1.7628],
@@ -139,6 +140,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links=collision_links,
+        self_collision_pairs=self_collision_pairs,
         goal=goal,
         number_obstacles=2,
         number_plane_constraints=1,
@@ -154,9 +156,9 @@ def run_panda_example(n_steps=5000, render=True):
     # planner.export_as_c("planner.c")
     action = np.zeros(7)
     ob, *_ = env.step(action)
-    env.add_collision_link(0, 3, shape_type='sphere', size=[0.10])
-    env.add_collision_link(0, 4, shape_type='sphere', size=[0.10])
-    env.add_collision_link(0, 7, shape_type='sphere', size=[0.10])
+    body_links={1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 7: 0.1}
+    for body_link, radius in body_links.items():
+        env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
 
 
     for _ in range(n_steps):
@@ -172,10 +174,15 @@ def run_panda_example(n_steps=5000, render=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
-            radius_body_links={3: 0.1, 4: 0.1, 9: 0.1, 7: 0.1},
+            radius_body_links=body_links,
             constraint_0=np.array([0, 0, 1, 0.0]),
         )
-        ob, *_ = env.step(action)
+        ob, reward, terminated, truncated, info = env.step(action)
+        """
+        if terminated or truncated:
+            print(info)
+            break
+        """
     env.close()
     return {}
 
