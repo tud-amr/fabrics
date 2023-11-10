@@ -152,11 +152,13 @@ def run_panda_self_collision(n_steps=5000, render=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
+            radius_body_panda_link2=np.array([0.07]),
             radius_body_panda_link3=np.array([0.02]),
             radius_body_panda_link4=np.array([0.02]),
             radius_body_panda_link5=np.array([0.02]),
             radius_body_panda_link6=np.array([0.02]),
             radius_body_panda_link7=np.array([0.02]),
+            radius_body_panda_hand=np.array([0.07]),
         )
         ob, *_ = env.step(action)
     env.close()
