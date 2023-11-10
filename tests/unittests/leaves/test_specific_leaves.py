@@ -1,3 +1,4 @@
+from copy import deepcopy
 import casadi as ca
 import pytest
 import numpy as np
@@ -24,13 +25,16 @@ def test_self_collision_leaf():
         state_variables={"q": q, "qdot": qdot}
     )
     fk = q[0] + q[1]
-    self_collision_leaf = SelfCollisionLeaf(root_variables, fk, "test_self_collision")
+    self_collision_leaf = SelfCollisionLeaf(root_variables, fk, "link1", "link2")
     phi = ca.norm_2(fk) / (2 * 0.1) - 1
-    phi_fun = ca.Function("ground_truth_phi", [q], [phi])
-    phi_test = ca.Function("test_phi", [q], [self_collision_leaf.map()._phi])
-    value = np.array([0.1, -0.334])
-    phi_ground_truth = phi_fun(value)
-    phi_test = phi_test(value)
+    var = deepcopy(root_variables.state_variables())
+    var.update(root_variables.parameters())
+    var = list(var.values())
+    phi_fun = ca.Function("ground_truth_phi", var, [phi])
+    phi_test = ca.Function("test_phi", var, [self_collision_leaf.map()._phi])
+    value = [np.array([0.1, -0.334]), np.array([0, 0]), 0.1, 0.1]
+    phi_ground_truth = phi_fun(*value)
+    phi_test = phi_test(*value)
     assert np.isclose(phi_ground_truth, phi_test)
 
 def test_plane_constraint_leaf():
