@@ -1,6 +1,7 @@
 import os
 import gymnasium as gym
 import numpy as np
+import yaml
 
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
@@ -12,6 +13,12 @@ from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+CONFIG_FILE = "panda_config.yaml"
+with open(CONFIG_FILE, 'r') as config_file:
+    CONFIG = yaml.safe_load(config_file)
+
+
 
 def initalize_environment(render=True):
     """
@@ -43,32 +50,10 @@ def initalize_environment(render=True):
         "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
     }
     obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
-    # Definition of the goal.
-    goal_dict = {
-        "subgoal0": {
-            "weight": 1.0,
-            "is_primary_goal": True,
-            "indices": [0, 1, 2],
-            "parent_link": "panda_link0",
-            "child_link": "panda_hand",
-            "desired_position": [0.1, -0.6, 0.4],
-            "epsilon": 0.05,
-            "type": "staticSubGoal",
-        },
-        "subgoal1": {
-            "weight": 5.0,
-            "is_primary_goal": False,
-            "indices": [0, 1, 2],
-            "parent_link": "panda_link7",
-            "child_link": "panda_hand",
-            "desired_position": [0.1, 0.0, 0.0],
-            "epsilon": 0.05,
-            "type": "staticSubGoal",
-        }
-    }
-    goal = GoalComposition(name="goal", content_dict=goal_dict)
+    goal = GoalComposition(name="goal", content_dict=CONFIG['goal']['goal_definition'])
     obstacles = (obst1, obst2)
-    env.reset()
+    vel0 = np.array([-0.0, 0, 0, 0, 0, 0, 0])
+    env.reset(vel=vel0)
     env.add_sensor(full_sensor, [0])
     for obst in obstacles:
         env.add_obstacle(obst)
@@ -122,30 +107,19 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         rootLink="panda_link0",
         end_link="panda_link9",
     )
+    limit_geometry: str = (
+        "-1.0 / (x ** 2) * xdot ** 2"
+    )
+    limit_finsler: str = (
+        "0.1/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
+    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
+        limit_finsler=limit_finsler,
+        limit_geometry=limit_geometry,
     )
-    collision_links = ['panda_link7', 'panda_link3', 'panda_link4']
-    self_collision_pairs = {"panda_link7": ['panda_link3', 'panda_link4', 'panda_link2', 'panda_link1']}
-    panda_limits = [
-            [-2.8973, 2.8973],
-            [-1.7628, 1.7628],
-            [-2.8973, 2.8973],
-            [-3.0718, -0.0698],
-            [-2.8973, 2.8973],
-            [-0.0175, 3.7525],
-            [-2.8973, 2.8973]
-        ]
-    # The planner hides all the logic behind the function set_components.
-    planner.set_components(
-        collision_links=collision_links,
-        self_collision_pairs=self_collision_pairs,
-        goal=goal,
-        number_obstacles=2,
-        number_plane_constraints=1,
-        limits=panda_limits,
-    )
+    planner.load_problem_configuration(CONFIG)
     planner.concretize()
     return planner
 
@@ -178,6 +152,12 @@ def run_panda_example(n_steps=5000, render=True):
             constraint_0=np.array([0, 0, 1, 0.0]),
         )
         ob, reward, terminated, truncated, info = env.step(action)
+        q = ob['robot_0']['joint_state']['position']
+        dq = ob['robot_0']['joint_state']['velocity']
+        if terminated or truncated:
+            print(info)
+        vel_mag = np.linalg.norm(dq)
+        #print(q[0])
         """
         if terminated or truncated:
             print(info)
@@ -188,4 +168,4 @@ def run_panda_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    res = run_panda_example(render=True, n_steps=5000)

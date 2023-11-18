@@ -7,6 +7,7 @@ from forwardkinematics.fksCommon.fk import ForwardKinematics
 from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
+from fabrics.components.robot_representation.collision_link import Sphere
 from fabrics.helpers.exceptions import ExpressionSparseError
 from fabrics import __version__
 
@@ -43,6 +44,8 @@ from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from pyquaternion import Quaternion
 
+from fabrics.planner.configuration_classes import FabricPlannerConfig, ProblemConfiguration
+
 class InvalidRotationAnglesError(Exception):
     pass
 
@@ -66,59 +69,15 @@ def compute_rotation_matrix(angles) -> np.ndarray:
         raise(InvalidRotationAnglesError)
 
 
-
-@dataclass
-class FabricPlannerConfig:
-    base_energy: str = (
-        "0.5 * 0.2 * ca.dot(xdot, xdot)"
-    )
-    collision_geometry: str = (
-        "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
-    )
-    collision_finsler: str = (
-        "0.1/(x**1) * xdot**2"
-    )
-    limit_geometry: str = (
-        "-0.1 / (x ** 1) * xdot ** 2"
-    )
-    limit_finsler: str = (
-        "0.1/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
-    )
-    self_collision_geometry: str = (
-        "-0.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
-    )
-    self_collision_finsler: str = (
-        "0.1/(x**1) * xdot**2"
-    )
-    geometry_plane_constraint: str = (
-        "-0.5 / (x ** 5) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
-    )
-    finsler_plane_constraint: str = (
-        "0.1/(x**1) * xdot**2"
-    )
-    attractor_potential: str = (
-        "5.0 * (ca.norm_2(x) + 1 / 10 * ca.log(1 + ca.exp(-2 * 10 * ca.norm_2(x))))"
-    )
-    attractor_metric: str = (
-        "((2.0 - 0.3) * ca.exp(-1 * (0.75 * ca.norm_2(x))**2) + 0.3) * ca.SX(np.identity(x.size()[0]))"
-    )
-    damper_beta: str = (
-        "0.5 * (ca.tanh(-0.5 * (ca.norm_2(x) - 0.02)) + 1) * 6.5 + 0.01 + ca.fmax(0, sym('a_ex') - sym('a_le'))"
-    )
-    damper_eta: str = (
-        "0.5 * (ca.tanh(-0.9 * (1 - 1/2) * ca.dot(xdot, xdot) - 0.5) + 1)"
-    )
-    """
-    damper_beta: str = (
-        "0.5 * (ca.tanh(-sym('alpha_b') * (ca.norm_2(x) - sym('radius_shift'))) + 1) * sym('beta_close') + sym('beta_distant') + ca.fmax(0, sym('a_ex') - sym('a_le'))"
-    )
-    damper_eta: str = (
-        "0.5 * (ca.tanh(-sym('alpha_eta') * sym('ex_lag') * (1 - sym('ex_factor')) - 0.5) + 1)"
-    )
-    """
-
-
 class ParameterizedFabricPlanner(object):
+    
+    _dof: int
+    _config: FabricPlannerConfig
+    _problem_configuration : ProblemConfiguration
+    leaves: Dict[str, Leaf]
+    _ref_sign: int
+
+
     def __init__(self, dof: int, forward_kinematics: ForwardKinematics, **kwargs):
         self._dof = dof
         self._config = FabricPlannerConfig(**kwargs)
@@ -130,6 +89,9 @@ class ParameterizedFabricPlanner(object):
         self.leaves = {}
 
     """ INITIALIZING """
+
+    def load_fabrics_configuration(self, **fabrics_configuration):
+        self._config = FabricPlannerConfig(**fabrics_configuration)
 
     def initialize_joint_variables(self):
         q = ca.SX.sym("q", self._dof)
@@ -505,6 +467,77 @@ class ParameterizedFabricPlanner(object):
         self.add_leaf(lower_limit_geometry)
         self.add_leaf(upper_limit_geometry)
 
+    def load_problem_configuration(self, problem_configuration: ProblemConfiguration):
+        self._problem_configuration = ProblemConfiguration(**problem_configuration)
+
+        self.set_collision_avoidance()
+        self.set_self_collision_avoidance()
+        self.set_joint_limits()
+        self.set_goal_component(self._problem_configuration.goal_composition)
+        execution_energy = ExecutionLagrangian(self._variables)
+        self.set_execution_energy(execution_energy)
+        self.set_speed_control()
+
+    def set_joint_limits(self):
+        limits = np.zeros((7, 2))
+        limits[:, 0] = self._problem_configuration.joint_limits.lower_limits
+        limits[:, 1] = self._problem_configuration.joint_limits.upper_limits
+        limits = limits.tolist()
+        for joint_index in range(len(limits)):
+            self.add_limit_geometry(joint_index, limits[joint_index])
+
+    def set_self_collision_avoidance(self) -> None:
+        if not self._problem_configuration.robot_representation.self_collision_pairs:
+            return
+        for link_name,  paired_links_names in self._problem_configuration.robot_representation.self_collision_pairs.items():
+            link = self._problem_configuration.robot_representation.collision_links[link_name]
+            for paired_link_name in paired_links_names:
+                paired_link = self._problem_configuration.robot_representation.collision_links[paired_link_name]
+                if isinstance(link, Sphere) and isinstance(paired_link, Sphere):
+                    self.add_spherical_self_collision_geometry(
+                            paired_link_name,
+                            link_name,
+                    )
+
+
+    def set_collision_avoidance(self) -> None:
+        if not self._problem_configuration.robot_representation.collision_links:
+            return
+        for link_name, collision_link in self._problem_configuration.robot_representation.collision_links.items():
+            fk = self.get_forward_kinematics(link_name)
+            if is_sparse(fk):
+                message = (
+                        f"Expression {fk} for link {collision_link} "
+                        "is sparse and thus skipped."
+                )
+                logging.warning(message.format_map(locals()))
+                continue
+            for i in range(self._problem_configuration.environment.number_sphere_obstacles['static']):
+                obstacle_name = f"obst_{i}"
+                if isinstance(collision_link, Sphere):
+                    self.add_spherical_obstacle_geometry(obstacle_name, link_name, fk)
+            for i in range(self._problem_configuration.environment.number_sphere_obstacles['dynamic']):
+                obstacle_name = f"obst_dynamic_{i}"
+                if isinstance(collision_link, Sphere):
+                    self.add_dynamic_spherical_obstacle_geometry(
+                            obstacle_name,
+                            collision_link,
+                            fk,
+                            reference_parameter_list[i],
+                            dynamic_obstacle_dimension=dynamic_obstacle_dimension,
+                    )
+            for i in range(self._problem_configuration.environment.number_planes):
+                constraint_name = f"constraint_{i}"
+                if isinstance(collision_link, Sphere):
+                    self.add_plane_constraint(constraint_name, link_name, fk)
+
+            for i in range(self._problem_configuration.environment.number_cuboids):
+                obstacle_name = f"obst_cuboid_{i}"
+                if isinstance(collision_link, Sphere):
+                    self.add_cuboid_obstacle_geometry(obstacle_name, collision_link, fk)
+
+
+
 
     def set_components(
         self,
@@ -644,7 +677,8 @@ class ParameterizedFabricPlanner(object):
         if mode == 'vel':
             if not time_step:
                 raise Exception("No time step passed in velocity mode.")
-        try:
+        self._geometry.concretize()
+        if hasattr(self, '_forced_geometry') and hasattr(self, '_execution_geometry'):
             eta = self._damper.substitute_eta()
             a_ex = (
                 eta * self._execution_geometry._alpha
@@ -656,11 +690,12 @@ class ParameterizedFabricPlanner(object):
                 - ca.mtimes(self._forced_geometry.Minv(), self._target_velocity)
             )
             #xddot = self._forced_geometry._xddot
-        except AttributeError:
+        elif hasattr(self, '_execution_geometry'):
             logging.warn("No forcing term, using pure geoemtry with energization.")
-            self._geometry.concretize()
             #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
             xddot = self._execution_geometry._xddot - self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
+        else:
+            xddot = self._geometry._xddot
 
         if mode == 'acc':
             self._funs = CasadiFunctionWrapper(
