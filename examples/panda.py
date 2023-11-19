@@ -168,4 +168,4 @@ def run_panda_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_example(render=True, n_steps=5000)
+    res = run_panda_example(render=False, n_steps=5000)

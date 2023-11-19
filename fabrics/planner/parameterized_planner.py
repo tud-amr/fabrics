@@ -521,7 +521,7 @@ class ParameterizedFabricPlanner(object):
                 if isinstance(collision_link, Sphere):
                     self.add_dynamic_spherical_obstacle_geometry(
                             obstacle_name,
-                            collision_link,
+                            link_name,
                             fk,
                             reference_parameter_list[i],
                             dynamic_obstacle_dimension=dynamic_obstacle_dimension,
@@ -531,10 +531,10 @@ class ParameterizedFabricPlanner(object):
                 if isinstance(collision_link, Sphere):
                     self.add_plane_constraint(constraint_name, link_name, fk)
 
-            for i in range(self._problem_configuration.environment.number_cuboids):
+            for i in range(self._problem_configuration.environment.number_cuboids['static']):
                 obstacle_name = f"obst_cuboid_{i}"
                 if isinstance(collision_link, Sphere):
-                    self.add_cuboid_obstacle_geometry(obstacle_name, collision_link, fk)
+                    self.add_cuboid_obstacle_geometry(obstacle_name, link_name, fk)
 
 
 
