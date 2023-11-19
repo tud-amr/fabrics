@@ -29,6 +29,9 @@ class RobotRepresentation:
         for link_name, paired_links_names in self._self_collision_pairs.items():
             if link_name not in self._collision_links:
                 raise CollisionLinkUndefinedError(link_name)
+            for paired_link_name in paired_links_names:
+                if paired_link_name not in self._collision_links:
+                    raise CollisionLinkUndefinedError(paired_link_name)
 
     @property
     def collision_links(self) -> CollisionLinksType:
