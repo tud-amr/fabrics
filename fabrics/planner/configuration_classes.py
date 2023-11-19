@@ -1,9 +1,10 @@
 import sys
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List
 from mpscenes.goals.goal_composition import GoalComposition
 
 from fabrics.components.robot_representation import RobotRepresentation
+from fabrics.components.environment import Environment
 
 @dataclass
 class FabricPlannerConfig:
@@ -73,12 +74,6 @@ class JointLimits:
     lower_limits: List[float]
     upper_limits: List[float]
 
-@dataclass
-class Environment:
-    number_sphere_obstacles: Dict[str, int]
-    number_planes: int
-    number_cuboids: int
-
 class ProblemConfiguration:
     def __init__(self, **config):
         self._config = config
@@ -89,7 +84,7 @@ class ProblemConfiguration:
         )
         self.construt_robot_representation()
         self._environment=Environment(
-            number_sphere_obstacles=self._config['environment']['number_sphere_obstacles'],
+            number_spheres=self._config['environment']['number_spheres'],
             number_planes=self._config['environment']['number_planes'],
             number_cuboids=self._config['environment']['number_cuboids'],
         )

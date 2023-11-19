@@ -1,7 +1,7 @@
 environment:
   number_cuboids: 0
   number_planes: 1
-  number_sphere_obstacles:
+  number_spheres:
     dynamic: 0
     static: 2
 goal:

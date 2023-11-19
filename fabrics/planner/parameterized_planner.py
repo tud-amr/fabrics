@@ -512,11 +512,11 @@ class ParameterizedFabricPlanner(object):
                 )
                 logging.warning(message.format_map(locals()))
                 continue
-            for i in range(self._problem_configuration.environment.number_sphere_obstacles['static']):
+            for i in range(self._problem_configuration.environment.number_spheres['static']):
                 obstacle_name = f"obst_{i}"
                 if isinstance(collision_link, Sphere):
                     self.add_spherical_obstacle_geometry(obstacle_name, link_name, fk)
-            for i in range(self._problem_configuration.environment.number_sphere_obstacles['dynamic']):
+            for i in range(self._problem_configuration.environment.number_spheres['dynamic']):
                 obstacle_name = f"obst_dynamic_{i}"
                 if isinstance(collision_link, Sphere):
                     self.add_dynamic_spherical_obstacle_geometry(
