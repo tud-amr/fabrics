@@ -1,5 +1,11 @@
+from typing import List
+
+
 class CollisionLink:
-    pass
+
+    @property
+    def size(self) -> List[float]:
+        return []
 
 class Capsule(CollisionLink):
     _radius: float
@@ -9,12 +15,16 @@ class Capsule(CollisionLink):
         self._length = length
 
     @property
+    def size(self) -> List[float]:
+        return [self.radius, self.length]
+
+    @property
     def radius(self) -> float:
-         return self._radius
+        return self._radius
 
     @property
     def length(self) -> float:
-         return self._length
+        return self._length
 
 class Sphere(CollisionLink):
     _radius: float
@@ -22,6 +32,10 @@ class Sphere(CollisionLink):
         self._radius = radius
 
     @property
+    def size(self) -> List[float]:
+        return [self.radius]
+
+    @property
     def radius(self) -> float:
-         return self._radius
+        return self._radius
 

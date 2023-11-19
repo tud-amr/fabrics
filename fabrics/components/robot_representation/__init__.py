@@ -6,6 +6,11 @@ class CollisionLinkDoesNotExistError(Exception):
         message = f"Collision link with name {collision_link_name} does not exist."
         super().__init__(message)
 
+class CollisionLinkUndefinedError(Exception):
+    def __init__(self, collision_link_name: str):
+        message = f"Collision link with name {collision_link_name} does not exist but is used in the self_collision_pairs."
+        super().__init__(message)
+
 SelfCollisionPairsType = Union[Dict[str, List[str]], None]
 CollisionLinksType = Union[Dict[str, CollisionLink], None]
 
@@ -18,6 +23,12 @@ class RobotRepresentation:
                  self_collision_pairs: SelfCollisionPairsType):
         self._collision_links = collision_links
         self._self_collision_pairs = self_collision_pairs
+        self.check_self_collision_pairs()
+
+    def check_self_collision_pairs(self):
+        for link_name, paired_links_names in self._self_collision_pairs.items():
+            if link_name not in self._collision_links:
+                raise CollisionLinkUndefinedError(link_name)
 
     @property
     def collision_links(self) -> CollisionLinksType:
