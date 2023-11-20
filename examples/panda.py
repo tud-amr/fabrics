@@ -11,6 +11,7 @@ from urdfenvs.sensors.full_sensor import FullSensor
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+from mpscenes.obstacles.box_obstacle import BoxObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
@@ -50,8 +51,18 @@ def initalize_environment(render=True):
         "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
     }
     obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
+    static_obst_dict = {
+        "type": "box",
+        "geometry": {"position": [-0.0, -0.6, 0.45],
+                     "length": 1.1,
+                     "width": 0.5,
+                     "height": 0.1,
+                     },
+    }
+    obst3 = BoxObstacle(name="staticObst", content_dict=static_obst_dict)
+
     goal = GoalComposition(name="goal", content_dict=CONFIG['goal']['goal_definition'])
-    obstacles = (obst1, obst2)
+    obstacles = (obst1, obst2, obst3)
     vel0 = np.array([-0.0, 0, 0, 0, 0, 0, 0])
     env.reset(vel=vel0)
     env.add_sensor(full_sensor, [0])
@@ -131,8 +142,10 @@ def run_panda_example(n_steps=5000, render=True):
     action = np.zeros(7)
     ob, *_ = env.step(action)
     body_links={1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 7: 0.1}
+    arguments = {}
     for body_link, radius in body_links.items():
         env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
+        arguments[f'radius_panda_link{body_link}'] = radius
 
 
     for _ in range(n_steps):
@@ -140,16 +153,18 @@ def run_panda_example(n_steps=5000, render=True):
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][4]['position'],
-            weight_goal_0=ob_robot['FullSensor']['goals'][4]['weight'],
-            x_goal_1=ob_robot['FullSensor']['goals'][5]['position'],
-            weight_goal_1=ob_robot['FullSensor']['goals'][5]['weight'],
+            x_goal_0=ob_robot['FullSensor']['goals'][5]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][5]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][6]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][6]['weight'],
             x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
-            radius_body_links=body_links,
             constraint_0=np.array([0, 0, 1, 0.0]),
+            x_obst_2=ob_robot['FullSensor']['obstacles'][4]['position'],
+            sizes_obst_2=ob_robot['FullSensor']['obstacles'][4]['size'],
+            **arguments,
         )
         ob, reward, terminated, truncated, info = env.step(action)
         q = ob['robot_0']['joint_state']['position']
@@ -168,4 +183,4 @@ def run_panda_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_example(render=False, n_steps=5000)
+    res = run_panda_example(render=True, n_steps=5000)

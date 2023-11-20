@@ -1,7 +1,7 @@
 environment:
   number_cuboids:
     dynamic: 0
-    static: 0
+    static: 1
   number_planes: 1
   number_spheres:
     dynamic: 0
