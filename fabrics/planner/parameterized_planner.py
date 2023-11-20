@@ -28,7 +28,7 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import (CapsuleSphereLeaf,
+from fabrics.components.leaves.geometry import (AvoidanceLeaf, CapsuleSphereLeaf,
                                                 ObstacleLeaf, LimitLeaf,
                                                 PlaneConstraintGeometryLeaf,
                                                 SelfCollisionLeaf,
@@ -469,9 +469,12 @@ class ParameterizedFabricPlanner(object):
 
     def load_problem_configuration(self, problem_configuration: ProblemConfiguration):
         self._problem_configuration = ProblemConfiguration(**problem_configuration)
+        for obstacle in self._problem_configuration.environment.obstacles:
+            self._variables.add_parameters(obstacle.parameters)
+
 
         self.set_collision_avoidance()
-        self.set_self_collision_avoidance()
+        #self.set_self_collision_avoidance()
         self.set_joint_limits()
         self.set_goal_component(self._problem_configuration.goal_composition)
         execution_energy = ExecutionLagrangian(self._variables)
@@ -505,6 +508,8 @@ class ParameterizedFabricPlanner(object):
             return
         for link_name, collision_link in self._problem_configuration.robot_representation.collision_links.items():
             fk = self.get_forward_kinematics(link_name)
+            collision_link.set_position(fk)
+            self._variables.add_parameters(collision_link.parameters)
             if is_sparse(fk):
                 message = (
                         f"Expression {fk} for link {link_name} "
@@ -512,9 +517,16 @@ class ParameterizedFabricPlanner(object):
                 )
                 logging.warning(message.format_map(locals()))
                 continue
+            for obstacle in self._problem_configuration.environment.obstacles:
+                distance = collision_link.distance(obstacle)
+                leaf_name = f"{link_name}_{obstacle.name}_leaf"
+                leaf = AvoidanceLeaf(self._variables, leaf_name, distance)
+                leaf.set_geometry(self.config.collision_geometry)
+                leaf.set_finsler_structure(self.config.collision_finsler)
+                self.add_leaf(leaf)
+            """
             for i in range(self._problem_configuration.environment.number_spheres['static']):
                 obstacle_name = f"obst_{i}"
-                #collision_link.get_map('sphere')
                 if isinstance(collision_link, Sphere):
                     self.add_spherical_obstacle_geometry(obstacle_name, link_name, fk)
             for i in range(self._problem_configuration.environment.number_spheres['dynamic']):
@@ -536,6 +548,7 @@ class ParameterizedFabricPlanner(object):
                 obstacle_name = f"obst_cuboid_{i}"
                 if isinstance(collision_link, Sphere):
                     self.add_cuboid_obstacle_geometry(obstacle_name, link_name, fk)
+            """
 
 
 
