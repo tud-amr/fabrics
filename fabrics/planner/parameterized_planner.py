@@ -7,7 +7,7 @@ from forwardkinematics.fksCommon.fk import ForwardKinematics
 from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
-from fabrics.components.robot_representation.collision_link import Sphere
+from fabrics.helpers.geometric_primitives import Sphere
 from fabrics.helpers.exceptions import ExpressionSparseError
 from fabrics import __version__
 
@@ -507,13 +507,14 @@ class ParameterizedFabricPlanner(object):
             fk = self.get_forward_kinematics(link_name)
             if is_sparse(fk):
                 message = (
-                        f"Expression {fk} for link {collision_link} "
+                        f"Expression {fk} for link {link_name} "
                         "is sparse and thus skipped."
                 )
                 logging.warning(message.format_map(locals()))
                 continue
             for i in range(self._problem_configuration.environment.number_spheres['static']):
                 obstacle_name = f"obst_{i}"
+                #collision_link.get_map('sphere')
                 if isinstance(collision_link, Sphere):
                     self.add_spherical_obstacle_geometry(obstacle_name, link_name, fk)
             for i in range(self._problem_configuration.environment.number_spheres['dynamic']):

@@ -5,8 +5,8 @@ from fabrics.components.robot_representation import (
     CollisionLinkUndefinedError,
     RobotRepresentation,
 )
-from fabrics.components.robot_representation.collision_link import (
-    CollisionLink,
+from fabrics.helpers.geometric_primitives import (
+    GeometricPrimitive,
     Sphere,
     Capsule,
 )
@@ -21,11 +21,11 @@ def test_robot_representation_errors():
             self_collision_pairs=self_collision_pairs,
         )
 
-    collision_links: Dict[str, CollisionLink] = {
-        "link1": Sphere(radius=0.1),
-        "link2": Sphere(radius=0.1),
-        "link3": Sphere(radius=0.1),
-        "link4": Sphere(radius=0.1),
+    collision_links: Dict[str, GeometricPrimitive] = {
+        "link1": Sphere('link1', radius=0.1),
+        "link2": Sphere('link2', radius=0.1),
+        "link3": Sphere('link3', radius=0.1),
+        "link4": Sphere('link4', radius=0.1),
     }
     robot_representation = RobotRepresentation(
         collision_links=collision_links,
@@ -40,10 +40,10 @@ def test_robot_representation_errors():
 def test_robot_representation():
     self_collision_pairs = {"link1": ["link3", "link4"]}
     collision_links = {
-        "link1": Sphere(radius=0.1),
-        "link2": Capsule(radius=0.1, length=1.0),
-        "link3": Sphere(radius=0.1),
-        "link4": Sphere(radius=0.1),
+        "link1": Sphere("link1", radius=0.1),
+        "link2": Capsule("link2", radius=0.1, length=1.0),
+        "link3": Sphere("link3", radius=0.1),
+        "link4": Sphere("link4", radius=0.1),
     }
     robot_representation = RobotRepresentation(
         collision_links=collision_links,

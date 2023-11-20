@@ -93,7 +93,7 @@ class ProblemConfiguration:
         collision_links = {}
         for link, link_data in self._config['robot_representation']['collision_links'].items():
             collision_link_type = list(link_data.keys())[0]
-            collision_links[link] = getattr(sys.modules['fabrics.components.robot_representation.collision_link'], collision_link_type.capitalize())(**link_data[collision_link_type])
+            collision_links[link] = getattr(sys.modules['fabrics.helpers.geometric_primitives'], collision_link_type.capitalize())(link, **link_data[collision_link_type])
         self._robot_representation=RobotRepresentation(
             collision_links=collision_links,
             self_collision_pairs=self._config['robot_representation']['self_collision_pairs']

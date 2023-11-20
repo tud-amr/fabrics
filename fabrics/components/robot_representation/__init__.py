@@ -1,5 +1,5 @@
 from typing import Dict, List, Union
-from fabrics.components.robot_representation.collision_link import CollisionLink
+from fabrics.helpers.geometric_primitives import GeometricPrimitive
 
 class CollisionLinkDoesNotExistError(Exception):
     def __init__(self, collision_link_name: str):
@@ -12,7 +12,7 @@ class CollisionLinkUndefinedError(Exception):
         super().__init__(message)
 
 SelfCollisionPairsType = Dict[str, List[str]]
-CollisionLinksType = Dict[str, CollisionLink]
+CollisionLinksType = Dict[str, GeometricPrimitive]
 
 class RobotRepresentation:
     _collision_links: CollisionLinksType
@@ -43,7 +43,7 @@ class RobotRepresentation:
     def collision_links(self) -> CollisionLinksType:
         return self._collision_links
 
-    def collision_link(self, name: str) -> CollisionLink:
+    def collision_link(self, name: str) -> GeometricPrimitive:
         if name in self._collision_links:
             return self._collision_links[name]
         raise CollisionLinkDoesNotExistError(name)
