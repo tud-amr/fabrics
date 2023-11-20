@@ -11,18 +11,24 @@ class CollisionLinkUndefinedError(Exception):
         message = f"Collision link with name {collision_link_name} does not exist but is used in the self_collision_pairs."
         super().__init__(message)
 
-SelfCollisionPairsType = Union[Dict[str, List[str]], None]
-CollisionLinksType = Union[Dict[str, CollisionLink], None]
+SelfCollisionPairsType = Dict[str, List[str]]
+CollisionLinksType = Dict[str, CollisionLink]
 
 class RobotRepresentation:
     _collision_links: CollisionLinksType
     _self_collision_pairs: SelfCollisionPairsType
 
     def __init__(self,
-                 collision_links: CollisionLinksType,
-                 self_collision_pairs: SelfCollisionPairsType):
-        self._collision_links = collision_links
-        self._self_collision_pairs = self_collision_pairs
+                 collision_links: Union[CollisionLinksType, None],
+                 self_collision_pairs: Union[SelfCollisionPairsType, None]):
+        if not collision_links:
+            self._collision_links = {}
+        else:
+            self._collision_links = collision_links
+        if not self_collision_pairs:
+            self._self_collision_pairs = {}
+        else:
+            self._self_collision_pairs = self_collision_pairs
         self.check_self_collision_pairs()
 
     def check_self_collision_pairs(self):

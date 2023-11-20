@@ -1,3 +1,4 @@
+from typing import Dict
 import pytest
 from fabrics.components.robot_representation import (
     CollisionLinkDoesNotExistError,
@@ -5,6 +6,7 @@ from fabrics.components.robot_representation import (
     RobotRepresentation,
 )
 from fabrics.components.robot_representation.collision_link import (
+    CollisionLink,
     Sphere,
     Capsule,
 )
@@ -19,7 +21,7 @@ def test_robot_representation_errors():
             self_collision_pairs=self_collision_pairs,
         )
 
-    collision_links = {
+    collision_links: Dict[str, CollisionLink] = {
         "link1": Sphere(radius=0.1),
         "link2": Sphere(radius=0.1),
         "link3": Sphere(radius=0.1),
