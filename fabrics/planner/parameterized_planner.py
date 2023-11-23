@@ -253,7 +253,7 @@ class ParameterizedFabricPlanner(object):
         self._damper = Damper(beta_expression, eta_expression, x_psi, dm_psi, exLag._l)
         self._variables.add_parameters(self._damper.symbolic_parameters())
 
-    def get_forward_kinematics(self, link_name) -> ca.SX:
+    def get_forward_kinematics(self, link_name, position_only: bool = True) -> ca.SX:
         if isinstance(link_name, ca.SX):
             return link_name
         if isinstance(self._forward_kinematics, GenericURDFFk):
@@ -261,13 +261,13 @@ class ParameterizedFabricPlanner(object):
                 self._variables.position_variable(),
                 self._forward_kinematics._rootLink,
                 link_name,
-                positionOnly=True
+                positionOnly=position_only
             )
         else:
             fk = self._forward_kinematics.fk(
                 self._variables.position_variable(),
                 link_name,
-                positionOnly=True
+                positionOnly=position_only
             )
         return fk
 
@@ -507,12 +507,12 @@ class ParameterizedFabricPlanner(object):
         if not self._problem_configuration.robot_representation.collision_links:
             return
         for link_name, collision_link in self._problem_configuration.robot_representation.collision_links.items():
-            fk = self.get_forward_kinematics(link_name)
-            collision_link.set_position(fk)
+            fk = self.get_forward_kinematics(link_name, position_only=False)
+            collision_link.set_origin(fk)
             self._variables.add_parameters(collision_link.parameters)
-            if is_sparse(fk):
+            if is_sparse(fk[0:3, 3]):
                 message = (
-                        f"Expression {fk} for link {link_name} "
+                        f"Expression {fk[0:3, 3]} for link {link_name} "
                         "is sparse and thus skipped."
                 )
                 logging.warning(message.format_map(locals()))
@@ -525,10 +525,6 @@ class ParameterizedFabricPlanner(object):
                 leaf.set_finsler_structure(self.config.collision_finsler)
                 self.add_leaf(leaf)
             """
-            for i in range(self._problem_configuration.environment.number_spheres['static']):
-                obstacle_name = f"obst_{i}"
-                if isinstance(collision_link, Sphere):
-                    self.add_spherical_obstacle_geometry(obstacle_name, link_name, fk)
             for i in range(self._problem_configuration.environment.number_spheres['dynamic']):
                 obstacle_name = f"obst_dynamic_{i}"
                 if isinstance(collision_link, Sphere):

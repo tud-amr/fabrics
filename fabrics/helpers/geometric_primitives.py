@@ -1,33 +1,47 @@
 from typing import List, Tuple, Dict
 import casadi as ca
+import numpy as np
 from urdfenvs.urdf_common.urdf_env import Plane
-from fabrics.helpers.distances import sphere_to_plane, sphere_to_sphere, cuboid_to_sphere
+from fabrics.helpers.distances import capsule_to_plane, capsule_to_sphere, cuboid_to_capsule, sphere_to_plane, sphere_to_sphere, cuboid_to_sphere
 
 class DistanceNotImplementedError(Exception):
     def __init__(self, primitive_1: "GeometricPrimitive", primitive_2: "GeometricPrimitive"):
-        message=f"Distance between {type(primitive_1)} and {type(primitive_2)} not implemented"
+        message=f"Distance between {primitive_1} and {primitive_2} not implemented"
         super().__init__(message)
+
 
 
 class GeometricPrimitive:
     _name: str
-    _position: ca.SX
+    _origin: ca.SX
     _parameters: Dict[str, ca.SX]
 
     def __init__(self, name: str):
         self._name = name
         self._position = ca.SX()
         self._parameters = {}
+        self._origin = ca.SX(np.identity(4))
 
+    def __str__(self) -> str:
+        return self.__class__.__name__ + ": " + self._name
 
     @property
     def position(self) -> ca.SX:
-        return self._position
+        return self._origin[0:3, 3]
 
     def set_position(self, position: ca.SX, free: bool = False) -> None:
-        self._position = position
+        self._origin[0:3,3] = position
         if free:
             self._parameters[position[0].name()[:-2]] = position
+
+    @property
+    def origin(self) -> ca.SX:
+        return self._origin
+
+    def set_origin(self, origin: ca.SX, free: bool = False) -> None:
+        self._origin = origin
+        if free:
+            self._parameters[origin[0][0].name()[:-2]] = origin
 
     @property
     def name(self) -> str:
@@ -89,7 +103,38 @@ class Capsule(GeometricPrimitive):
     def length(self) -> float:
         return self._length
 
+    @property
+    def centers(self) -> List[ca.SX]:
+        tf_origin_center_0 = ca.SX(np.identity(4))
+        tf_origin_center_0[2, 3] = self.sym_length / 2
+        tf_center_0 = ca.mtimes(self.origin, tf_origin_center_0)
+        tf_origin_center_1 = ca.SX(np.identity(4))
+        tf_origin_center_1[2, 3] = - self.sym_length / 2
+        tf_center_1 = ca.mtimes(self.origin, tf_origin_center_1)
+        return [tf_center_0[0:3, 3], tf_center_1[0:3, 3]]
+
+
     def distance(self, primitive: GeometricPrimitive) -> ca.SX:
+        if isinstance(primitive, Sphere):
+            return capsule_to_sphere(
+                    self.centers,
+                    primitive.position,
+                    self.sym_radius,
+                    primitive.sym_radius
+            )
+        elif isinstance(primitive, Cuboid):
+            return cuboid_to_capsule(
+                    primitive.position,
+                    self.centers,
+                    primitive.sym_sizes,
+                    self.sym_radius
+            )
+        elif isinstance(primitive, Plane):
+            return capsule_to_plane(
+                    self.centers,
+                    primitive.sym_plane_equation,
+                    self.sym_radius
+            )
         raise DistanceNotImplementedError(self, primitive)
 
 
@@ -128,21 +173,20 @@ class Sphere(GeometricPrimitive):
                     self.sym_radius,
                     primitive.sym_radius
             )
-        if isinstance(primitive, Plane):
+        elif isinstance(primitive, Plane):
             return sphere_to_plane(
                     self.position,
                     primitive.sym_plane_equation,
                     self.sym_radius
             )
-        if isinstance(primitive, Cuboid):
+        elif isinstance(primitive, Cuboid):
             return cuboid_to_sphere(
                     primitive.position,
                     self.position,
                     primitive.sym_sizes,
                     self.sym_radius,
             )
-        else:
-            raise DistanceNotImplementedError(self, primitive)
+        raise DistanceNotImplementedError(self, primitive)
 
 class Cuboid(GeometricPrimitive):
     _sizes: List[float]
@@ -162,7 +206,7 @@ class Cuboid(GeometricPrimitive):
         return {self._sym_sizes[0].name()[:-2]: self.sym_sizes}
 
     @property
-    def sizes(self) -> float:
+    def sizes(self) -> List[float]:
         return self._sizes
 
     @property

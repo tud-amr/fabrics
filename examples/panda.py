@@ -1,4 +1,5 @@
 import os
+import sys
 import gymnasium as gym
 import numpy as np
 import yaml
@@ -146,11 +147,13 @@ def run_panda_example(n_steps=5000, render=True):
     for body_link, radius in body_links.items():
         env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
         arguments[f'radius_panda_link{body_link}'] = radius
+    arguments['length_panda_link5'] = 0.03
+    arguments['radius_panda_link5'] = 0.01
 
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
-        action = planner.compute_action(
+        all_arguments = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][5]['position'],
@@ -166,11 +169,14 @@ def run_panda_example(n_steps=5000, render=True):
             sizes_obst_2=ob_robot['FullSensor']['obstacles'][4]['size'],
             **arguments,
         )
+        action = planner.compute_action(**all_arguments)
         ob, reward, terminated, truncated, info = env.step(action)
         q = ob['robot_0']['joint_state']['position']
         dq = ob['robot_0']['joint_state']['velocity']
+        """
         if terminated or truncated:
             print(info)
+        """
         vel_mag = np.linalg.norm(dq)
         #print(q[0])
         """
@@ -183,4 +189,5 @@ def run_panda_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_example(render=True, n_steps=5000)
+    render = bool(int(sys.argv[1]))
+    res = run_panda_example(render=render, n_steps=5000)

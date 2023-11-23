@@ -69,6 +69,10 @@ robot_representation:
     panda_link4:
       sphere:
         radius: 0.1
+    panda_link5:
+      capsule:
+        radius: 0.01
+        length: 0.05
     panda_link7:
       sphere:
         radius: 0.1
