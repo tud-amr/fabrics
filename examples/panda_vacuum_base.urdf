@@ -5,9 +5,15 @@
 <!-- =================================================================================== -->
 <robot name="panda">
   <link name="world"/>
+  <joint name="panda_joint_world" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="base_link"/>
    <joint name="mobile_joint_x" type="prismatic">
     <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-    <parent link="world"/>
+    <parent link="base_link"/>
     <child link="panda_link0"/>
     <origin rpy="0 0 0" xyz="0 0 0.05"/>
     <axis xyz="1 0 0"/>

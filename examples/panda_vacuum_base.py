@@ -60,32 +60,32 @@ def initalize_environment(render=True):
             "weight": 2.0,
             "is_primary_goal": True,
             "indices": [0, 1, 2],
-            "parent_link": "world",
+            "parent_link": "base_link",
             "child_link": "vacuum1_link",
             "desired_position": [0.1, -0.6, 0.4],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
-        # "subgoal1": {
-        #     "weight": 5,
-        #     "is_primary_goal": False,
-        #     "indices": [0, 1, 2],
-        #     "parent_link": "vacuum1_link",
-        #     "child_link": "vacuum2_link",
-        #     "desired_position": goal_1.tolist(),
-        #     "epsilon": 0.05,
-        #     "type": "staticSubGoal",
-        # },
-        # "subgoal2": {
-        #     "weight": 5,
-        #     "is_primary_goal": False,
-        #     "indices": [0, 1, 2],
-        #     "parent_link": "panda_link7",
-        #     "child_link": "vacuum_support_link",
-        #     "desired_position": goal_2.tolist(),
-        #     "epsilon": 0.05,
-        #     "type": "staticSubGoal",
-        # }
+        "subgoal1": {
+            "weight": 5,
+            "is_primary_goal": False,
+            "indices": [0, 1, 2],
+            "parent_link": "vacuum1_link",
+            "child_link": "vacuum2_link",
+            "desired_position": goal_1.tolist(),
+            "epsilon": 0.05,
+            "type": "staticSubGoal",
+        },
+        "subgoal2": {
+            "weight": 5,
+            "is_primary_goal": False,
+            "indices": [0, 1, 2],
+            "parent_link": "panda_link7",
+            "child_link": "vacuum_support_link",
+            "desired_position": goal_2.tolist(),
+            "epsilon": 0.05,
+            "type": "staticSubGoal",
+        }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     obstacles = (obst1, obst2)
@@ -139,7 +139,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 8):
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="world",
+        rootLink="base_link",
         end_link="vacuum1_link" #, "vacuum2_link", "vacuum_support_link"],
     )
     planner = ParameterizedFabricPlanner(
@@ -172,11 +172,11 @@ def run_panda_example(n_steps=5000, render=True):
     dof = 8
     (env, goal) = initalize_environment(render)
     planner = set_planner(goal)
-    # goal_2_leaf = planner.get_leaves(["goal_2_leaf"])[0]
-    # goal_1_leaf = planner.get_leaves(["goal_1_leaf"])[0]
-    # goal_2_leaf.concretize()
-    # goal_1_leaf.concretize()
-    # planner.export_as_c("planner.c")
+    goal_2_leaf = planner.get_leaves(["goal_2_leaf"])[0]
+    goal_1_leaf = planner.get_leaves(["goal_1_leaf"])[0]
+    goal_2_leaf.concretize()
+    goal_1_leaf.concretize()
+    planner.export_as_c("planner.c")
     action = np.zeros(dof)
     ob, *_ = env.step(action)
     env.add_collision_link(0, 3, shape_type='sphere', size=[0.10])
@@ -195,10 +195,10 @@ def run_panda_example(n_steps=5000, render=True):
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][4]['position'],
             weight_goal_0=ob_robot['FullSensor']['goals'][4]['weight'],
-            # x_goal_1=ob_robot['FullSensor']['goals'][5]['position'],
-            # weight_goal_1=ob_robot['FullSensor']['goals'][5]['weight'],
-            # x_goal_2=ob_robot['FullSensor']['goals'][6]['position'],
-            # weight_goal_2=ob_robot['FullSensor']['goals'][6]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][5]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][5]['weight'],
+            x_goal_2=ob_robot['FullSensor']['goals'][6]['position'],
+            weight_goal_2=ob_robot['FullSensor']['goals'][6]['weight'],
             x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
