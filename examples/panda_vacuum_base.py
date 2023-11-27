@@ -140,7 +140,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 8):
     forward_kinematics = GenericURDFFk(
         urdf,
         rootLink="base_link",
-        end_link="vacuum1_link" #, "vacuum2_link", "vacuum_support_link"],
+        end_link=["vacuum1_link" , "vacuum2_link", "vacuum_support_link"],
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -184,10 +184,6 @@ def run_panda_example(n_steps=5000, render=True):
     env.add_collision_link(0, 7, shape_type='sphere', size=[0.10])
 
 
-    yaw_1 = np.pi/4 * 1
-    yaw_2 = np.pi/2 * 0
-    sub_goal_1_rotation_matrix = get_rotation_matrix(yaw_1, axis='z') #z->z 
-    sub_goal_2_rotation_matrix = get_rotation_matrix(yaw_2, axis='y') #y->y
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
         args = dict(
