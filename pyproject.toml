@@ -46,7 +46,7 @@ optional = true
 [tool.poetry.group.agents.dependencies]
 #urdfenvs = "^0.8"
 planarenvs = "^1.4"
-urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop"}
+urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "ft-simple-mujoco"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
