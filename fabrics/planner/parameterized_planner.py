@@ -470,8 +470,7 @@ class ParameterizedFabricPlanner(object):
     def load_problem_configuration(self, problem_configuration: ProblemConfiguration):
         self._problem_configuration = ProblemConfiguration(**problem_configuration)
         for obstacle in self._problem_configuration.environment.obstacles:
-            self._variables.add_parameters(obstacle.parameters)
-
+            self._variables.add_parameters(obstacle.sym_parameters)
 
         self.set_collision_avoidance()
         #self.set_self_collision_avoidance()
@@ -509,7 +508,8 @@ class ParameterizedFabricPlanner(object):
         for link_name, collision_link in self._problem_configuration.robot_representation.collision_links.items():
             fk = self.get_forward_kinematics(link_name, position_only=False)
             collision_link.set_origin(fk)
-            self._variables.add_parameters(collision_link.parameters)
+            self._variables.add_parameters(collision_link.sym_parameters)
+            self._variables.add_parameters_values(collision_link.parameters)
             if is_sparse(fk[0:3, 3]):
                 message = (
                         f"Expression {fk[0:3, 3]} for link {link_name} "
@@ -709,12 +709,12 @@ class ParameterizedFabricPlanner(object):
 
         if mode == 'acc':
             self._funs = CasadiFunctionWrapper(
-                "funs", self.variables.asDict(), {"action": xddot}
+                "funs", self.variables, {"action": xddot}
             )
         elif mode == 'vel':
             action = self._geometry.xdot() + time_step * xddot
             self._funs = CasadiFunctionWrapper(
-                "funs", self.variables.asDict(), {"action": action}
+                "funs", self.variables, {"action": action}
             )
             
 

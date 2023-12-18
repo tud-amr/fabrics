@@ -135,7 +135,7 @@ class Lagrangian(object):
         for refTraj in self._refTrajs:
             var += refTraj._vars
         self._funs = CasadiFunctionWrapper(
-            "funs", var.asDict(), {"H": self._H}
+            "funs", var, {"H": self._H}
         )
 
     def ref_names(self) -> list:
@@ -183,7 +183,7 @@ class FinslerStructure(Lagrangian):
     def concretize(self):
         super().concretize()
         self._funs_lg = CasadiFunctionWrapper(
-            "funs", self._vars.asDict(), {"Lg": self._lg}
+            "funs", self._vars, {"Lg": self._lg}
         )
 
     def evaluate(self, **kwargs):

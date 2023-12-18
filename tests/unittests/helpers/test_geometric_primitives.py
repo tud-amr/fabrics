@@ -53,6 +53,8 @@ def test_set_origin():
     assert centers_np[0][1] == 0.2
     assert centers_np[0][2] == 0.35
     assert 'radius_capsule' in capsule.parameters
+    assert capsule.parameters['radius_capsule'] == 1.0
+    assert capsule.parameters['length_capsule'] == 0.5
 
 def test_plane():
     plane = Plane('plane', plane_equation = [0.0, 0.0, 1.0, 0.0])

@@ -1,4 +1,5 @@
 import os
+import time
 import sys
 import gymnasium as gym
 import numpy as np
@@ -143,6 +144,8 @@ def run_panda_example(n_steps=5000, render=True):
     action = np.zeros(7)
     ob, *_ = env.step(action)
     body_links={1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 7: 0.1}
+    # Passing arguments for the robot representation is possible but not needed.
+    # If nothing is specified, the defaults from the config file are used.
     arguments = {}
     for body_link, radius in body_links.items():
         env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
@@ -167,10 +170,13 @@ def run_panda_example(n_steps=5000, render=True):
             constraint_0=np.array([0, 0, 1, 0.0]),
             x_obst_2=ob_robot['FullSensor']['obstacles'][4]['position'],
             sizes_obst_2=ob_robot['FullSensor']['obstacles'][4]['size'],
-            **arguments,
+            #**arguments,
         )
         action = planner.compute_action(**all_arguments)
+        t0 = time.perf_counter()
         ob, reward, terminated, truncated, info = env.step(action)
+        t1 = time.perf_counter()
+        print(f"Time {t1-t0}")
         q = ob['robot_0']['joint_state']['position']
         dq = ob['robot_0']['joint_state']['velocity']
         """
@@ -190,4 +196,4 @@ def run_panda_example(n_steps=5000, render=True):
 
 if __name__ == "__main__":
     render = bool(int(sys.argv[1]))
-    res = run_panda_example(render=render, n_steps=5000)
+    res = run_panda_example(render=render, n_steps=1000)

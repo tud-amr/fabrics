@@ -80,7 +80,7 @@ class WeightedGeometry(Spec):
         )
         """
         self._funs = CasadiFunctionWrapper(
-                "funs", var.asDict(), {"M": self.M(), 'f': self.f(), 'xddot': self._xddot, 'alpha': self._alpha}
+                "funs", var, {"M": self.M(), 'f': self.f(), 'xddot': self._xddot, 'alpha': self._alpha}
         )
 
     def evaluate(self, **kwargs):

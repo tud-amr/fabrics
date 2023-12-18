@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
 import casadi as ca
 import numpy as np
 from urdfenvs.urdf_common.urdf_env import Plane
@@ -14,11 +14,13 @@ class DistanceNotImplementedError(Exception):
 class GeometricPrimitive:
     _name: str
     _origin: ca.SX
-    _parameters: Dict[str, ca.SX]
+    _parameters: Dict[str, Union[np.ndarray, float]]
+    _sym_parameters: Dict[str, ca.SX]
 
     def __init__(self, name: str):
         self._name = name
         self._position = ca.SX()
+        self._sym_parameters = {}
         self._parameters = {}
         self._origin = ca.SX(np.identity(4))
 
@@ -32,7 +34,7 @@ class GeometricPrimitive:
     def set_position(self, position: ca.SX, free: bool = False) -> None:
         self._origin[0:3,3] = position
         if free:
-            self._parameters[position[0].name()[:-2]] = position
+            self._sym_parameters[position[0].name()[:-2]] = position
 
     @property
     def origin(self) -> ca.SX:
@@ -41,7 +43,7 @@ class GeometricPrimitive:
     def set_origin(self, origin: ca.SX, free: bool = False) -> None:
         self._origin = origin
         if free:
-            self._parameters[origin[0][0].name()[:-2]] = origin
+            self._sym_parameters[origin[0][0].name()[:-2]] = origin
 
     @property
     def name(self) -> str:
@@ -52,8 +54,12 @@ class GeometricPrimitive:
         return []
 
     @property
-    def parameters(self) -> Dict[str, ca.SX]:
-        self._parameters.update(self.sym_size)
+    def sym_parameters(self) -> Dict[str, ca.SX]:
+        self._sym_parameters.update(self.sym_size)
+        return self._sym_parameters
+
+    @property
+    def parameters(self) -> Dict[str, Union[float, np.ndarray]]:
         return self._parameters
 
     @property
@@ -75,6 +81,8 @@ class Capsule(GeometricPrimitive):
         self._length = length
         self._sym_radius = ca.SX.sym(f"radius_{self.name}", 1)
         self._sym_length = ca.SX.sym(f"length_{self.name}", 1)
+        self._parameters[f'radius_{self.name}'] = self._radius
+        self._parameters[f'length_{self.name}'] = self._length
 
     @property
     def size(self) -> List[float]:
@@ -146,6 +154,7 @@ class Sphere(GeometricPrimitive):
         super().__init__(name)
         self._radius = radius
         self._sym_radius = ca.SX.sym(f"radius_{self.name}", 1)
+        self._parameters[f'radius_{self.name}'] = self._radius
 
     @property
     def size(self) -> List[float]:
@@ -196,6 +205,7 @@ class Cuboid(GeometricPrimitive):
         super().__init__(name)
         self._sizes = sizes
         self._sym_sizes = ca.SX.sym(f"sizes_{self.name}", 3)
+        self._parameters[f'sizes_{self.name}'] = self._sizes
 
     @property
     def size(self) -> List[float]:
@@ -224,6 +234,7 @@ class Plane(GeometricPrimitive):
         super().__init__(name)
         self._plane_equation = plane_equation
         self._sym_plane_equation = ca.SX.sym(f"{self.name}", 4)
+        self._parameters[f'{self.name}'] = self._plane_equation
 
     @property
     def size(self) -> List[float]:
