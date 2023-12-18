@@ -1,5 +1,4 @@
 import os
-import time
 import sys
 import gymnasium as gym
 import numpy as np
@@ -173,10 +172,7 @@ def run_panda_example(n_steps=5000, render=True):
             #**arguments,
         )
         action = planner.compute_action(**all_arguments)
-        t0 = time.perf_counter()
         ob, reward, terminated, truncated, info = env.step(action)
-        t1 = time.perf_counter()
-        print(f"Time {t1-t0}")
         q = ob['robot_0']['joint_state']['position']
         dq = ob['robot_0']['joint_state']['velocity']
         """
