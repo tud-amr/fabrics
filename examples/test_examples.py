@@ -104,3 +104,12 @@ def test_point_robot_debug():
     assert isinstance(res, dict)
     assert 'goal_0_leaf' in res
 
+def test_panda_capsule_cuboid():
+    from panda_capsules_cuboid import run_panda_capsule_cuboid_example
+    res = run_panda_capsule_cuboid_example(10, render=False)
+    assert isinstance(res, dict)
+
+def test_point_cuboid():
+    from point_robot_cuboid import run_point_robot_urdf
+    res = run_point_robot_urdf(10, render=False)
+    assert isinstance(res, dict)

@@ -27,6 +27,9 @@ class CasadiFunctionWrapper(object):
         input_expressions = [self._inputs[i] for i in self._input_keys]
         self._function = ca.Function(self._name, input_expressions, self._list_expressions)
 
+    def function(self) -> ca.Function:
+        return self._function
+
     def serialize(self, file_name):
         with bz2.BZ2File(file_name, 'w') as f:
             pickle.dump(self._function.serialize(), f)
@@ -35,7 +38,7 @@ class CasadiFunctionWrapper(object):
 
     def evaluate(self, **kwargs):
         argument_dictionary = {}
-        for key in kwargs:
+        for key in kwargs: # pragma no cover
             if key == 'x_obst' or key == 'x_obsts':
                 obstacle_dictionary = {}
                 for j, x_obst_j in enumerate(kwargs[key]):
@@ -66,6 +69,16 @@ class CasadiFunctionWrapper(object):
                 for j, radius_obst_dyn_j in enumerate(kwargs[key]):
                     radius_dyn_dictionary[f'radius_obst_dynamic_{j}'] = radius_obst_dyn_j
                 argument_dictionary.update(radius_dyn_dictionary)
+            if key == 'x_obst_cuboid' or key == 'x_obsts_cuboid':
+                x_obst_cuboid_dictionary = {}
+                for j, x_obst_cuboid_j in enumerate(kwargs[key]):
+                    x_obst_cuboid_dictionary[f'x_obst_cuboid_{j}'] = x_obst_cuboid_j
+                argument_dictionary.update(x_obst_cuboid_dictionary)
+            if key == 'size_obst_cuboid' or key == 'size_obsts_cuboid':
+                size_obst_cuboid_dictionary = {}
+                for j, size_obst_cuboid_j in enumerate(kwargs[key]):
+                    size_obst_cuboid_dictionary[f'size_obst_cuboid_{j}'] = size_obst_cuboid_j
+                argument_dictionary.update(size_obst_cuboid_dictionary)
             if key.startswith('radius_body') and key.endswith('links'):
                 # Radius bodies can be passed using a dictionary where the keys are simple integers.
                 radius_body_dictionary = {}
@@ -76,7 +89,6 @@ class CasadiFunctionWrapper(object):
                     except IndexError as e:
                         logging.warning(f"No body link with index {link_nr} in the inputs. Body link {link_nr} is ignored.")
                     radius_body_dictionary[key] = radius_body_j
-
                 argument_dictionary.update(radius_body_dictionary)
             else:
                 argument_dictionary[key] = kwargs[key]

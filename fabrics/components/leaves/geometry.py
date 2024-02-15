@@ -4,6 +4,8 @@ from fabrics.components.maps.parameterized_maps import (
     CapsuleSphereMap,
     ParameterizedPlaneConstraintMap,
     SphereSphereMap,
+    CuboidSphereMap,
+    CapsuleCuboidMap,
 )
 from fabrics.diffGeometry.diffMap import DifferentialMap, ExplicitDifferentialMap
 from fabrics.diffGeometry.geometry import Geometry
@@ -91,18 +93,41 @@ class SelfCollisionLeaf(GenericGeometryLeaf):
         self,
         parent_variables: Variables,
         forward_kinematics: ca.SX,
-        self_collision_name: str,
-        self_collision_body_radius: float=0.10,
+        collision_link_1: str,
+        collision_link_2: str,
     ):
+        self_collision_name = (
+                f"self_collision_{collision_link_1}_"
+                "{collision_link_2}"
+        )
         super().__init__(
             parent_variables, self_collision_name, forward_kinematics
         )
-        self.set_forward_map(self_collision_body_radius)
+        self.set_forward_map(collision_link_1, collision_link_2)
 
-    def set_forward_map(self, self_collision_body_radius):
+    def set_forward_map(self, collision_link_1, collision_link_2):
+        radius_body_1_name = f"radius_body_{collision_link_1}"
+        radius_body_2_name = f"radius_body_{collision_link_2}"
+        if radius_body_1_name in self._parent_variables.parameters():
+            radius_body_1_variable = self._parent_variables.parameters()[
+                radius_body_1_name
+            ]
+        else:
+            radius_body_1_variable = ca.SX.sym(radius_body_1_name, 1)
+        if radius_body_2_name in self._parent_variables.parameters():
+            radius_body_2_variable = self._parent_variables.parameters()[
+                radius_body_2_name
+            ]
+        else:
+            radius_body_2_variable = ca.SX.sym(radius_body_2_name, 1)
+        geo_parameters = {
+            radius_body_1_name: radius_body_1_variable,
+            radius_body_2_name: radius_body_2_variable,
+        }
+        self._parent_variables.add_parameters(geo_parameters)
         phi = (
             ca.norm_2(self._forward_kinematics)
-            / (2 * self_collision_body_radius) - 1
+            / (radius_body_1_variable + radius_body_2_variable) - 1
         )
         self._map = DifferentialMap(phi, self._parent_variables)
 
@@ -303,7 +328,6 @@ class CapsuleSphereLeaf(GenericGeometryLeaf):
         self._sphere_name = sphere_name
         self.set_forward_map()
 
-
     def set_forward_map(self):
         sphere_radius_name = f"radius_{self._sphere_name}"
         sphere_center_name = f"x_{self._sphere_name}"
@@ -324,6 +348,89 @@ class CapsuleSphereLeaf(GenericGeometryLeaf):
             sphere_center,
             capsule_radius,
             sphere_radius,
+        )
+
+class CapsuleCuboidLeaf(GenericGeometryLeaf):
+    def __init__(
+        self,
+        parent_variables: Variables,
+        capsule_name: str,
+        cuboid_name: str,
+        capsule_center_1: ca.SX,
+        capsule_center_2: ca.SX,
+    ):
+        super().__init__(
+            parent_variables, f"{capsule_name}_{cuboid_name}_leaf", None
+        )
+        self._capsule_centers = [
+            capsule_center_1,
+            capsule_center_2,
+        ]
+        self._capsule_name = capsule_name
+        self._cuboid_name = cuboid_name
+        self.set_forward_map()
+
+    def set_forward_map(self):
+        cuboid_size_name = f"size_{self._cuboid_name}"
+        cuboid_center_name = f"x_{self._cuboid_name}"
+        capsule_radius_name = f"radius_{self._capsule_name}"
+        cuboid_dimension = self._capsule_centers[0].size()[0]
+        cuboid_size = self.extract_or_create_variable(cuboid_size_name,
+                                                      cuboid_dimension)
+        cuboid_center = self.extract_or_create_variable(cuboid_center_name,
+                                                        cuboid_dimension)
+        capsule_radius = self.extract_or_create_variable(capsule_radius_name, 1)
+        geo_parameters = {
+            cuboid_size_name: cuboid_size,
+            capsule_radius_name: capsule_radius,
+            cuboid_center_name: cuboid_center,
+        }
+        self._parent_variables.add_parameters(geo_parameters)
+        self._map = CapsuleCuboidMap(
+            self._parent_variables,
+            self._capsule_centers,
+            cuboid_center,
+            capsule_radius,
+            cuboid_size,
+        )
+
+class SphereCuboidLeaf(GenericGeometryLeaf):
+    """
+    Leaf for geometry of a cuboid (3D) obstacle with respect to the collision sphere.
+    """
+    def __init__(
+            self,
+            parent_variables: Variables,
+            forward_kinematics: ca.SX,
+            obstacle_name: str,
+            collision_link: str,
+    ):
+        super().__init__(
+            parent_variables, f"{obstacle_name}_{collision_link}_leaf", forward_kinematics
+        )
+        self.set_forward_map(obstacle_name, collision_link)
+
+    def set_forward_map(self, obstacle_name, collision_link):
+        cuboid_size_name = f"size_{obstacle_name}"
+        cuboid_center_name = f"x_{obstacle_name}"
+        radius_body_name = f"radius_body_{collision_link}"
+        obstacle_dimension = self._forward_kinematics.size()[0]
+        size_cuboid = self.extract_or_create_variable(cuboid_size_name, 3)
+        radius_body = self.extract_or_create_variable(radius_body_name, 1)
+        cuboid_center = self.extract_or_create_variable(cuboid_center_name, 3)
+        geo_parameters = {
+            cuboid_size_name: size_cuboid,
+            radius_body_name: radius_body,
+            cuboid_center_name: cuboid_center,
+
+        }
+        self._parent_variables.add_parameters(geo_parameters)
+        self._map = CuboidSphereMap(
+            self._parent_variables,
+            self._forward_kinematics,
+            cuboid_center,
+            radius_body,
+            size_cuboid,
         )
 
 

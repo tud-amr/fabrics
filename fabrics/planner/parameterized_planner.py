@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+import deprecation
+from typing import Dict, Optional, List
 import logging
 import casadi as ca
 from forwardkinematics.fksCommon.fk import ForwardKinematics
@@ -7,7 +8,7 @@ from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
 import numpy as np
 from copy import deepcopy
 from fabrics.helpers.exceptions import ExpressionSparseError
-from typing import List
+from fabrics import __version__
 
 from fabrics.helpers.variables import Variables
 from fabrics.helpers.constants import eps
@@ -26,8 +27,14 @@ from fabrics.components.leaves.leaf import Leaf
 from fabrics.components.leaves.attractor import GenericAttractor
 from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
 from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import CapsuleSphereLeaf, ObstacleLeaf, LimitLeaf, PlaneConstraintGeometryLeaf, SelfCollisionLeaf, GenericGeometryLeaf, ESDFGeometryLeaf
-
+from fabrics.components.leaves.geometry import (CapsuleSphereLeaf,
+                                                ObstacleLeaf, LimitLeaf,
+                                                PlaneConstraintGeometryLeaf,
+                                                SelfCollisionLeaf,
+                                                GenericGeometryLeaf,
+                                                ESDFGeometryLeaf,
+                                                SphereCuboidLeaf,
+                                                CapsuleCuboidLeaf)
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
 
@@ -42,6 +49,10 @@ class InvalidRotationAnglesError(Exception):
 class LeafNotFoundError(Exception):
     pass
 
+
+@deprecation.deprecated(deprecated_in="0.8.8", removed_in="0.9",
+                        current_version=__version__,
+                        details="Remove the goal attribute angle and rotate the position before passing it into compute_action.")
 def compute_rotation_matrix(angles) -> np.ndarray:
     if isinstance(angles, float):
         angle = angles
@@ -322,8 +333,29 @@ class ParameterizedFabricPlanner(object):
         capsule_sphere_leaf.set_finsler_structure(self.config.collision_finsler)
         self.add_leaf(capsule_sphere_leaf)
 
-
-
+    def add_capsule_cuboid_geometry(
+            self,
+            obstacle_name: str,
+            capsule_name: str,
+            tf_capsule_origin: ca.SX,
+            capsule_length: float
+    ):
+        tf_origin_center_0 = np.identity(4)
+        tf_origin_center_0[2][3] = capsule_length / 2
+        tf_center_0 = ca.mtimes(tf_capsule_origin, tf_origin_center_0)
+        tf_origin_center_1 = np.identity(4)
+        tf_origin_center_1[2][3] = - capsule_length / 2
+        tf_center_1 = ca.mtimes(tf_capsule_origin, tf_origin_center_1)
+        capsule_cuboid_leaf = CapsuleCuboidLeaf(
+            self._variables,
+            capsule_name,
+            obstacle_name,
+            tf_center_0[0:3,3],
+            tf_center_1[0:3,3],
+        )
+        capsule_cuboid_leaf.set_geometry(self.config.collision_geometry)
+        capsule_cuboid_leaf.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(capsule_cuboid_leaf)
 
     def add_spherical_obstacle_geometry(
             self,
@@ -412,6 +444,23 @@ class ParameterizedFabricPlanner(object):
         geometry.set_geometry(self.config.geometry_plane_constraint)
         geometry.set_finsler_structure(self.config.finsler_plane_constraint)
         self.add_leaf(geometry)
+
+    def add_cuboid_obstacle_geometry(
+            self,
+            obstacle_name: str,
+            collision_link_name: str,
+            forward_kinematics: ca.SX,
+            ) -> None:
+
+        geometry = SphereCuboidLeaf(
+            self._variables,
+            forward_kinematics,
+            obstacle_name,
+            collision_link_name,
+        )
+        geometry.set_geometry(self.config.collision_geometry)
+        geometry.set_finsler_structure(self.config.collision_finsler)
+        self.add_leaf(geometry)
     
     def add_esdf_geometry(
             self,
@@ -437,11 +486,7 @@ class ParameterizedFabricPlanner(object):
                     "and {collision_link_2} is sparse and thus skipped."
             )
             logging.warning(message.format_map(locals()))
-        self_collision_name = (
-                f"self_collision_{collision_link_1}_"
-                "{collision_link_2}"
-        )
-        geometry = SelfCollisionLeaf(self._variables, fk, self_collision_name)
+        geometry = SelfCollisionLeaf(self._variables, fk, collision_link_1, collision_link_2)
         geometry.set_geometry(self.config.self_collision_geometry)
         geometry.set_finsler_structure(self.config.self_collision_finsler)
         self.add_leaf(geometry)
@@ -470,6 +515,7 @@ class ParameterizedFabricPlanner(object):
         limits: Optional[list] = None,
         number_obstacles: int = 1,
         number_dynamic_obstacles: int = 0,
+        number_obstacles_cuboid: int = 0,
         number_plane_constraints: int = 0,
         dynamic_obstacle_dimension: int = 3,
     ):
@@ -510,6 +556,10 @@ class ParameterizedFabricPlanner(object):
                 constraint_name = f"constraint_{i}"
                 self.add_plane_constraint(constraint_name, collision_link, fk)
 
+            for i in range(number_obstacles_cuboid):
+                obstacle_name = f"obst_cuboid_{i}"
+                self.add_cuboid_obstacle_geometry(obstacle_name, collision_link, fk)
+
 
         for collision_link in collision_links_esdf:
             self.add_esdf_geometry(collision_link)
@@ -517,8 +567,8 @@ class ParameterizedFabricPlanner(object):
         for self_collision_key, self_collision_list in self_collision_pairs.items():
             for self_collision_link in self_collision_list:
                 self.add_spherical_self_collision_geometry(
+                        self_collision_link,
                         self_collision_key,
-                        self_collision_link
                 )
 
         if limits:
@@ -545,7 +595,14 @@ class ParameterizedFabricPlanner(object):
             except LinkNotInURDFError as e:
                 fk_parent = ca.SX(np.zeros(3))
             angles = sub_goal.angle()
+
             if angles and isinstance(angles, list) and len(angles) == 4:
+                logging.warning(
+                    "Subgoal attribute 'angle' deprecated. " \
+                    +"Remove the goal attribute angle and rotate the" \
+                    +"position before passing it into"\
+                    +"compute_action."
+                )
                 angles = ca.SX.sym(f"angle_goal_{sub_goal_index}", 3, 3)
                 self._variables.add_parameter(f'angle_goal_{sub_goal_index}', angles)
                 # rotation
@@ -553,6 +610,12 @@ class ParameterizedFabricPlanner(object):
                 fk_child = ca.mtimes(R, fk_child)
                 fk_parent = ca.mtimes(R, fk_parent)
             elif angles:
+                logging.warning(
+                    "Subgoal attribute 'angle' deprecated. " \
+                    +"Remove the goal attribute angle and rotate the" \
+                    +"position before passing it into"\
+                    +"compute_action."
+                )
                 R = compute_rotation_matrix(angles)
                 fk_child = ca.mtimes(R, fk_child)
                 fk_parent = ca.mtimes(R, fk_parent)
@@ -619,6 +682,24 @@ class ParameterizedFabricPlanner(object):
         pickle.
         """
         self._funs.serialize(file_name)
+
+    def export_as_xml(self, file_name: str):
+        """
+        Exports the pure casadi function in xml format.
+
+        The generated file can be loaded in python, cpp or Matlab.
+        You can use that using the syntax ca.Function.load(file_name).
+        Note that passing arguments as dictionary is not supported then.
+        """
+        function = self._funs.function()
+        function.save(file_name)
+
+    def export_as_c(self, file_name: str):
+        """
+        Export the planner as c source code.
+        """
+        function = self._funs.function()
+        function.generate(file_name)
  
     """ RUNTIME METHODS """
 
