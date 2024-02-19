@@ -1,0 +1,48 @@
+import numpy as np
+import time
+from fabrics.helpers.translation import c2np
+
+"""
+Use the example point_robot_urdf.py to generate a simple planner
+```python
+planner.export_as_c(simple_planner.c')
+```
+
+Then you can use this example to test the numpy function for parallelization.
+"""
+
+python_code = c2np('simple_planner.c', 'simple_planner.py' )
+from simple_planner import casadi_f0_numpy
+
+N = 5
+
+q0 = np.array([[-1.9998125,0.5, 0]])
+qdot0 = np.array([[0.0187499776, 0.0, 0]])
+x_goal = np.array([[3.5, 0.5]])
+
+weight_goal_0 = np.repeat(np.array([0.5]), N)
+radius_obst_0 = np.repeat(np.array([1.0]), N)
+radius_body = np.repeat(np.array([0.2]), N)
+
+q = np.repeat(np.transpose(q0), N, axis=1)
+qdot = np.repeat(np.transpose(qdot0), N, axis=1)
+x_obst = np.array([[2.0, 0.0, 0.0]])
+x_obst_0 = np.repeat(np.transpose(x_obst), N, axis=1)
+
+x_goal_0 = np.repeat(np.transpose(x_goal), N, axis=1)
+x_goal_0 = np.transpose(np.array([
+    [3.5, 0.5],
+    [3.5, 1.5],
+    [-3.5, 0.5],
+    [1.5, 2.0],
+    [3.5, -0.5],
+]))
+
+t0 = time.perf_counter()
+res2 = casadi_f0_numpy(q, qdot, radius_body, radius_obst_0, weight_goal_0, x_goal_0, x_obst_0)
+t1 = time.perf_counter()
+print(res2)
+print(f'Computed {N} actions in {(t1-t0)} which means {1000* (t1-t0)/N} ms for action')
+
+
+
