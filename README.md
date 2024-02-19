@@ -33,6 +33,7 @@ Motion Policies and offers increased stability and accessibility.
   </tr>
   <tr>
     <td> <img src="./assets/panda_picking.gif"  alt="1" width = 360px ></td>
+    <td> <img src="./assets/panda_mujoco.gif"  alt="1" width = 360px ></td>
   </tr>
 </table>
 

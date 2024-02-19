@@ -1,19 +1,27 @@
+from copy import deepcopy
 import os
+import shutil
 from PIL import Image
 import gymnasium as gym
 import numpy as np
+import matplotlib.pyplot as plt
 
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 
-from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from urdfenvs.robots.generic_urdf import GenericUrdfReacher
-from urdfenvs.sensors.full_sensor import FullSensor
 
-from urdfenvs.urdf_common.generic_mujoco_env import GenericMujocoEnv
+from urdfenvs.generic_mujoco.generic_mujoco_env import GenericMujocoEnv
+from urdfenvs.generic_mujoco.generic_mujoco_robot import GenericMujocoRobot
+
+
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+ROBOTTYPE = 'panda'
+ROBOTMODEL = 'panda_without_gripper'
+
 
 def initalize_environment(render=True):
     """
@@ -31,24 +39,24 @@ def initalize_environment(render=True):
         dt=0.01, robots=robots, render=render
     )
     """
-    env =  GenericMujocoEnv(xml_file='panda_scene.xml', render_mode="rgb_array")
 
-    full_sensor = FullSensor(
-            goal_mask=["position", "weight"],
-            obstacle_mask=['position', 'size'],
-            variance=0.0
-    )
+    robot_model = LocalRobotModel(ROBOTTYPE, ROBOTMODEL)
+
+
+    xml_file = robot_model.get_xml_path()
+    robots  = [
+        GenericMujocoRobot(xml_file=xml_file, mode="vel"),
+    ]
+    home_config = np.array([-1.0,0,0,-1.57079,0,1.57079,-0.7853, 0.04, 0.04])
+
+
+
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
+        "geometry": {"position": [0.5, 0.2, 0.2], "radius": 0.2},
     }
-    obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
-    static_obst_dict = {
-        "type": "sphere",
-        "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
-    }
-    obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
+    obst1 = SphereObstacle(name="obstacle_1", content_dict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
@@ -57,26 +65,25 @@ def initalize_environment(render=True):
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_hand",
-            "desired_position": [0.1, -0.6, 0.4],
+            "desired_position": [0.5, 0.6, 0.3],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
         "subgoal1": {
-            "weight": 5.0,
+            "weight": 2.0,
             "is_primary_goal": False,
             "indices": [0, 1, 2],
             "parent_link": "panda_link7",
             "child_link": "panda_hand",
-            "desired_position": [0.1, 0.0, 0.0],
+            "desired_position": [0.0, 0.0, -0.1],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    obstacles = (obst1, obst2)
-    env.reset()
-    pos0=np.array([0,0,0,-1.57079,0,1.57079,-0.7853,0.04,0.04])
-    env.reset_model(pos=pos0)
+    obstacles = [obst1]
+    env = GenericMujocoEnv(robots, obstacles, goal.sub_goals()[0:1], render=render)
+    env.reset(pos=home_config)
 
     """
     env.add_sensor(full_sensor, [0])
@@ -86,10 +93,10 @@ def initalize_environment(render=True):
         env.add_goal(sub_goal)
     env.set_spaces()
     """
-    return (env, goal)
+    return (env, goal, obstacles)
 
 
-def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
+def set_planner(goal: GoalComposition, dt: float):
     """
     Initializes the fabric planner for the panda robot.
 
@@ -125,6 +132,13 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     #     attractor_potential=attractor_potential,
     #     damper=damper,
     # )
+    collision_geometry: str = "-4.5 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    geometry_plane_constraint: str = (
+        "-10.0 / (x ** 1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2"
+    )
+    finsler_plane_constraint: str = (
+        "1.0/(x**1) * xdot**2"
+    )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/panda_for_fk.urdf", "r", encoding="utf-8") as file:
         urdf = file.read()
@@ -134,12 +148,12 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         end_link="panda_link9",
     )
     planner = ParameterizedFabricPlanner(
-        degrees_of_freedom,
+        7,
         forward_kinematics,
+        collision_geometry=collision_geometry,
+        geometry_plane_constraint=geometry_plane_constraint,
     )
-    collision_links = ['panda_link7', 'panda_link3', 'panda_link4']
-    collision_linsk = []
-    self_collision_pairs = {"panda_link7": ['panda_link3', 'panda_link4', 'panda_link2', 'panda_link1']}
+    collision_links = ['panda_link9']
     self_collision_pairs = {}
     panda_limits = [
             [-2.8973, 2.8973],
@@ -155,42 +169,71 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         collision_links=collision_links,
         self_collision_pairs=self_collision_pairs,
         goal=goal,
-        number_obstacles=0,
-        number_plane_constraints=0,
+        number_obstacles=1,
+        number_plane_constraints=1,
         limits=panda_limits,
     )
-    planner.concretize(mode="vel", time_step=0.01)
+    planner.concretize(mode="vel", time_step=dt)
     return planner
+
+def forward_simulate(
+        planner: ParameterizedFabricPlanner,
+        q0: np.ndarray,
+        arguments: dict,
+        n_steps: int,
+        dt: float,
+        ) -> np.ndarray:
+    trajectory = np.zeros((n_steps, q0.size))
+    dq = np.zeros_like(q0)
+    q = deepcopy(q0)
+    alpha = 0.43
+    alpha = 0
+    for i in range(n_steps):
+        trajectory[i] = deepcopy(q)
+        dq_new = planner.compute_action(q=q, qdot=dq, **arguments)
+        dq = alpha * dq +  (1-alpha) * dq_new
+        q = q + dq * dt
+
+    return trajectory
+
+
 
 
 def run_panda_example(n_steps=5000, render=True):
-    (env, goal) = initalize_environment(render)
-    planner = set_planner(goal)
+    (env, goal, obstacles) = initalize_environment(render)
+    planner = set_planner(goal, env.dt)
     # planner.export_as_c("planner.c")
-    action = np.zeros(8)
+    action = np.zeros(7)
     ob, *_ = env.step(action)
     """
     body_links={1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 7: 0.1}
     for body_link, radius in body_links.items():
         env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
     """
+    arguments = dict(
+        x_goal_0=goal.sub_goals()[0].position(),
+        weight_goal_0=goal.sub_goals()[0].weight(),
+        x_goal_1=goal.sub_goals()[1].position(),
+        weight_goal_1=goal.sub_goals()[1].weight(),
+        radius_body_panda_link9=0.20,
+        radius_obst_0=obstacles[0].size()[0],
+        x_obst_0=obstacles[0].position(),
+        constraint_0=np.array([0.0, 0.0, 1.0, -0.1]),
+        #constraint_1=np.array([0.0, 1.0, 0.0, 0.0]),
+    )
+
+    q0 = ob['robot_0']['joint_state']['position'][0:7]
+    trajectory_forward = forward_simulate(planner, q0, arguments, n_steps, env.dt)
+    trajectory_actual = np.zeros_like(trajectory_forward)
 
 
+    input("Wait....")
     for i in range(n_steps):
-        q = ob[:7]
-        qdot = ob[8:-1]
-        arguments = dict(
-            q=q,
-            qdot=qdot,
-            x_goal_0=np.array([0.0, 0.3, 0.7]),
-            weight_goal_0=2,
-            x_goal_1=np.array([0.1, 0.0, 0.0]),
-            weight_goal_1=5,
-        )
-        action[0:7] = planner.compute_action(**arguments)
+        q = ob['robot_0']['joint_state']['position'][0:7]
+        trajectory_actual[i] = q
+        qdot = ob['robot_0']['joint_state']['velocity'][0:7]
+        action = planner.compute_action(q=q, qdot=qdot, **arguments)
         ob, reward, terminated, truncated, info = env.step(action)
-        rgb_array = env.render()
-        Image.fromarray(rgb_array).save("images/rgb_array_large_{:04d}.png".format(i))
 
         """
         if terminated or truncated:
@@ -198,8 +241,12 @@ def run_panda_example(n_steps=5000, render=True):
             break
         """
     env.close()
+    plt.plot(trajectory_forward[:, :], color='red', label='forward')
+    plt.plot(trajectory_actual[:, :], color='green', label='actual')
+    plt.legend()
+    #plt.show()
     return {}
 
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    res = run_panda_example(n_steps=500, render=True)
