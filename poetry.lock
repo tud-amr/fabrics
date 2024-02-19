@@ -358,35 +358,6 @@ files = [
     {file = "casadi-3.6.4-cp312-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:dd27871ff74b1a75df7e70f25b44678ae63700fc953ccca8e09b2f1688e3eb06"},
     {file = "casadi-3.6.4-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:a75c307dd0e898d724f5475146595f533c8b0f0f8cd613e0f3f7c1cad32e6cfb"},
     {file = "casadi-3.6.4-cp312-none-manylinux2014_i686.whl", hash = "sha256:c426bc132ece7d3293481cb0435467bb2499a3bda3a7bd6e1e563da02c1c01db"},
-    {file = "casadi-3.6.4-cp312-none-manylinux2014_x86_64.whl", hash = "sha256:6b0778d899cc1532956bb8ed34202dcd6d12cab47f44e7a3e1a143e8eb89fe1d"},
-    {file = "casadi-3.6.4-cp312-none-win_amd64.whl", hash = "sha256:d755abb57cfb0b593ffc64d9328b4ec30ba104883f47512838a77afc379e70f6"},
-    {file = "casadi-3.6.4-cp35-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:028f115b9084b57e99afd90b2c2e257d52f7931a1dc1241180f78c12f9bdcc95"},
-    {file = "casadi-3.6.4-cp35-none-manylinux1_i686.whl", hash = "sha256:9ca0369d04a6f84e16f65142dc7f4bb6646c32a7e7675c212efaa00d183d9a73"},
-    {file = "casadi-3.6.4-cp35-none-manylinux2010_x86_64.whl", hash = "sha256:7e6cdf6a8b2204cfae9f15a2d32056ad1cc8bf6daae53335e583218819292ea5"},
-    {file = "casadi-3.6.4-cp35-none-win_amd64.whl", hash = "sha256:cc2602ceadb33c340ba5df8a12379db93af50152f8377ff9143ae538b652f36b"},
-    {file = "casadi-3.6.4-cp36-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:b426b7def4f26c2270d54bfd754ea8264fe89e10c2eac2ff9e50b8d557d76290"},
-    {file = "casadi-3.6.4-cp36-none-manylinux2014_aarch64.whl", hash = "sha256:f4c7267614c95cb4066be9cd87799febd68ee16fe2ac041c340827167f1fc70c"},
-    {file = "casadi-3.6.4-cp36-none-manylinux2014_i686.whl", hash = "sha256:fcd2c1c4c7ba8f71a529f892b2ea7b83556191ec6222b3cce7930985d9fef97d"},
-    {file = "casadi-3.6.4-cp36-none-manylinux2014_x86_64.whl", hash = "sha256:269fcf2bbe14277014e6310288b6f86b738154fb38d0daf8f4a7712ac4732a1c"},
-    {file = "casadi-3.6.4-cp36-none-win_amd64.whl", hash = "sha256:c3d831efc5eac356a09197656ea63f4d9b880473cc0e47460cf440bfe8d9e07a"},
-    {file = "casadi-3.6.4-cp37-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:233527f6a28ba90e40fb11397fef71c4411bcf30b5063f8cca09cf189ae0e9b2"},
-    {file = "casadi-3.6.4-cp37-none-manylinux2014_aarch64.whl", hash = "sha256:61291a4ecf0f1cb01d566a5bd33f6c75664f476e55afde47b030722cb51e118e"},
-    {file = "casadi-3.6.4-cp37-none-manylinux2014_i686.whl", hash = "sha256:a5896300aaf9114efaf3f6787c7baac2d63ef095478165015f8b9f0afcefdbd8"},
-    {file = "casadi-3.6.4-cp37-none-manylinux2014_x86_64.whl", hash = "sha256:d9cd8a924a5703163db4b6cee782a63964d8f6782aec30e545c9ea6525e35cd3"},
-    {file = "casadi-3.6.4-cp37-none-win_amd64.whl", hash = "sha256:71d004709d368520579225da9b1fa0f15a05a5aea35492d0dc0b344466b4bd16"},
-    {file = "casadi-3.6.4-cp38-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:5d491ca9300541d03da13ae67185c08c1288dea3c154a4d05151b90f98d644d4"},
-    {file = "casadi-3.6.4-cp38-none-macosx_11_0_arm64.whl", hash = "sha256:222da27e4f07b8e2e907dce01a9c0c98240ced34a456ec8f1bb5c3a13f51810a"},
-    {file = "casadi-3.6.4-cp38-none-manylinux2014_aarch64.whl", hash = "sha256:e8a5abd1d2a04d5c11881920b430ac6780ecee99849b82f5d738f0acd37e0a1e"},
-    {file = "casadi-3.6.4-cp38-none-manylinux2014_i686.whl", hash = "sha256:af6d4bd3552b7eb1964b5657ec49e87837ac21c24389c41520f68b87a50c3a46"},
-    {file = "casadi-3.6.4-cp38-none-manylinux2014_x86_64.whl", hash = "sha256:443d0547b1b7246dee52ed0d4e2cd0de8972c89cd88cd2d9318dbdd1ecfb8b5d"},
-    {file = "casadi-3.6.4-cp38-none-win_amd64.whl", hash = "sha256:eb6c83fdc3d250d6ac7e6fd94d98ee6857e6f9c9d173ceffd65d1abe8b5e282e"},
-    {file = "casadi-3.6.4-cp39-none-macosx_10_13_x86_64.macosx_10_13_intel.whl", hash = "sha256:882ae4da70e93ae6045a25e25e6298655921f3429276f6094f71ac3aaa2b43da"},
-    {file = "casadi-3.6.4-cp39-none-macosx_11_0_arm64.whl", hash = "sha256:8f0bbedffb9df8face9ebf46557caf3a2a730fe98474877737a7361d2a77c891"},
-    {file = "casadi-3.6.4-cp39-none-manylinux2014_aarch64.whl", hash = "sha256:aaaab3a04cb35bda34cf86b879301ef13b229a34ea3b85c87f36420203b8cdbb"},
-    {file = "casadi-3.6.4-cp39-none-manylinux2014_i686.whl", hash = "sha256:d134bab93c058c576d3ddb7154b19f07478eac98b89b2a1ce2e8d285152f41c7"},
-    {file = "casadi-3.6.4-cp39-none-manylinux2014_x86_64.whl", hash = "sha256:e4f59b3cbf4bf2070b71df109d20cb158ddc0a57c5014c8d0bd405e3a12c08ff"},
-    {file = "casadi-3.6.4-cp39-none-win_amd64.whl", hash = "sha256:0c195a7a19098aafb18a0356c20ac165cb64f3d65f6041e443deb024964f8107"},
-    {file = "casadi-3.6.4.tar.gz", hash = "sha256:affdca1a99c14580992cdf34d247754b7d851080b712c2922ad2e92442eeaa35"},
 ]
 
 [package.dependencies]
@@ -1282,6 +1253,38 @@ files = [
     {file = "idna-3.6-py3-none-any.whl", hash = "sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f"},
     {file = "idna-3.6.tar.gz", hash = "sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca"},
 ]
+
+[[package]]
+name = "imageio"
+version = "2.34.0"
+description = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "imageio-2.34.0-py3-none-any.whl", hash = "sha256:08082bf47ccb54843d9c73fe9fc8f3a88c72452ab676b58aca74f36167e8ccba"},
+    {file = "imageio-2.34.0.tar.gz", hash = "sha256:ae9732e10acf807a22c389aef193f42215718e16bd06eed0c5bb57e1034a4d53"},
+]
+
+[package.dependencies]
+numpy = "*"
+pillow = ">=8.3.2"
+
+[package.extras]
+all-plugins = ["astropy", "av", "imageio-ffmpeg", "pillow-heif", "psutil", "tifffile"]
+all-plugins-pypy = ["av", "imageio-ffmpeg", "pillow-heif", "psutil", "tifffile"]
+build = ["wheel"]
+dev = ["black", "flake8", "fsspec[github]", "pytest", "pytest-cov"]
+docs = ["numpydoc", "pydata-sphinx-theme", "sphinx (<6)"]
+ffmpeg = ["imageio-ffmpeg", "psutil"]
+fits = ["astropy"]
+full = ["astropy", "av", "black", "flake8", "fsspec[github]", "gdal", "imageio-ffmpeg", "itk", "numpydoc", "pillow-heif", "psutil", "pydata-sphinx-theme", "pytest", "pytest-cov", "sphinx (<6)", "tifffile", "wheel"]
+gdal = ["gdal"]
+itk = ["itk"]
+linting = ["black", "flake8"]
+pillow-heif = ["pillow-heif"]
+pyav = ["av"]
+test = ["fsspec[github]", "pytest", "pytest-cov"]
+tifffile = ["tifffile"]
 
 [[package]]
 name = "importlib-metadata"
@@ -3717,6 +3720,7 @@ optional = false
 python-versions = ">=3.8,<4.0"
 files = [
     {file = "robotmodels-0.1.2-py3-none-any.whl", hash = "sha256:ee05a1c764f96cc20322a5d70b79cc7fce64503ad4c1dfbd2b42653f8217d2fa"},
+    {file = "robotmodels-0.1.2.tar.gz", hash = "sha256:ad621e0c7f3917e1804cc10a38da7e9244088afb1a6c9db17702f8023beb6a2e"},
 ]
 
 [package.dependencies]
@@ -4851,4 +4855,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.10"
-content-hash = "7798711bc7e2ea3dad58f9a7f13d9e89619edb0f64ad6109dc19571e2755afe7"
+content-hash = "f4571add7acb65a05b7c9230000bc2fe162780514d3db30a264357da401648b7"

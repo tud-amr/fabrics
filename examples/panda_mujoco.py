@@ -1,10 +1,8 @@
 from copy import deepcopy
 import os
 import shutil
-from PIL import Image
 import gymnasium as gym
 import numpy as np
-import matplotlib.pyplot as plt
 
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
@@ -39,6 +37,12 @@ def initalize_environment(render=True):
         dt=0.01, robots=robots, render=render
     )
     """
+
+    if os.path.exists(ROBOTTYPE):
+        shutil.rmtree(ROBOTTYPE)
+    robot_model = RobotModel(ROBOTTYPE, ROBOTMODEL)
+    robot_model.copy_model(os.path.join(os.path.dirname(os.path.abspath(__file__)), ROBOTTYPE))
+    del robot_model
 
     robot_model = LocalRobotModel(ROBOTTYPE, ROBOTMODEL)
 
@@ -227,7 +231,6 @@ def run_panda_example(n_steps=5000, render=True):
     trajectory_actual = np.zeros_like(trajectory_forward)
 
 
-    input("Wait....")
     for i in range(n_steps):
         q = ob['robot_0']['joint_state']['position'][0:7]
         trajectory_actual[i] = q
@@ -241,10 +244,6 @@ def run_panda_example(n_steps=5000, render=True):
             break
         """
     env.close()
-    plt.plot(trajectory_forward[:, :], color='red', label='forward')
-    plt.plot(trajectory_actual[:, :], color='green', label='actual')
-    plt.legend()
-    #plt.show()
     return {}
 
 
