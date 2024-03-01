@@ -45,7 +45,7 @@ optional = true
 
 [tool.poetry.group.agents.dependencies]
 planarenvs = "^1.4"
-urdfenvs = {extras = ["mujoco"], version = "^0.9.8"}
+urdfenvs = {url = "https://files.pythonhosted.org/packages/d9/02/823ee4c712473744963990036ff05a8fc76277c79e16a3d137fb1bd68b39/urdfenvs-0.9.9-py3-none-any.whl"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
