@@ -4111,6 +4111,7 @@ optional = false
 python-versions = ">=3.8,<4.0"
 files = [
     {file = "urdfenvs-0.9.9-py3-none-any.whl", hash = "sha256:71ab02f8de91ba23b3defc93cd3291e352a9b046212c5c940d513e8899dd0929"},
+    {file = "urdfenvs-0.9.9.tar.gz", hash = "sha256:fb18d248fd4285900b5bfca124c0c088c9ff8f61a1ec5eab86cfcb70c3ba47ac"},
 ]
 
 [package.dependencies]
@@ -4124,10 +4125,6 @@ pybullet = ">=3.2.1,<4.0.0"
 robotmodels = ">=0.1.2,<0.2.0"
 scipy = ">=1.9.0,<2.0.0"
 yourdfpy = ">=0.0.56,<0.0.57"
-
-[package.source]
-type = "url"
-url = "https://files.pythonhosted.org/packages/d9/02/823ee4c712473744963990036ff05a8fc76277c79e16a3d137fb1bd68b39/urdfenvs-0.9.9-py3-none-any.whl"
 
 [[package]]
 name = "uri-template"
@@ -4711,4 +4708,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.10"
-content-hash = "f3849526c219872ac5ec0caa9a2d23bdda5c8fe07cafdff68a24185997953e86"
+content-hash = "6376e00a408dbea54cc4d8c84b5eedafe7a02311ce269b6a1e16a1ec664e741e"
