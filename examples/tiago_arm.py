@@ -32,7 +32,7 @@ def initalize_environment(render=True):
     """
     robots = [
         GenericDiffDriveRobot(
-            urdf="tiago_dual.urdf",
+            urdf="tiago.urdf",
             mode="acc",
             actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
             castor_wheels=[
@@ -53,7 +53,7 @@ def initalize_environment(render=True):
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
-    )
+    ).unwrapped
     full_sensor = FullSensor(
             goal_mask=["position", "weight"],
             obstacle_mask=['position', 'size'],
