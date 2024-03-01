@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.8.10"
+version = "0.9.0"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 readme = "README.md"
@@ -44,9 +44,8 @@ jupyterlab = "^3.6.1"
 optional = true
 
 [tool.poetry.group.agents.dependencies]
-#urdfenvs = "^0.8"
 planarenvs = "^1.4"
-urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop"}
+urdfenvs = {extras = ["mujoco"], version = "^0.9.8"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
