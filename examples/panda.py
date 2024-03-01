@@ -1,17 +1,24 @@
 import os
+import shutil
 import gymnasium as gym
 import numpy as np
 
+from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
+
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
-from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
+
+from urdfenvs.generic_mujoco.generic_mujoco_robot import GenericMujocoRobot
+from urdfenvs.generic_mujoco.generic_mujoco_env import GenericMujocoEnv
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+
+ROBOTTYPE = 'panda'
+ROBOTMODEL = 'panda_without_gripper'
 
 def initalize_environment(render=True):
     """
@@ -20,29 +27,33 @@ def initalize_environment(render=True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    robots = [
-        GenericUrdfReacher(urdf="panda.urdf", mode="acc"),
-    ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
-        dt=0.01, robots=robots, render=render
-    )
     full_sensor = FullSensor(
             goal_mask=["position", "weight"],
             obstacle_mask=['position', 'size'],
-            variance=0.0
+            variance=0.0,
+            physics_engine_name='mujoco',
     )
+    
+    if not os.path.exists(f'{ROBOTTYPE}_local'):
+        robot_model_original = RobotModel(ROBOTTYPE, ROBOTMODEL)
+        robot_model_original.copy_model(os.path.join(os.getcwd(), f'{ROBOTTYPE}_local'))
+    robot_model = LocalRobotModel(f'{ROBOTTYPE}_local', ROBOTMODEL)
+
+    xml_file = robot_model.get_xml_path()
+    robots  = [
+        GenericMujocoRobot(xml_file=xml_file, mode="vel"),
+    ]
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
         "geometry": {"position": [0.5, -0.3, 0.3], "radius": 0.1},
     }
-    obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
+    obst1 = SphereObstacle(name="obstacle_0", content_dict=static_obst_dict)
     static_obst_dict = {
         "type": "sphere",
         "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
     }
-    obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
+    obst2 = SphereObstacle(name="obstacle_1", content_dict=static_obst_dict)
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
@@ -67,14 +78,16 @@ def initalize_environment(render=True):
         }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    obstacles = (obst1, obst2)
+    obstacles = [obst1, obst2]
+    env = GenericMujocoEnv(
+        robots=robots,
+        obstacles=obstacles,
+        goals=goal.sub_goals(),
+        sensors=[full_sensor],
+        render=render,
+        enforce_real_time=True,
+    )
     env.reset()
-    env.add_sensor(full_sensor, [0])
-    for obst in obstacles:
-        env.add_obstacle(obst)
-    for sub_goal in goal.sub_goals():
-        env.add_goal(sub_goal)
-    env.set_spaces()
     return (env, goal)
 
 
@@ -146,7 +159,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         number_plane_constraints=1,
         limits=panda_limits,
     )
-    planner.concretize()
+    planner.concretize(mode='vel', time_step=0.05)
     return planner
 
 
@@ -157,32 +170,32 @@ def run_panda_example(n_steps=5000, render=True):
     action = np.zeros(7)
     ob, *_ = env.step(action)
     body_links={1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 7: 0.1}
+    """
     for body_link, radius in body_links.items():
         env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
+    """
 
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
         action = planner.compute_action(
-            q=ob_robot["joint_state"]["position"],
-            qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][4]['position'],
-            weight_goal_0=ob_robot['FullSensor']['goals'][4]['weight'],
-            x_goal_1=ob_robot['FullSensor']['goals'][5]['position'],
-            weight_goal_1=ob_robot['FullSensor']['goals'][5]['weight'],
-            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
+            q=ob_robot["joint_state"]["position"][0:7],
+            qdot=ob_robot["joint_state"]["velocity"][0:7],
+            x_goal_0=ob_robot['FullSensor']['goals'][0]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][0]['weight'],
+            x_goal_1=ob_robot['FullSensor']['goals'][1]['position'],
+            weight_goal_1=ob_robot['FullSensor']['goals'][1]['weight'],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][0]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][0]['size'],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][1]['position'],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][1]['size'],
             radius_body_links=body_links,
             constraint_0=np.array([0, 0, 1, 0.0]),
         )
         ob, reward, terminated, truncated, info = env.step(action)
-        """
         if terminated or truncated:
             print(info)
             break
-        """
     env.close()
     return {}
 
