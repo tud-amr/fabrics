@@ -24,7 +24,7 @@ for the first obstacle, fabrics ends up in a local minima and is unable to recov
 This would be a good case to improve with imitation learning.
 """
 
-def initalize_environment(render=True):
+def initalize_environment(render=True, nr_obst: int = 0):
     """
     Initializes the simulation environment.
 
@@ -72,20 +72,34 @@ def initalize_environment(render=True):
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
-        "subgoal1": { #todo: try!!! comment this subgoal out, gives different behavior, even with weight=0
-            "weight": 0.,
+        "subgoal1": {
+            "weight": 10.,
             "is_primary_goal": False,
             "indices": [0, 1, 2],
-            "parent_link": "iiwa_link_0",
-            "child_link": "iiwa_link_ee",
-            "desired_position": [-0.24355761, -0.75252747, 0.5],  # [0.1, -0.6, 0.4],
-            "angle": sub_goal_0_quaternion,
+            "parent_link": "iiwa_link_7",
+            "child_link": "iiwa_link_ee_x",
+            "desired_position": [0.045, 0., 0.],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
+        "subgoal2": {
+            "weight": 10.,
+            "is_primary_goal": False,
+            "indices": [0, 1, 2],
+            "parent_link": "iiwa_link_7",
+            "child_link": "iiwa_link_ee",
+            "desired_position": [0.0, 0.0, 0.045],
+            "epsilon": 0.05,
+            "type": "staticSubGoal",
+        },
+
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    obstacles = (obst1, obst2)
+    obstacles = []
+    if nr_obst == 1:
+        obstacles = [obst1]
+    elif nr_obst == 2:
+         obstacles = [obst1, obst2]
     pos0 = np.array([0.0, 0.8, -1.5, 2.0, 0.0, 0.0, 0.0])
     env.reset(pos=pos0)
     env.add_sensor(full_sensor, [0])
@@ -97,7 +111,7 @@ def initalize_environment(render=True):
     return (env, goal)
 
 
-def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
+def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int = 7):
     """
     Initializes the fabric planner for the panda robot.
 
@@ -140,17 +154,18 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        number_obstacles=2,
+        number_obstacles=nr_obst,
         number_plane_constraints=1,
         limits=iiwa_limits,
     )
-    planner.concretize() #extensive_concretize=True, bool_speed_control=True)
+    planner.concretize()
     return planner
 
 
 def run_panda_example(n_steps=5000, render=True):
-    (env, goal) = initalize_environment(render)
-    planner = set_planner(goal)
+    nr_obst = 2
+    (env, goal) = initalize_environment(render, nr_obst=nr_obst)
+    planner = set_planner(goal, nr_obst)
     # planner.export_as_c("planner.c")
     action = np.zeros(7)
     ob, *_ = env.step(action)
@@ -158,24 +173,35 @@ def run_panda_example(n_steps=5000, render=True):
     # collision_links_nrs = [3, 4, 5, 6, 7]
     for collision_link_nr in collision_radii.keys():
         env.add_collision_link(0, collision_link_nr, shape_type='sphere', size=[0.10])
+
     rot_matrix = np.array([[-0.339, -0.784306, -0.51956],
-                      [-0.0851341, 0.57557, -0.813309],
-                      [0.936926, -0.23148, -0.261889]])
+                           [-0.0851341, 0.57557, -0.813309],
+                           [0.936926, -0.23148, -0.261889]])
+    # if you want to check if the axis are nicely aligned:
+    # rot_matrix = np.eye(3)
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
+
+        # rotate the positions that determine the orientations of the end-effector to get the desired orientation:
+        x_goal_1_x = ob_robot['FullSensor']['goals'][nr_obst+3]['position']
+        x_goal_2_z = ob_robot['FullSensor']['goals'][nr_obst+4]['position']
+        p_orient_rot_x = rot_matrix @ x_goal_1_x
+        p_orient_rot_z = rot_matrix @ x_goal_2_z
+
         arguments_dict = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][4]['position'],
-            weight_goal_0=ob_robot['FullSensor']['goals'][4]['weight'],
-            x_goal_1=ob_robot['FullSensor']['goals'][4]['position'],
-            weight_goal_1=ob_robot['FullSensor']['goals'][4]['weight'],
-            angle_goal_1=rot_matrix,
-            x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][3]['position'],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][3]['size'],
+            x_goal_0=ob_robot['FullSensor']['goals'][nr_obst+2]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][nr_obst+2]['weight'],
+            x_goal_1=p_orient_rot_x,
+            weight_goal_1=ob_robot['FullSensor']['goals'][nr_obst+3]['weight'],
+            x_goal_2=p_orient_rot_z,
+            weight_goal_2=ob_robot['FullSensor']['goals'][nr_obst+4]['weight'],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][nr_obst]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][nr_obst]['size'],
+            x_obst_1=ob_robot['FullSensor']['obstacles'][nr_obst+1]['position'],
+            radius_obst_1=ob_robot['FullSensor']['obstacles'][nr_obst+1]['size'],
             radius_body_links=collision_radii,
             constraint_0=np.array([0, 0, 1, 0.0]))
 
