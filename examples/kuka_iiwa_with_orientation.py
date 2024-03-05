@@ -1,7 +1,7 @@
 import os
 import gymnasium as gym
 import numpy as np
-
+import casadi as ca
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 from scipy.spatial.transform import Rotation as R
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
@@ -177,11 +177,18 @@ def run_panda_example(n_steps=5000, render=True):
     rot_matrix = np.array([[-0.339, -0.784306, -0.51956],
                            [-0.0851341, 0.57557, -0.813309],
                            [0.936926, -0.23148, -0.261889]])
-    # if you want to check if the axis are nicely aligned:
-    # rot_matrix = np.eye(3)
 
-    for _ in range(n_steps):
+    # --- if you want to check if the orientation is correctly implemented: ---#
+    # rot_matrix = np.eye(3)
+    fk_full = planner._forward_kinematics.fk(q=planner._variables.position_variable(),
+                                             parent_link="iiwa_link_0",
+                                             child_link="iiwa_link_ee",
+                                             positionOnly=False)
+    fk_function = ca.Function("fk", [planner.variables._state_variables["q"]], [fk_full], ["q"], ["pose_ee"])
+
+    for w in range(n_steps):
         ob_robot = ob['robot_0']
+        q = ob_robot["joint_state"]["position"]
 
         # rotate the positions that determine the orientations of the end-effector to get the desired orientation:
         x_goal_1_x = ob_robot['FullSensor']['goals'][nr_obst+3]['position']
@@ -190,7 +197,7 @@ def run_panda_example(n_steps=5000, render=True):
         p_orient_rot_z = rot_matrix @ x_goal_2_z
 
         arguments_dict = dict(
-            q=ob_robot["joint_state"]["position"],
+            q=q,
             qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][nr_obst+2]['position'],
             weight_goal_0=ob_robot['FullSensor']['goals'][nr_obst+2]['weight'],
@@ -207,6 +214,11 @@ def run_panda_example(n_steps=5000, render=True):
 
         action = planner.compute_action(**arguments_dict)
         ob, *_ = env.step(action)
+
+        # check if the orientation is correctly reached:
+        pose_ee = fk_function(q)
+        if w%100 == 0:
+            print("rotation matrix:", pose_ee[0:3, 0:3])
     env.close()
     return {}
 
