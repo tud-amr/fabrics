@@ -1,9 +1,7 @@
 import os
 import gymnasium as gym
 import numpy as np
-import casadi as ca
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
-from scipy.spatial.transform import Rotation as R
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
@@ -20,8 +18,8 @@ If
         "type": "sphere",
         "geometry": {"position": [0.3, -0.3, 0.5], "radius": 0.1},
     }
-for the first obstacle, fabrics ends up in a local minima and is unable to recover from it. 
-This would be a good case to improve with imitation learning.
+for the first obstacle, fabrics ends up in a local minima and is unable to
+recover from it. This would be a good case to improve with imitation learning.
 """
 
 def initalize_environment(render=True, nr_obst: int = 0):
@@ -46,7 +44,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [0.3, -0.3, 0.3], "radius": 0.1}, #todo: IMPORTANT when z=0.5: fabrics becomes unstable/local minima
+        "geometry": {"position": [0.3, -0.3, 0.3], "radius": 0.1},
     }
     obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
@@ -54,13 +52,6 @@ def initalize_environment(render=True, nr_obst: int = 0):
         "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
     }
     obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
-    # Definition of the goal.
-    rot_matrix = np.array([[-0.339, -0.784306, -0.51956],
-                      [-0.0851341, 0.57557, -0.813309],
-                      [0.936926, -0.23148, -0.261889]])
-    r = R.from_matrix(rot_matrix)
-    quat_list = list(r.as_quat())
-    sub_goal_0_quaternion = [float(quat_i) for quat_i in quat_list]
     goal_dict = {
         "subgoal0": {
             "weight": 1.0,
@@ -68,7 +59,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
             "indices": [0, 1, 2],
             "parent_link": "iiwa_link_0",
             "child_link": "iiwa_link_ee",
-            "desired_position": [-0.24355761, -0.75252747, 0.5], #[0.1, -0.6, 0.4],
+            "desired_position": [-0.24355761, -0.75252747, 0.5],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -95,11 +86,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
 
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    obstacles = []
-    if nr_obst == 1:
-        obstacles = [obst1]
-    elif nr_obst == 2:
-         obstacles = [obst1, obst2]
+    obstacles = [obst1, obst2][0:nr_obst]
     pos0 = np.array([0.0, 0.8, -1.5, 2.0, 0.0, 0.0, 0.0])
     env.reset(pos=pos0)
     env.add_sensor(full_sensor, [0])
@@ -113,7 +100,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
 
 def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int = 7):
     """
-    Initializes the fabric planner for the panda robot.
+    Initializes the fabric planner for the kuka robot.
 
     This function defines the forward kinematics for collision avoidance,
     and goal reaching. These components are fed into the fabrics planner.
@@ -140,7 +127,13 @@ def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int
         degrees_of_freedom,
         forward_kinematics,
     )
-    collision_links = ["iiwa_link_3", "iiwa_link_4", "iiwa_link_5", "iiwa_link_6", "iiwa_link_7"]
+    collision_links = [
+        "iiwa_link_3",
+        "iiwa_link_4",
+        "iiwa_link_5",
+        "iiwa_link_6",
+        "iiwa_link_7"
+    ]
     iiwa_limits = [
         [-2.96705973, 2.96705973],
         [-2.0943951, 2.0943951],
@@ -162,29 +155,19 @@ def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int
     return planner
 
 
-def run_panda_example(n_steps=5000, render=True):
+def run_kuka_example(n_steps=5000, render=True):
     nr_obst = 2
     (env, goal) = initalize_environment(render, nr_obst=nr_obst)
     planner = set_planner(goal, nr_obst)
-    # planner.export_as_c("planner.c")
     action = np.zeros(7)
     ob, *_ = env.step(action)
     collision_radii = {3: 0.1, 4: 0.1, 5: 0.1, 6: 0.1, 7: 0.1}
-    # collision_links_nrs = [3, 4, 5, 6, 7]
     for collision_link_nr in collision_radii.keys():
         env.add_collision_link(0, collision_link_nr, shape_type='sphere', size=[0.10])
 
     rot_matrix = np.array([[-0.339, -0.784306, -0.51956],
                            [-0.0851341, 0.57557, -0.813309],
                            [0.936926, -0.23148, -0.261889]])
-
-    # --- if you want to check if the orientation is correctly implemented: ---#
-    # rot_matrix = np.eye(3)
-    fk_full = planner._forward_kinematics.fk(q=planner._variables.position_variable(),
-                                             parent_link="iiwa_link_0",
-                                             child_link="iiwa_link_ee",
-                                             positionOnly=False)
-    fk_function = ca.Function("fk", [planner.variables._state_variables["q"]], [fk_full], ["q"], ["pose_ee"])
 
     for w in range(n_steps):
         ob_robot = ob['robot_0']
@@ -216,12 +199,17 @@ def run_panda_example(n_steps=5000, render=True):
         ob, *_ = env.step(action)
 
         # check if the orientation is correctly reached:
-        pose_ee = fk_function(q)
         if w%100 == 0:
-            print("rotation matrix:", pose_ee[0:3, 0:3])
+            pose_ee = planner._forward_kinematics.numpy(
+                q,
+                parent_link= 'iiwa_link_0',
+                child_link= 'iiwa_link_ee',
+            )
+            rotation_distance = np.linalg.norm(pose_ee[0:3, 0:3] - rot_matrix)
+            print("Distance in naive matrix norm:", rotation_distance)
     env.close()
     return {}
 
 
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    res = run_kuka_example(n_steps=5000)
