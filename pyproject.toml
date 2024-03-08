@@ -23,7 +23,7 @@ vector = "^1.1.1"
 pytest = "6.2.5"
 deprecation = "^2.1.0"
 forwardkinematics = ">=1.1.4,<1.2"
-robotmodels = { git = "https://github.com/maxspahn/robotmodels.git", branch = "ft_visualize_urdf_name" }
+robotmodels = { git = "https://github.com/maxspahn/robotmodels.git"}
 
 [tool.poetry.group.dev]
 optional = true
