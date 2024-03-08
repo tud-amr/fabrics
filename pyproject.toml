@@ -10,8 +10,7 @@ keywords = ["robotics", "motion-planning", "geometry"]
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.10"
-casadi = ">=3.5.5, <3.6.4"
-evdev = "<1.7.0"
+casadi = ">=3.5.5"
 numpy = "^1.15.3"
 geomdl = "^5.3.1"
 pyquaternion = "^0.9.9"
