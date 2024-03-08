@@ -1,0 +1,246 @@
+<robot name="KR7108-URDF" version="1.0">
+  <mujoco>
+    <compiler meshdir="meshes/" balanceinertia="true" discardvisual="false"/>
+  </mujoco>
+  <!-- ENABLE ONLY WHEN GENERATING MUJOCO XML: -->
+  <!-- <link name="WORLD" />
+  <joint name="world_link" type="revolute">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="WORLD" />
+    <child link="BASE" />
+    <limit lower="-0.0001" upper="0.00001"/>
+  </joint> -->
+  <link name="BASE">
+    <inertial>
+      <origin xyz="0.00244324 0.00015573 0.08616742" rpy="0 0 0" />
+      <mass value="1.14608471" />
+      <inertia ixx="0.00335854" ixy="0.00000039" ixz="-0.00010989" iyy="0.003311" iyz="-0.00000191" izz="0.00077158" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/BASE.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="0" type="revolute">
+    <origin xyz="0 0 0.12825" rpy="0 0 0" />
+    <parent link="BASE" />
+    <child link="SHOULDER" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.76" upper="2.76" effort="10" velocity="0.35" />
+    <calibration rising="0" falling="0" />
+    <dynamics damping="0" friction="0" />
+    <safety_controller soft_upper="0" soft_lower="0" k_position="0" k_velocity="0" />
+  </joint>
+  <link name="SHOULDER">
+    <inertial>
+      <origin xyz="-0.00002477 -0.02213531 0.09937686" rpy="0 0 0" />
+      <mass value="0.95974404" />
+      <inertia ixx="0.00165947" ixy="-0.00000002" ixz="0.00000036" iyy="0.00140355" iyz="-0.00034927" izz="0.00089493" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/SHOULDER.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="1" type="revolute">
+    <origin xyz="0 -0.03 0.115" rpy="1.5708 0 0" />
+    <parent link="SHOULDER" />
+    <child link="ARM" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.76" upper="2.76" effort="14" velocity="0.35" />
+    <calibration rising="0" falling="0" />
+    <dynamics damping="0" friction="0" />
+    <safety_controller soft_upper="0" soft_lower="0" k_position="0" k_velocity="0" />
+  </joint>
+  <link name="ARM">
+    <inertial>
+      <origin xyz="-0.00169104791836735 0.21154808 0.0453031" rpy="0 0 0" />
+      <mass value="1.17756164" />
+      <inertia ixx="0.01149277" ixy="0.000001" ixz="-0.00000016" iyy="0.00102851" iyz="-0.00140765" izz="0.01133492" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/ARM.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="2" type="revolute">
+    <origin xyz="0 0.28 0" rpy="-3.1416 0 0" />
+    <parent link="ARM" />
+    <child link="FOREARM" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.76" upper="2.76" effort="10" velocity="0.35" />
+    <calibration rising="0" falling="0" />
+    <dynamics damping="0" friction="0" />
+    <safety_controller soft_upper="0" soft_lower="0" k_position="0" k_velocity="0" />
+  </joint>
+  <link name="FOREARM">
+    <inertial>
+      <origin xyz="0.00717231283673469 -0.09502206 -0.0073555" rpy="0 0 0" />
+      <mass value="0.59767669" />
+      <inertia ixx="0.00163256" ixy="-0.00000711" ixz="-0.00000154" iyy="0.00029798" iyz="0.00009587" izz="0.00169091" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/FOREARM.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="3" type="revolute">
+    <origin xyz="0 -0.14 0.02" rpy="1.5708 0 0" />
+    <parent link="FOREARM" />
+    <child link="LOWER_WRIST" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.67" upper="2.67" effort="7" velocity="0.35" />
+    <calibration rising="0" falling="0" />
+    <dynamics damping="0" friction="0" />
+    <safety_controller soft_upper="0" soft_lower="0" k_position="0" k_velocity="0" />
+  </joint>
+  <link name="LOWER_WRIST">
+    <inertial>
+      <origin xyz="0.013087969877551 -0.00234271057142857 0.08719207" rpy="0 0.785398 0" />
+      <mass value="0.52693412" />
+      <inertia ixx="0.00069098" ixy="-0.00000024" ixz="0.00016483" iyy="0.00078519" iyz="0.00000074" izz="0.00034115" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/LOWER_WRIST.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="4" type="revolute">
+    <origin xyz="0.0285 0 0.105" rpy="0 1.5708 0" />
+    <parent link="LOWER_WRIST" />
+    <child link="UPPER_WRIST" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.67" upper="2.67" effort="7" velocity="0.35" />
+    <calibration rising="0" falling="0" />
+    <dynamics damping="0" friction="0" />
+    <safety_controller soft_upper="0" soft_lower="0" k_position="0" k_velocity="0" />
+  </joint>
+  <link name="UPPER_WRIST">
+    <inertial>
+      <origin xyz="-0.0722202801632653 0.00195835736734694 0.0295429193265306" rpy="0 0 0" />
+      <mass value="0.58097325" />
+      <inertia ixx="0.00021268" ixy="0.00000521" ixz="-0.00000291" iyy="0.00106371" iyz="0.00000011" izz="0.00108465" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/UPPER_WRIST.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="5" type="revolute">
+    <origin xyz="-0.105 0 0.0285" rpy="0 -1.5708 0" />
+    <parent link="UPPER_WRIST" />
+    <child link="GRIPPER_FRAME" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.67" upper="2.67" effort="7" velocity="0.35" />
+    <calibration rising="0" falling="0" />
+    <dynamics damping="0" friction="0" />
+    <safety_controller soft_upper="0" soft_lower="0" k_position="0" k_velocity="0" />
+  </joint>
+  <link name="GRIPPER_FRAME">
+    <inertial>
+      <origin xyz="-0.00000403 0.0000108 0.04139748" rpy="0 0 0" />
+      <mass value="0.1395" />
+      <inertia ixx="0.00011614" ixy="-0.00000001" ixz="-0.00000004" iyy="0.00010327" iyz="0" izz="0.00009707" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/GRIPPER_FRAME.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <!-- RIGHT FINGER: -->
+  <joint name="RIGHT_BOTTOM" type="fixed">
+    <origin xyz="0 -0.030501 0.070003" rpy="0 1.5708 0" />
+    <parent link="GRIPPER_FRAME" />
+    <child link="RIGHT_FINGER_PROX" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.09" upper="0.96" effort="1000" velocity="1000" />
+  </joint>
+  <link name="RIGHT_FINGER_PROX">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.018385" />
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/RIGHT_FINGER_PROX.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="RIGHT_TIP" type="fixed">
+    <origin xyz="-0.045636 0.020423 0" rpy="0 0 0" />
+    <parent link="RIGHT_FINGER_PROX" />
+    <child link="RIGHT_FINGER_DIST" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.03" upper="0.21" effort="1000" velocity="1000" />
+  </joint>
+  <link name="RIGHT_FINGER_DIST">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.010748" />
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/RIGHT_FINGER_DIST.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <!-- LEFT FINGER: -->
+  <joint name="LEFT_BOTTOM" type="fixed">
+    <origin xyz="0 0.0305 0.070003" rpy="0 1.5708 0" />
+    <parent link="GRIPPER_FRAME" />
+    <child link="LEFT_FINGER_PROX" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.96" upper="0.09" effort="1000" velocity="1000" />
+  </joint>
+  <link name="LEFT_FINGER_PROX">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.018385" />
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/LEFT_FINGER_PROX.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="LEFT_TIP" type="fixed">
+    <origin xyz="-0.045636 -0.020423 6.9901E-05" rpy="0 0 0" />
+    <parent link="LEFT_FINGER_PROX" />
+    <child link="LEFT_FINGER_DIST" />
+    <axis xyz="0 0 -1" />
+    <limit lower="-0.21" upper="1.03" effort="1000" velocity="1000" />
+  </joint>
+  <link name="LEFT_FINGER_DIST">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.010748" />
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/LEFT_FINGER_DIST.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>
