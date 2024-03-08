@@ -3978,8 +3978,8 @@ yourdfpy = "^0.0.56"
 [package.source]
 type = "git"
 url = "https://github.com/maxspahn/robotmodels.git"
-reference = "ft_visualize_urdf_name"
-resolved_reference = "cf1348ddd703bfd245529dafd032e9a4b940ba8f"
+reference = "HEAD"
+resolved_reference = "474dccbd154cec6d3e18e1a2558b59105e8cc8c9"
 
 [[package]]
 name = "rpds-py"
@@ -5165,4 +5165,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.10"
-content-hash = "bc80175cd897f6ed5e8fd08c79173306fecb57351cd38f665d36c69f76a5cfcf"
+content-hash = "9db4084f3eb1d2af98390b22c84b9c004d3a3c65f04330e202e5dbb61ab1d06d"

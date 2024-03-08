@@ -11,16 +11,20 @@ from urdfenvs.sensors.full_sensor import FullSensor
 
 from urdfenvs.generic_mujoco.generic_mujoco_robot import GenericMujocoRobot
 from urdfenvs.generic_mujoco.generic_mujoco_env import GenericMujocoEnv
-
+from urdfenvs.sensors.free_space_decomposition import FreeSpaceDecompositionSensor
+from urdfenvs.sensors.free_space_occupancy import FreeSpaceOccupancySensor
+from urdfenvs.sensors.full_sensor import FullSensor
+from urdfenvs.sensors.lidar import Lidar
+from urdfenvs.sensors.sdf_sensor import SDFSensor
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-
+from urdfenvs.scene_examples.goal import goal1
 ROBOTTYPE = 'kinova'
-ROBOTMODEL = 'gen3_7dof'
+ROBOTMODEL = 'gen3lite'
 
-def initalize_environment(render=True):
+def initalize_environment(render=True, nr_obst: int = 0):
     """
     Initializes the simulation environment.
 
@@ -33,11 +37,11 @@ def initalize_environment(render=True):
             variance=0.0,
             physics_engine_name='mujoco',
     )
-    
-    if not os.path.exists(f'{ROBOTTYPE}_local'):
-        robot_model_original = RobotModel(ROBOTTYPE, ROBOTMODEL)
-        robot_model_original.copy_model(os.path.join(os.getcwd(), f'{ROBOTTYPE}_local'))
-    robot_model = LocalRobotModel(f'{ROBOTTYPE}_local', ROBOTMODEL)
+    if os.path.exists(ROBOTTYPE):
+        shutil.rmtree(ROBOTTYPE)
+    robot_model_original = RobotModel(ROBOTTYPE, ROBOTMODEL)
+    robot_model_original.copy_model(os.path.join(os.getcwd(), ROBOTTYPE))
+    robot_model = LocalRobotModel(ROBOTTYPE, ROBOTMODEL)
 
     xml_file = robot_model.get_xml_path()
     robots  = [
@@ -60,38 +64,29 @@ def initalize_environment(render=True):
             "weight": 1.0,
             "is_primary_goal": True,
             "indices": [0, 1, 2],
-            "parent_link": "panda_link0",
-            "child_link": "panda_hand",
-            "desired_position": [0.1, -0.6, 0.4],
+            "parent_link": "base_link",
+            "child_link": "end_effector_link",
+            "desired_position": [-0.24355761, -0.75252747, 0.5],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
-        "subgoal1": {
-            "weight": 5.0,
-            "is_primary_goal": False,
-            "indices": [0, 1, 2],
-            "parent_link": "panda_link7",
-            "child_link": "panda_hand",
-            "desired_position": [0.1, 0.0, 0.0],
-            "epsilon": 0.05,
-            "type": "staticSubGoal",
-        }
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    obstacles = [obst1, obst2]
-    env = GenericMujocoEnv(
+    obstacles = [obst1, obst2][0:nr_obst]
+    env: GenericMujocoEnv = gym.make(
+        'generic-mujoco-env-v0',
         robots=robots,
         obstacles=obstacles,
         goals=goal.sub_goals(),
         sensors=[full_sensor],
         render=render,
         enforce_real_time=True,
-    )
-    env.reset()
+    ).unwrapped
+    ob, info = env.reset()
     return (env, goal)
 
 
-def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
+def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int = 6):
     """
     Initializes the fabric planner for the panda robot.
 
@@ -108,92 +103,73 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-
-    ## Optional reconfiguration of the planner
-    # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     forward_kinematics,
-    #     base_inertia=base_inertia,
-    #     attractor_potential=attractor_potential,
-    #     damper=damper,
-    # )
-    absolute_path = os.path.dirname(os.path.abspath(__file__))
-    with open(absolute_path + "/panda_for_fk.urdf", "r", encoding="utf-8") as file:
+    robot_model = RobotModel(ROBOTTYPE, model_name="gen3_6dof")
+    urdf_file = robot_model.get_urdf_path()
+    with open(urdf_file, "r", encoding="utf-8") as file:
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="panda_link0",
-        end_link="panda_link9",
+        rootLink="base_link",
+        end_link="end_effector_link",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
     )
-    collision_links = ['panda_link7', 'panda_link3', 'panda_link4']
-    self_collision_pairs = {"panda_link7": ['panda_link3', 'panda_link4', 'panda_link2', 'panda_link1']}
-    panda_limits = [
-            [-2.8973, 2.8973],
-            [-1.7628, 1.7628],
-            [-2.8973, 2.8973],
-            [-3.0718, -0.0698],
-            [-2.8973, 2.8973],
-            [-0.0175, 3.7525],
-            [-2.8973, 2.8973]
-        ]
+    collision_links = [
+        "forearm_link",
+        "spherical_wrist_1_link",
+        "spherical_wrist_2_link",
+        "bracelet_link",
+        "end_effector_link"
+    ]
+    gen3lite_limits = list(np.array([
+        [-154.1, 154.1],
+        [150.1, 150.1],
+        [150.1, 150.1],
+        [-148.98, 148.98],
+        [-144.97, 145.0],
+        [-148.98, 148.98]
+    ]) * np.pi/180)
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
         collision_links=collision_links,
-        self_collision_pairs=self_collision_pairs,
         goal=goal,
-        number_obstacles=2,
+        number_obstacles=nr_obst,
         number_plane_constraints=1,
-        limits=panda_limits,
+        limits=gen3lite_limits,
     )
     planner.concretize(mode='vel', time_step=0.05)
     return planner
 
 
-def run_panda_example(n_steps=5000, render=True):
-    (env, goal) = initalize_environment(render)
-    planner = set_planner(goal)
+def run_kinova_example(n_steps=5000, render=True, dof=6):
+    nr_obst=2
+    (env, goal) = initalize_environment(render, nr_obst=nr_obst)
+    planner = set_planner(goal, nr_obst=nr_obst, degrees_of_freedom=dof)
     # planner.export_as_c("planner.c")
-    action = np.zeros(18)
+    action = np.zeros(dof)
     ob, *_ = env.step(action)
-    body_links={1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 7: 0.1}
-    """
-    for body_link, radius in body_links.items():
-        env.add_collision_link(0, body_link, shape_type='sphere', size=[radius])
-    """
-
 
     for _ in range(n_steps):
         ob_robot = ob['robot_0']
-        print("q:", ob_robot["joint_state"]["position"])
-        action = planner.compute_action(
-            q=ob_robot["joint_state"]["position"][0:7],
-            qdot=ob_robot["joint_state"]["velocity"][0:7],
+        arguments_dict = dict(
+            q=ob_robot["joint_state"]["position"],
+            qdot=ob_robot["joint_state"]["velocity"],
             x_goal_0=ob_robot['FullSensor']['goals'][0]['position'],
             weight_goal_0=ob_robot['FullSensor']['goals'][0]['weight'],
-            x_goal_1=ob_robot['FullSensor']['goals'][1]['position'],
-            weight_goal_1=ob_robot['FullSensor']['goals'][1]['weight'],
             x_obst_0=ob_robot['FullSensor']['obstacles'][0]['position'],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][0]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][1]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][1]['size'],
-            radius_body_links=body_links,
-            constraint_0=np.array([0, 0, 1, 0.0]),
-        )
-        action = np.zeros(18)
+            radius_body_end_effector_link = 0.1,
+            radius_body_bracelet_link = 0.1,
+            radius_body_spherical_wrist_1_link = 0.1,
+            radius_body_spherical_wrist_2_link = 0.1,
+            radius_body_forearm_link=0.1,
+            constraint_0=np.array([0, 0, 1, 0.0]))
+
+        action = planner.compute_action(**arguments_dict)
         ob, reward, terminated, truncated, info = env.step(action)
         if terminated or truncated:
             print(info)
@@ -201,6 +177,5 @@ def run_panda_example(n_steps=5000, render=True):
     env.close()
     return {}
 
-
 if __name__ == "__main__":
-    res = run_panda_example(n_steps=5000)
+    res = run_kinova_example(n_steps=5000, dof=6)
