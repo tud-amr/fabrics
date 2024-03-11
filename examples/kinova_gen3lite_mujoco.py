@@ -64,9 +64,9 @@ def initalize_environment(render=True, nr_obst: int = 0):
             "weight": 1.0,
             "is_primary_goal": True,
             "indices": [0, 1, 2],
-            "parent_link": "base_link",
-            "child_link": "end_effector_link",
-            "desired_position": [-0.24355761, -0.75252747, 0.5],
+            "parent_link": "BASE",
+            "child_link": "END_EFFECTOR",
+            "desired_position": [-0.24355761, -0.65252747, 0.5],
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
@@ -103,25 +103,23 @@ def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-    robot_model = RobotModel(ROBOTTYPE, model_name="gen3_6dof")
+    robot_model = RobotModel(ROBOTTYPE, model_name="gen3lite")
     urdf_file = robot_model.get_urdf_path()
     with open(urdf_file, "r", encoding="utf-8") as file:
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="base_link",
-        end_link="end_effector_link",
+        rootLink="BASE",
+        end_link="DUMMY",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
     )
     collision_links = [
-        "forearm_link",
-        "spherical_wrist_1_link",
-        "spherical_wrist_2_link",
-        "bracelet_link",
-        "end_effector_link"
+        "FOREARM",
+        "DUMMY",
+        "END_EFFECTOR"
     ]
     gen3lite_limits = list(np.array([
         [-154.1, 154.1],
@@ -162,11 +160,9 @@ def run_kinova_example(n_steps=5000, render=True, dof=6):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][0]['size'],
             x_obst_1=ob_robot['FullSensor']['obstacles'][1]['position'],
             radius_obst_1=ob_robot['FullSensor']['obstacles'][1]['size'],
-            radius_body_end_effector_link = 0.1,
-            radius_body_bracelet_link = 0.1,
-            radius_body_spherical_wrist_1_link = 0.1,
-            radius_body_spherical_wrist_2_link = 0.1,
-            radius_body_forearm_link=0.1,
+            radius_body_END_EFFECTOR = 0.1,
+            radius_body_FOREARM = 0.1,
+            radius_body_DUMMY = 0.1,
             constraint_0=np.array([0, 0, 1, 0.0]))
 
         action = planner.compute_action(**arguments_dict)
