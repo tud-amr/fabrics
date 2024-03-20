@@ -8,7 +8,7 @@ from fabrics.components.environment import Environment
 
 @dataclass
 class FabricPlannerConfig:
-    forcing_type: str = 'speed-controlled' # options are 'speed-controlled', 'pure-geometry', 'execution-energy', 'forced'
+    forcing_type: str = 'speed-controlled' # options are 'speed-controlled', 'pure-geometry', 'execution-energy', 'forced', 'forced-energized'
     base_energy: str = (
         "0.5 * 0.2 * ca.dot(xdot, xdot)"
     )

@@ -477,9 +477,9 @@ class ParameterizedFabricPlanner(object):
         self.set_collision_avoidance()
         #self.set_self_collision_avoidance()
         self.set_joint_limits()
-        if self._config.forcing_type in ['forced', 'speed-controlled']:
+        if self._config.forcing_type in ['forced', 'speed-controlled', 'forced-energized']:
             self.set_goal_component(self._problem_configuration.goal_composition)
-        if self._config.forcing_type in ['speed-controlled', 'execution-energy']:
+        if self._config.forcing_type in ['speed-controlled', 'execution-energy', 'forced-energized']:
             execution_energy = ExecutionLagrangian(self._variables)
             self.set_execution_energy(execution_energy)
         if self._config.forcing_type in ['speed-controlled']:
@@ -706,7 +706,7 @@ class ParameterizedFabricPlanner(object):
             if not time_step:
                 raise Exception("No time step passed in velocity mode.")
         self._geometry.concretize()
-        if hasattr(self, '_forced_geometry') and hasattr(self, '_execution_geometry'):
+        if self._config.forcing_type in ['speed-controlled']:
             eta = self._damper.substitute_eta()
             a_ex = (
                 eta * self._execution_geometry._alpha
@@ -718,15 +718,20 @@ class ParameterizedFabricPlanner(object):
                 - ca.mtimes(self._forced_geometry.Minv(), self._target_velocity)
             )
             #xddot = self._forced_geometry._xddot
-        elif hasattr(self, '_execution_geometry'):
+        elif self._config.forcing_type == 'execution-energy':
             logging.warn("No forcing term, using pure geoemtry with energization.")
             #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
             xddot = self._execution_geometry._xddot - self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
-        elif hasattr(self, '_forced_geometry'):
-            logging.warn("No execution energy, using forced geoemtry without speed regulation.")
+        elif self._config.forcing_type == 'forced-energized':
+            logging.warn("Using forced geoemtry with constant execution energy.")
+            xddot = self._forced_speed_controlled_geometry._xddot - self._forced_speed_controlled_geometry._alpha * self._geometry._vars.velocity_variable()
+        elif self._config.forcing_type == 'forced':
+            logging.warn("No execution energy, using forced geomtry without speed regulation.")
             xddot = self._forced_geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
-        else:
+        elif self._config.forcing_type == 'pure-geometry':
             xddot = self._geometry._xddot
+        else:
+            raise Exception(f"Unknown forcing type {self._config.forcing_type}.")
 
         if mode == 'acc':
             self._funs = CasadiFunctionWrapper(
