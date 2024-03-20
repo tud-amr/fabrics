@@ -1,7 +1,6 @@
 from typing import List, Tuple, Dict, Union
 import casadi as ca
 import numpy as np
-from urdfenvs.urdf_common.urdf_env import Plane
 from fabrics.helpers.distances import capsule_to_plane, capsule_to_sphere, cuboid_to_capsule, sphere_to_plane, sphere_to_sphere, cuboid_to_sphere
 
 class DistanceNotImplementedError(Exception):
