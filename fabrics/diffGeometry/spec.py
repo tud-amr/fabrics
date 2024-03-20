@@ -88,7 +88,7 @@ class Spec:
         for refTraj in self._refTrajs:
             var += refTraj._vars
         self._funs = CasadiFunctionWrapper(
-            "funs", var.asDict(), {"M": self.M(), "f": self.f(), "xddot": self._xddot}
+            "funs", var, {"M": self.M(), "f": self.f(), "xddot": self._xddot}
         )
 
     def evaluate(self, **kwargs):

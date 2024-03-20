@@ -1,0 +1,91 @@
+problem:
+  environment:
+    number_cuboids:
+      dynamic: 0
+      static: 1
+    number_planes: 1
+    number_spheres:
+      dynamic: 0
+      static: 2
+  goal:
+    goal_definition:
+      subgoal0:
+        child_link: panda_hand
+        desired_position:
+        - 0.0
+        - -0.6
+        - 0.7
+        epsilon: 0.05
+        indices:
+        - 0
+        - 1
+        - 2
+        is_primary_goal: true
+        parent_link: panda_link0
+        type: staticSubGoal
+        weight: 1.0
+      subgoal1:
+        child_link: panda_hand
+        desired_position:
+        - 0.0
+        - -0.1
+        - 0.0
+        epsilon: 0.05
+        indices:
+        - 0
+        - 1
+        - 2
+        is_primary_goal: false
+        parent_link: panda_link7
+        type: staticSubGoal
+        weight: 5.0
+  joint_limits:
+    lower_limits:
+    - -2.8973
+    - -1.7628
+    - -2.8973
+    - -3.0718
+    - -2.8973
+    - -0.0175
+    - -2.8973
+    upper_limits:
+    - 2.8973
+    - 1.7628
+    - 2.8973
+    - -0.0698
+    - 2.8973
+    - 3.7525
+    - 2.8973
+  robot_representation:
+    collision_links:
+      panda_link1:
+        sphere:
+          radius: 0.1
+      panda_link2:
+        sphere:
+          radius: 0.1
+      panda_link3:
+        sphere:
+          radius: 0.1
+      panda_link4:
+        sphere:
+          radius: 0.1
+      panda_link5:
+        capsule:
+          radius: 0.01
+          length: 0.05
+      panda_link7:
+        sphere:
+          radius: 0.15
+    self_collision_pairs:
+      panda_link7:
+      - panda_link3
+      - panda_link4
+      - panda_link2
+      - panda_link1
+fabrics:
+  limit_geometry: -1.0 / (x ** 1) * xdot ** 2
+  limit_finsler: 1.0/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2
+  collision_geometry: -0.2 / (x ** 1) * xdot ** 2
+  collision_finsler:  0.2/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2
+

@@ -89,7 +89,7 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
         self._geometry = WeightedGeometry(g=base_geometry, le=base_lagrangian)
 
     def extra_terms_function(self):
-        extra_terms_functions = CasadiFunctionWrapper("extra_terms", self._variables.asDict(), {"J_nh": self._J_nh, "f_extra": self._f_extra})
+        extra_terms_functions = CasadiFunctionWrapper("extra_terms", self._variables, {"J_nh": self._J_nh, "f_extra": self._f_extra})
         return extra_terms_functions
 
     def concretize(self, mode='acc', time_step=None):
@@ -129,10 +129,10 @@ class NonHolonomicParameterizedFabricPlanner(ParameterizedFabricPlanner):
             xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
         if mode == 'acc':
             self._funs = CasadiFunctionWrapper(
-                "funs", self.variables.asDict(), {"action": xddot}
+                "funs", self.variables, {"action": xddot}
             )
         elif mode == 'vel':
             action = self._qudot + time_step * xddot
             self._funs = CasadiFunctionWrapper(
-                "funs", self.variables.asDict(), {"action": action}
+                "funs", self.variables, {"action": action}
             )

@@ -53,6 +53,16 @@ class GenericGeometryLeaf(Leaf):
         self._parent_variables.add_parameters(new_parameters)
         self._lag = Lagrangian(lagrangian_geometry, var=self._leaf_variables)
 
+class AvoidanceLeaf(GenericGeometryLeaf):
+    def _init__(
+            self, 
+            parent_variables: Variables,
+            name: str,
+            phi: ca.SX,
+            ):
+        super().__init__(parent_variables, name, phi)
+
+
 class LimitLeaf(GenericGeometryLeaf):
     """
     The LimitLeaf is geometry leaf for joint limits.

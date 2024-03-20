@@ -13,6 +13,21 @@ def closest_point_to_line(
 def clamp(a: ca.SX, a_min: float, a_max: float):
     return ca.fmin(a_max, ca.fmax(a, a_min))
 
+def point_to_point(point_1: ca.SX, point_2: ca.SX) -> ca.SX:
+    return ca.norm_2(point_1 - point_2)
+
+def sphere_to_point(sphere_center: ca.SX,
+                    point: ca.SX,
+                    sphere_radius: ca.SX) -> ca.SX:
+    return point_to_point(sphere_center, point) - sphere_radius
+
+def sphere_to_sphere(sphere_1_center: ca.SX,
+                     sphere_2_center: ca.SX,
+                     sphere_1_radius: ca.SX,
+                     sphere_2_radius: ca.SX) -> ca.SX:
+    distance = point_to_point(sphere_1_center, sphere_2_center)
+    return distance - sphere_1_radius - sphere_2_radius
+
 def point_to_line(point: ca.SX, line_start: ca.SX, line_end: ca.SX) -> ca.SX:
     line_vec = line_end - line_start
     point_vec = point - line_start

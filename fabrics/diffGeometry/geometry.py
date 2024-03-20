@@ -71,7 +71,7 @@ class Geometry:
         for refTraj in self._refTrajs:
             var += refTraj._vars
         self._funs = CasadiFunctionWrapper(
-            "funs", var.asDict(), {"h": self._h, "xddot": self._xddot}
+            "funs", var, {"h": self._h, "xddot": self._xddot}
         )
 
     def evaluate(self, **kwargs):
