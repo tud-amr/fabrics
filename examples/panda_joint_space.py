@@ -28,7 +28,7 @@ def initalize_environment(render=True):
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
-    )
+    ).unwrapped
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {

@@ -12,9 +12,9 @@ problem:
       subgoal0:
         child_link: panda_hand
         desired_position:
-        - 0.1
+        - 0.0
         - -0.6
-        - 0.4
+        - 0.7
         epsilon: 0.05
         indices:
         - 0
@@ -27,8 +27,8 @@ problem:
       subgoal1:
         child_link: panda_hand
         desired_position:
-        - 0.1
         - 0.0
+        - -0.1
         - 0.0
         epsilon: 0.05
         indices:
@@ -76,7 +76,7 @@ problem:
           length: 0.05
       panda_link7:
         sphere:
-          radius: 0.1
+          radius: 0.15
     self_collision_pairs:
       panda_link7:
       - panda_link3
@@ -84,5 +84,8 @@ problem:
       - panda_link2
       - panda_link1
 fabrics:
-  limit_geometry: -1.0 / (x ** 2) * xdot ** 2
-  limit_finsler: 0.1/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2
+  limit_geometry: -1.0 / (x ** 1) * xdot ** 2
+  limit_finsler: 1.0/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2
+  collision_geometry: -0.2 / (x ** 1) * xdot ** 2
+  collision_finsler:  0.2/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2
+

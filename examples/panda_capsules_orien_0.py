@@ -8,10 +8,9 @@ from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.sensors.full_sensor import FullSensor
-import quaternionic
+
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
-from mpscenes.obstacles.box_obstacle import BoxObstacle
 from fabrics.components.energies.execution_energies import ExecutionLagrangian
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
@@ -19,9 +18,8 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 absolute_path = os.path.dirname(os.path.abspath(__file__))
 URDF_FILE = absolute_path + "/panda_collision_links.urdf"
 CAPSULE_LINKS = list(range(2,4)) + list(range(5,9))
-# TODO: BUG: Crashesh when all capsule links are used because Jdot becomes nan.
-# This is probably related to phi being not differentiable at the position.
-CAPSULE_LINKS = [2, 3, 5, 7, 8]
+
+
 
 def setup_collision_links_panda(i) -> Tuple[np.ndarray, str, int, float, float]:
     link_translations = [
@@ -46,7 +44,7 @@ def setup_collision_links_panda(i) -> Tuple[np.ndarray, str, int, float, float]:
     tf[0:3, 3] = link_translations[i]
     return (tf, link_names[i], links[i], radii[i], lengths[i])
 
-def initalize_environment(render=True, obstacle_resolution = 8):
+def initalize_environment(render=True):
     """
     Initializes the simulation environment.
 
@@ -63,33 +61,14 @@ def initalize_environment(render=True, obstacle_resolution = 8):
     full_sensor = FullSensor(
             goal_mask=["position", "weight"],
             obstacle_mask=["position", "size"],
-            variance=0.0,
+            variance=0.0
     )
-    q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
     # Definition of the obstacle.
-    radius_ring = 0.3
-    goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
-    rotation_matrix = quaternionic.array(goal_orientation).to_rotation_matrix
-    whole_position = [0.1, 0.6, 0.8]
     static_obst_dict = {
         "type": "sphere",
         "geometry": {"position": [0.40, -0.25, 0.5], "radius": 0.1},
     }
     obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
-    obstacles = [obst1]
-    for i in range(obstacle_resolution + 1):
-        angle = i/obstacle_resolution * 2.*np.pi
-        origin_position = [
-            0.0,
-            radius_ring * np.cos(angle),
-            radius_ring * np.sin(angle),
-        ]
-        position = np.dot(np.transpose(rotation_matrix), origin_position) + whole_position
-        static_obst_dict = {
-            "type": "box",
-            "geometry": {"position": position.tolist(), "length": 0.1, "width": 0.1, "height": 0.1},
-        }
-        obstacles.append(BoxObstacle(name="staticObst", content_dict=static_obst_dict))
     # Definition of the goal.
     goal_dict = {
         "subgoal0": {
@@ -98,13 +77,25 @@ def initalize_environment(render=True, obstacle_resolution = 8):
             "indices": [0, 1, 2],
             "parent_link": "panda_link0",
             "child_link": "panda_link8",
-            "desired_position": whole_position,
+            "desired_position": [0.1, -0.6, 0.4],
             "epsilon": 0.05,
             "type": "staticSubGoal",
-        }
+        },
+        "subgoal1": {
+            "weight": 0.0,
+            "is_primary_goal": False,
+            "indices": [0, 1, 2],
+            "parent_link": "panda_link0",
+            "child_link": "panda_link8",
+            "angle": [1., 0.5, 0.5, 0.],
+            "desired_position": [0.1, -0.6, 0.4],
+            "epsilon": 0.05,
+            "type": "staticSubGoal",
+        },
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    env.reset(pos=q0)
+    obstacles = [obst1]
+    env.reset()
     env.add_sensor(full_sensor, [0])
     for obst in obstacles:
         env.add_obstacle(obst)
@@ -114,8 +105,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
     return (env, goal)
 
 
-
-def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_resolution: int = 10):
+def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
     """
     Initializes the fabric planner for the panda robot.
 
@@ -150,43 +140,23 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         tf_capsule_origin =  forward_kinematics.casadi(
             q, "panda_link0", link_name, tf
         ) 
-        # planner.add_capsule_sphere_geometry(
-        #     "obst_1", f"capsule_{i}", tf_capsule_origin, length
-        # )
-        #todo:  WHEN UNCOMMENTING THIS, i GET ACTIONS NAN, AN ERROR SOMEWHERE!
-        planner.add_capsule_cuboid_geometry(
-            "obst_cuboid_1", f"capsule_{i}", tf_capsule_origin, length
+        planner.add_capsule_sphere_geometry(
+            "obst_1", f"capsule_{i}", tf_capsule_origin, length
         )
 
-    panda_limits = [
-            [-2.8973, 2.8973],
-            [-1.7628, 1.7628],
-            [-2.8973, 2.8973],
-            [-3.0718, -0.0698],
-            [-2.8973, 2.8973],
-            [-0.0175, 3.7525],
-            [-2.8973, 2.8973]
-        ]
+
     planner.set_goal_component(goal)
     execution_energy = ExecutionLagrangian(planner.variables)
     planner.set_execution_energy(execution_energy)
     planner.set_speed_control()
-    # planner.set_components(
-    #     collision_links=None,
-    #     goal=goal,
-    #     number_obstacles=0,
-    #     number_obstacles_cuboid=obstacle_resolution,
-    #     # limits=panda_limits,
-    # )
+
     planner.concretize()
     return planner
 
 
-def run_panda_capsule_cuboid_example(n_steps=5000, render=True):
-    nr_obstacles_sphere = 1
-    nr_obstacles_cuboid = 1
-    (env, goal) = initalize_environment(render, obstacle_resolution=nr_obstacles_cuboid)
-    planner = set_planner(goal, obstacle_resolution=nr_obstacles_cuboid)
+def run_panda_capsule_example(n_steps=5000, render=True):
+    (env, goal) = initalize_environment(render)
+    planner = set_planner(goal)
     action = np.zeros(7)
     ob, *_ = env.step(action)
     static_args = {}
@@ -203,22 +173,16 @@ def run_panda_capsule_cuboid_example(n_steps=5000, render=True):
 
     for _ in range(n_steps):
         ob_robot = ob["robot_0"]
-        ind_goal = list(ob_robot["FullSensor"]["goals"].keys())[0]
-        x_obsts_cuboids = [
-            ob_robot['FullSensor']['obstacles'][i+2+nr_obstacles_sphere]['position'] for i in range(nr_obstacles_cuboid)
-        ]
-        size_obsts_cuboids = [
-            ob_robot['FullSensor']['obstacles'][i+2+nr_obstacles_sphere]['size'] for i in range(nr_obstacles_cuboid)
-        ]
         args = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot["FullSensor"]["goals"][ind_goal]["position"],
-            weight_goal_0=ob_robot["FullSensor"]["goals"][ind_goal]["weight"],
+            x_goal_0=ob_robot["FullSensor"]["goals"][3]["position"],
+            weight_goal_0=ob_robot["FullSensor"]["goals"][3]["weight"],
+            x_goal_1=ob_robot["FullSensor"]["goals"][3]["position"],
+            weight_goal_1=ob_robot["FullSensor"]["goals"][3]["weight"],
+            angle_goal_1=np.eye(3),
             x_obst_1=ob_robot["FullSensor"]["obstacles"][2]["position"],
             radius_obst_1=ob_robot["FullSensor"]["obstacles"][2]["size"],
-            x_obst_cuboid_1=x_obsts_cuboids[0],
-            size_obst_cuboid_1=size_obsts_cuboids[0],
             **static_args
         )
         action = planner.compute_action(**args)
@@ -228,4 +192,4 @@ def run_panda_capsule_cuboid_example(n_steps=5000, render=True):
 
 
 if __name__ == "__main__":
-    res = run_panda_capsule_cuboid_example(n_steps=5000, render=True)
+    res = run_panda_capsule_example(n_steps=5000)

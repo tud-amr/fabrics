@@ -35,13 +35,16 @@ def initalize_environment(render=True, obstacle_resolution = 8):
             obstacle_mask=["position", "size"],
             variance=0.0,
     )
-    q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
+    # q0 = np.array([0.0, -1.0, 0.0, -1.501, 0.0, 1.8675, 0.0])
+    q0 = np.array([0.0, -1.0, 0.0, -2.5, 0.0, 0, 0.0])
     # Definition of the obstacle.
     radius_ring = 0.3
     obstacles = []
-    goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
+    # goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
+    goal_orientation = [1.0, 0.0, 0.0, 0.0]
     rotation_matrix = quaternionic.array(goal_orientation).to_rotation_matrix
-    whole_position = [0.1, 0.6, 0.8]
+    whole_position = [0.3, 0, 1] #[0.1, 0.6, 0.8]
+    whole_position_obstacles = [10.1, 10.6, 10.8]
     for i in range(obstacle_resolution + 1):
         angle = i/obstacle_resolution * 2.*np.pi
         origin_position = [
@@ -49,7 +52,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
             radius_ring * np.cos(angle),
             radius_ring * np.sin(angle),
         ]
-        position = np.dot(np.transpose(rotation_matrix), origin_position) + whole_position
+        position = np.dot(np.transpose(rotation_matrix), origin_position) + whole_position_obstacles
         static_obst_dict = {
             "type": "sphere",
             "geometry": {"position": position.tolist(), "radius": 0.1},
@@ -142,7 +145,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
-        geometry_plane_constraint="10*(1/(1+1*ca.exp(-10*x))-1) * (xdot**2)",
     )
     panda_limits = [
             [-2.8973, 2.8973],
@@ -161,7 +163,6 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         goal=goal,
         number_obstacles=obstacle_resolution,
         limits=panda_limits,
-        number_plane_constraints=1,
     )
     planner.concretize()
     return planner
@@ -176,8 +177,6 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
     action = np.zeros(7)
     ob, *_ = env.step(action)
     env.reconfigure_camera(1.4000000953674316, 67.9999008178711, -31.0001220703125, (-0.4589785635471344, 0.23635289072990417, 0.3541859984397888))
-
-    constraint = np.array([0, 0, 1, 0.0])
 
     if not planner:
         planner = set_planner(goal, obstacle_resolution = obstacle_resolution_ring)
@@ -210,7 +209,6 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
             radius_body_panda_link6=0.15,
             radius_body_panda_hand=0.1,
             angle_goal_1=np.array(sub_goal_0_rotation_matrix),
-            constraint_0=constraint
         )
         ob, *_ = env.step(action)
     env.close()

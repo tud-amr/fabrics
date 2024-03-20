@@ -113,3 +113,8 @@ def test_point_cuboid():
     from point_robot_cuboid import run_point_robot_urdf
     res = run_point_robot_urdf(10, render=False)
     assert isinstance(res, dict)
+
+def test_kuka_orientation():
+    from kuka_iiwa_with_orientation import run_kuka_example
+    res = run_kuka_example(10, render=False)
+    assert isinstance(res, dict)

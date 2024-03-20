@@ -110,7 +110,7 @@ def initalize_environment(render):
     env: UrdfEnv  = gym.make(
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
-    )
+    ).unwrapped
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
     vel0 = np.array([0.0, 0.0, 0.0])
