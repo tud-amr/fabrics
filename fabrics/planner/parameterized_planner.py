@@ -515,9 +515,16 @@ class ParameterizedFabricPlanner(object):
             collision_link.set_origin(fk)
             self._variables.add_parameters(collision_link.sym_parameters)
             self._variables.add_parameters_values(collision_link.parameters)
-            if is_sparse(fk[0:3, 3]):
+            if fk.shape == (4, 4) and is_sparse(fk[0:3, 3]):
                 message = (
                         f"Expression {fk[0:3, 3]} for link {link_name} "
+                        "is sparse and thus skipped."
+                )
+                logging.warning(message.format_map(locals()))
+                continue
+            elif fk.shape != (4, 4) and is_sparse(fk):
+                message = (
+                        f"Expression {fk} for link {link_name} "
                         "is sparse and thus skipped."
                 )
                 logging.warning(message.format_map(locals()))
