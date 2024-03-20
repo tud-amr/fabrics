@@ -18,7 +18,9 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 CONFIG_FILE = "panda_config.yaml"
 with open(CONFIG_FILE, 'r') as config_file:
-    CONFIG = yaml.safe_load(config_file)
+    config = yaml.safe_load(config_file)
+    CONFIG_PROBLEM = config['problem']
+    CONFIG_FABRICS = config['fabrics']
 
 
 
@@ -62,7 +64,7 @@ def initalize_environment(render=True):
     }
     obst3 = BoxObstacle(name="staticObst", content_dict=static_obst_dict)
 
-    goal = GoalComposition(name="goal", content_dict=CONFIG['goal']['goal_definition'])
+    goal = GoalComposition(name="goal", content_dict=CONFIG_PROBLEM['goal']['goal_definition'])
     obstacles = (obst1, obst2, obst3)
     vel0 = np.array([-0.0, 0, 0, 0, 0, 0, 0])
     env.reset(vel=vel0)
@@ -72,45 +74,20 @@ def initalize_environment(render=True):
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
     env.set_spaces()
-    return (env, goal)
+    return env
 
 
-def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
+def set_planner(degrees_of_freedom: int = 7):
     """
     Initializes the fabric planner for the panda robot.
 
-    This function defines the forward kinematics for collision avoidance,
-    and goal reaching. These components are fed into the fabrics planner.
-
-    In the top section of this function, an example for optional reconfiguration
-    can be found. Commented by default.
+    Reparameterization is done in the panda_config.yaml file.
 
     Params
     ----------
-    goal: StaticSubGoal
-        The goal to the motion planning problem.
     degrees_of_freedom: int
         Degrees of freedom of the robot (default = 7)
     """
-
-    ## Optional reconfiguration of the planner
-    # base_inertia = 0.03
-    # attractor_potential = "20 * ca.norm_2(x)**4"
-    # damper = {
-    #     "alpha_b": 0.5,
-    #     "alpha_eta": 0.5,
-    #     "alpha_shift": 0.5,
-    #     "beta_distant": 0.01,
-    #     "beta_close": 6.5,
-    #     "radius_shift": 0.1,
-    # }
-    # planner = ParameterizedFabricPlanner(
-    #     degrees_of_freedom,
-    #     forward_kinematics,
-    #     base_inertia=base_inertia,
-    #     attractor_potential=attractor_potential,
-    #     damper=damper,
-    # )
     absolute_path = os.path.dirname(os.path.abspath(__file__))
     with open(absolute_path + "/panda_for_fk.urdf", "r", encoding="utf-8") as file:
         urdf = file.read()
@@ -119,26 +96,19 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7):
         rootLink="panda_link0",
         end_link="panda_link9",
     )
-    limit_geometry: str = (
-        "-1.0 / (x ** 2) * xdot ** 2"
-    )
-    limit_finsler: str = (
-        "0.1/(x**1) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2"
-    )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
-        limit_finsler=limit_finsler,
-        limit_geometry=limit_geometry,
     )
-    planner.load_problem_configuration(CONFIG)
+    planner.load_fabrics_configuration(CONFIG_FABRICS)
+    planner.load_problem_configuration(CONFIG_PROBLEM)
     planner.concretize()
     return planner
 
 
 def run_panda_example(n_steps=5000, render=True):
-    (env, goal) = initalize_environment(render)
-    planner = set_planner(goal)
+    env = initalize_environment(render)
+    planner = set_planner()
     # planner.export_as_c("planner.c")
     action = np.zeros(7)
     ob, *_ = env.step(action)

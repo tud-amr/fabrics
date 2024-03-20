@@ -90,7 +90,7 @@ class ParameterizedFabricPlanner(object):
 
     """ INITIALIZING """
 
-    def load_fabrics_configuration(self, **fabrics_configuration):
+    def load_fabrics_configuration(self, fabrics_configuration: dict):
         self._config = FabricPlannerConfig(**fabrics_configuration)
 
     def initialize_joint_variables(self):
