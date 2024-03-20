@@ -37,6 +37,7 @@ class CasadiFunctionWrapper(object):
             pickle.dump(self._function.serialize(), f)
             pickle.dump(list(self._expressions.keys()), f)
             pickle.dump(self._input_keys, f)
+            pickle.dump(self._argument_dictionary, f)
 
     def evaluate(self, **kwargs):
         for key in kwargs: # pragma no cover
@@ -134,6 +135,7 @@ class CasadiFunctionWrapper_deserialized(CasadiFunctionWrapper):
             self._function = ca.Function().deserialize(cPickle.load(data))
             expression_keys = cPickle.load(data)
             self._input_keys = cPickle.load(data)
+            self._argument_dictionary = cPickle.load(data)
             self._expressions = {}
             for key in expression_keys:
                 self._expressions[key] = []
