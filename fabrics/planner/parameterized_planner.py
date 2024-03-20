@@ -486,7 +486,7 @@ class ParameterizedFabricPlanner(object):
             self.set_speed_control()
 
     def set_joint_limits(self):
-        limits = np.zeros((7, 2))
+        limits = np.zeros((self._dof, 2))
         limits[:, 0] = self._problem_configuration.joint_limits.lower_limits
         limits[:, 1] = self._problem_configuration.joint_limits.upper_limits
         limits = limits.tolist()
@@ -512,9 +512,6 @@ class ParameterizedFabricPlanner(object):
             return
         for link_name, collision_link in self._problem_configuration.robot_representation.collision_links.items():
             fk = self.get_forward_kinematics(link_name, position_only=False)
-            collision_link.set_origin(fk)
-            self._variables.add_parameters(collision_link.sym_parameters)
-            self._variables.add_parameters_values(collision_link.parameters)
             if fk.shape == (4, 4) and is_sparse(fk[0:3, 3]):
                 message = (
                         f"Expression {fk[0:3, 3]} for link {link_name} "
@@ -529,6 +526,15 @@ class ParameterizedFabricPlanner(object):
                 )
                 logging.warning(message.format_map(locals()))
                 continue
+            if fk.shape != (4, 4):
+                fk_augmented = ca.SX(np.identity(4))
+                fk_augmented[0, 3] = fk[0]
+                fk_augmented[1, 3] = fk[1]
+                collision_link.set_origin(fk_augmented)
+            else:
+                collision_link.set_origin(fk)
+            self._variables.add_parameters(collision_link.sym_parameters)
+            self._variables.add_parameters_values(collision_link.parameters)
             for obstacle in self._problem_configuration.environment.obstacles:
                 distance = collision_link.distance(obstacle)
                 leaf_name = f"{link_name}_{obstacle.name}_leaf"
