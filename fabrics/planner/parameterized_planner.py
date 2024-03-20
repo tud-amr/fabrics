@@ -195,6 +195,8 @@ class ParameterizedFabricPlanner(object):
             self._forced_variables = geometry._vars
             self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
+        self._geometry.concretize()
+        self._forced_geometry.concretize(ref_sign=self._ref_sign)
 
     def add_dynamic_forcing_geometry(
         self,
@@ -241,8 +243,6 @@ class ParameterizedFabricPlanner(object):
             logging.warning("No damping")
 
     def set_speed_control(self):
-        self._geometry.concretize()
-        self._forced_geometry.concretize(ref_sign=self._ref_sign)
         x_psi = self._forced_variables.position_variable()
         dm_psi = self._forced_forward_map
         exLag = self._execution_lagrangian
@@ -475,10 +475,13 @@ class ParameterizedFabricPlanner(object):
         self.set_collision_avoidance()
         #self.set_self_collision_avoidance()
         self.set_joint_limits()
-        self.set_goal_component(self._problem_configuration.goal_composition)
-        execution_energy = ExecutionLagrangian(self._variables)
-        self.set_execution_energy(execution_energy)
-        self.set_speed_control()
+        if self._config.forcing_type in ['forced', 'speed-controlled']:
+            self.set_goal_component(self._problem_configuration.goal_composition)
+        if self._config.forcing_type in ['speed-controlled', 'execution-energy']:
+            execution_energy = ExecutionLagrangian(self._variables)
+            self.set_execution_energy(execution_energy)
+        if self._config.forcing_type in ['speed-controlled']:
+            self.set_speed_control()
 
     def set_joint_limits(self):
         limits = np.zeros((7, 2))
@@ -704,6 +707,9 @@ class ParameterizedFabricPlanner(object):
             logging.warn("No forcing term, using pure geoemtry with energization.")
             #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
             xddot = self._execution_geometry._xddot - self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
+        elif hasattr(self, '_forced_geometry'):
+            logging.warn("No execution energy, using forced geoemtry without speed regulation.")
+            xddot = self._forced_geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
         else:
             xddot = self._geometry._xddot
 

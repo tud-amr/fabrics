@@ -8,6 +8,7 @@ from fabrics.components.environment import Environment
 
 @dataclass
 class FabricPlannerConfig:
+    forcing_type: str = 'speed-controlled' # options are 'speed-controlled', 'pure-geometry', 'execution-energy', 'forced'
     base_energy: str = (
         "0.5 * 0.2 * ca.dot(xdot, xdot)"
     )
@@ -82,14 +83,14 @@ class ProblemConfiguration:
             lower_limits=self._config['joint_limits']['lower_limits'],
             upper_limits=self._config['joint_limits']['upper_limits']
         )
-        self.construt_robot_representation()
+        self.construct_robot_representation()
         self._environment=Environment(
             number_spheres=self._config['environment']['number_spheres'],
             number_planes=self._config['environment']['number_planes'],
             number_cuboids=self._config['environment']['number_cuboids'],
         )
 
-    def construt_robot_representation(self):
+    def construct_robot_representation(self):
         collision_links = {}
         for link, link_data in self._config['robot_representation']['collision_links'].items():
             collision_link_type = list(link_data.keys())[0]
