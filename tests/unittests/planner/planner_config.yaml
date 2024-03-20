@@ -1,0 +1,43 @@
+problem:
+  environment:
+    number_cuboids:
+      dynamic: 0
+      static: 1
+    number_planes: 1
+    number_spheres:
+      dynamic: 0
+      static: 2
+  goal:
+    goal_definition:
+      subgoal0:
+        child_link: 0
+        desired_position:
+        - 0.0
+        - -0.6
+        epsilon: 0.05
+        indices:
+        - 0
+        - 1
+        is_primary_goal: true
+        parent_link: 1
+        type: staticSubGoal
+        weight: 1.0
+  joint_limits:
+    lower_limits:
+    - -2.
+    - -1.
+    upper_limits:
+    - 2.
+    - 2.
+  robot_representation:
+    collision_links:
+      1:
+        sphere:
+          radius: 0.1
+    self_collision_pairs: {}
+fabrics:
+  limit_geometry: -1.0 / (x ** 1) * xdot ** 2
+  limit_finsler: 1.0/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2
+  collision_geometry: -0.2 / (x ** 1) * xdot ** 2
+  collision_finsler:  0.2/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2
+

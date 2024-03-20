@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+import os
+import yaml
 
 from forwardkinematics.fksCommon.fk_creator import FkCreator
 
@@ -36,6 +38,15 @@ def goal():
 def test_set_components(planner: ParameterizedFabricPlanner, goal: GoalComposition):
     planner.set_components(collision_links=[1], goal=goal)
     planner.concretize()
+
+def test_load_configuration(planner: ParameterizedFabricPlanner):
+    config_file = os.path.join(os.path.dirname(__file__), "planner_config.yaml")
+    with open(config_file, 'r') as config_file:
+        config = yaml.safe_load(config_file)
+        config_problem = config['problem']
+        config_fabrics = config['fabrics']
+    planner.load_fabrics_configuration(config_fabrics)
+    planner.load_problem_configuration(config_problem)
 
 def test_compute_action(planner: ParameterizedFabricPlanner, goal: GoalComposition):
     planner.set_components(collision_links=[1], goal=goal)
