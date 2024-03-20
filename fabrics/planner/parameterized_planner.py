@@ -224,6 +224,8 @@ class ParameterizedFabricPlanner(object):
         self._variables = self._variables + self._forced_geometry._vars
         self._target_velocity += ca.mtimes(ca.transpose(forward_map._J), target_velocity)
         self._ref_sign = -1
+        self._geometry.concretize()
+        self._forced_geometry.concretize(ref_sign=self._ref_sign)
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
         assert isinstance(execution_lagrangian, Lagrangian)
