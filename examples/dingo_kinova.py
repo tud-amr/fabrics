@@ -11,20 +11,10 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
-"""
-Experiments with Kuka iiwa
-If 
-    static_obst_dict = {
-        "type": "sphere",
-        "geometry": {"position": [0.3, -0.3, 0.5], "radius": 0.1},
-    }
-for the first obstacle, fabrics ends up in a local minima and is unable to
-recover from it. This would be a good case to improve with imitation learning.
-"""
 
 # ROBOTTYPE = 'kinova'
 # ROBOTMODEL = 'gen3_6dof'
-# current_dir = os.getcwd()
+
 absolute_path = os.path.dirname(os.path.abspath(__file__))
 URDF_FILE = os.path.join(absolute_path, "dingo_kinova/urdf/dingo_kinova.urdf") # we are already in the examples folder
 
@@ -55,7 +45,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
     # Definition of the obstacle.
     static_obst_dict = {
         "type": "sphere",
-        "geometry": {"position": [-0.4, -0.5, 0.5], "radius": 0.1},
+        "geometry": {"position": [-0.4, -0.6, 0.5], "radius": 0.1},
     }
     obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
     static_obst_dict = {
@@ -144,11 +134,11 @@ def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int
 
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
-        # collision_links=collision_links,
+        collision_links=collision_links,
         goal=goal,
-        # number_obstacles=nr_obst,
-        # number_plane_constraints=1,
-        # limits=joint_limits,
+        number_obstacles=nr_obst,
+        number_plane_constraints=1,
+        limits=joint_limits,
     )
     planner.concretize()
     return planner
