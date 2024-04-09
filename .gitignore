@@ -13,3 +13,4 @@ tags
 *.pbz2
 *.pkl
 .idea
+.python-version
