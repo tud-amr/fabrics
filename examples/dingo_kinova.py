@@ -1,6 +1,7 @@
 import os
 import gymnasium as gym
 import numpy as np
+import quaternionic
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
@@ -8,6 +9,7 @@ from urdfenvs.sensors.full_sensor import FullSensor
 
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
+from mpscenes.obstacles.box_obstacle import BoxObstacle
 from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
@@ -19,7 +21,7 @@ absolute_path = os.path.dirname(os.path.abspath(__file__))
 URDF_FILE = os.path.join(absolute_path, "dingo_kinova/urdf/dingo_kinova.urdf") # we are already in the examples folder
 
 
-def initalize_environment(render=True, nr_obst: int = 0):
+def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 8):
     """
     Initializes the simulation environment.
 
@@ -42,17 +44,26 @@ def initalize_environment(render=True, nr_obst: int = 0):
             obstacle_mask=['position', 'size'],
             variance=0.0
     )
-    # Definition of the obstacle.
-    static_obst_dict = {
-        "type": "sphere",
-        "geometry": {"position": [-0.4, -0.6, 0.5], "radius": 0.1},
-    }
-    obst1 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
-    static_obst_dict = {
-        "type": "sphere",
-        "geometry": {"position": [-0.7, 0.0, 0.5], "radius": 0.1},
-    }
-    obst2 = SphereObstacle(name="staticObst", content_dict=static_obst_dict)
+    radius_ring = 0.3
+    obstacles = []
+    obstacle_resolution = n_cube_obst
+    goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
+    rotation_matrix = quaternionic.array(goal_orientation).to_rotation_matrix
+    whole_position = [0.1, 0.6, 0.8]
+    for i in range(obstacle_resolution + 1):
+        angle = i/obstacle_resolution * 2.*np.pi
+        origin_position = [
+            0.0,
+            radius_ring * np.cos(angle),
+            radius_ring * np.sin(angle),
+        ]
+        position = np.dot(np.transpose(rotation_matrix), origin_position) + whole_position
+        static_obst_dict = {
+            "type": "box",
+            "geometry": {"position": position.tolist(), "length": 0.1, "width": 0.1, "height": 0.1},
+        }
+        obstacles.append(BoxObstacle(name="staticObst", content_dict=static_obst_dict))
+
     goal_dict = {
         "subgoal0": {
             "weight": 1.0,
@@ -60,13 +71,13 @@ def initalize_environment(render=True, nr_obst: int = 0):
             "indices": [0, 1, 2],
             "parent_link": "world",
             "child_link": "arm_tool_frame",
-            "desired_position": [-0.24355761, -0.75252747, 0.5],
+            "desired_position": whole_position,
             "epsilon": 0.05,
             "type": "staticSubGoal",
         },
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
-    obstacles = [obst1, obst2][0:nr_obst]
+    
     pos0 = np.array([0.0, 0.8, -1.5, 2.0, 0.0, 0.0])
     env.reset(pos=pos0)
     env.add_sensor(full_sensor, [0])
@@ -81,7 +92,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
     return (env, goal)
 
 
-def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int = 3+6):
+def set_planner(goal: GoalComposition, n_obst: int, n_cube_obst:int, degrees_of_freedom: int):
     """
     Initializes the fabric planner for the kuka robot.
 
@@ -136,8 +147,9 @@ def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int
     planner.set_components(
         collision_links=collision_links,
         goal=goal,
-        number_obstacles=nr_obst,
-        number_plane_constraints=1,
+        number_obstacles=n_obst,
+        number_obstacles_cuboid=n_cube_obst,
+        number_plane_constraints=0,
         limits=joint_limits,
     )
     planner.concretize()
@@ -145,9 +157,11 @@ def set_planner(goal: GoalComposition, nr_obst: int = 0, degrees_of_freedom: int
 
 
 def run_kinova_example(n_steps=5000, render=True, dof=3+6):
-    nr_obst = 2
-    (env, goal) = initalize_environment(render, nr_obst=nr_obst)
-    planner = set_planner(goal, nr_obst, degrees_of_freedom=dof)
+    nr_obst = 0
+    n_cube_obst = 8
+    total_obst = nr_obst + n_cube_obst
+    (env, goal) = initalize_environment(render, nr_obst=nr_obst, n_cube_obst=n_cube_obst)
+    planner = set_planner(goal, n_obst=nr_obst, n_cube_obst=n_cube_obst, degrees_of_freedom=dof)
     action = np.zeros(dof)
     ob, *_ = env.step(action)
 
@@ -157,22 +171,25 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
 
     for w in range(n_steps):
         ob_robot = ob['robot_0']
+        #  x_obsts_cuboid is a np.array of shape (n_cube_obst, 3)
+        #  size_obsts_cuboid is a np.array of shape (n_cube_obst, 3), 3: length", "width", "height ?
+        x_obsts = [ob_robot['FullSensor']['obstacles'][i+2]['position'] for i in range(n_cube_obst)]
+        size_obsts = [ob_robot['FullSensor']['obstacles'][i+2]['size'] for i in range(n_cube_obst)]
 
         arguments_dict = dict(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][nr_obst+2]['position'],
-            weight_goal_0=ob_robot['FullSensor']['goals'][nr_obst+2]['weight'],
-            x_obst_0=ob_robot['FullSensor']['obstacles'][nr_obst]['position'],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][nr_obst]['size'],
-            x_obst_1=ob_robot['FullSensor']['obstacles'][nr_obst+1]['position'],
-            radius_obst_1=ob_robot['FullSensor']['obstacles'][nr_obst+1]['size'],
+            x_obsts_cuboid=x_obsts,
+            size_obsts_cuboid=size_obsts,
+            x_goal_0=ob_robot['FullSensor']['goals'][total_obst+3]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][total_obst+3]['weight'],
             radius_body_arm_arm_link = 0.1,
             radius_body_arm_forearm_link = 0.1,
             radius_body_arm_lower_wrist_link = 0.1,
             radius_body_arm_upper_wrist_link = 0.1,
             radius_body_arm_end_effector_link=0.1,
-            constraint_0=np.array([0, 0, 1, 0.0]))
+            # constraint_0=np.array([0, 0, 1, 0.0])
+            )
 
         action = planner.compute_action(**arguments_dict)
         ob, *_ = env.step(action)
