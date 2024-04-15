@@ -1,46 +1,48 @@
-import deprecation
-from typing import Dict, Optional, List
 import logging
+from copy import deepcopy
+from typing import Dict, List, Optional
+
 import casadi as ca
+import deprecation
+import numpy as np
+
 from forwardkinematics.fksCommon.fk import ForwardKinematics
 from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
-import numpy as np
-from copy import deepcopy
-from fabrics.helpers.geometric_primitives import Sphere
-from fabrics.helpers.exceptions import ExpressionSparseError
-from fabrics import __version__
-
-from fabrics.helpers.variables import Variables
-from fabrics.helpers.constants import eps
-from fabrics.helpers.functions import is_sparse, parse_symbolic_input
-
-from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
-from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.diffGeometry.geometry import Geometry
-from fabrics.diffGeometry.energized_geometry import WeightedGeometry
-from fabrics.diffGeometry.speedControl import Damper
-
-from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
-
-from fabrics.components.energies.execution_energies import ExecutionLagrangian
-from fabrics.components.leaves.leaf import Leaf
-from fabrics.components.leaves.attractor import GenericAttractor
-from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
-from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import (AvoidanceLeaf, CapsuleSphereLeaf,
-                                                ObstacleLeaf, LimitLeaf,
-                                                PlaneConstraintGeometryLeaf,
-                                                SelfCollisionLeaf,
-                                                GenericGeometryLeaf,
-                                                ESDFGeometryLeaf,
-                                                SphereCuboidLeaf,
-                                                CapsuleCuboidLeaf)
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
-
 from pyquaternion import Quaternion
 
-from fabrics.planner.configuration_classes import FabricPlannerConfig, ProblemConfiguration
+from fabrics import __version__
+from fabrics.components.energies.execution_energies import ExecutionLagrangian
+from fabrics.components.leaves.attractor import GenericAttractor
+from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
+from fabrics.components.leaves.dynamic_geometry import (
+    DynamicObstacleLeaf, GenericDynamicGeometryLeaf)
+from fabrics.components.leaves.geometry import (AvoidanceLeaf,
+                                                CapsuleCuboidLeaf,
+                                                CapsuleSphereLeaf,
+                                                ESDFGeometryLeaf,
+                                                GenericGeometryLeaf, LimitLeaf,
+                                                ObstacleLeaf,
+                                                PlaneConstraintGeometryLeaf,
+                                                SelfCollisionLeaf,
+                                                SphereCuboidLeaf)
+from fabrics.components.leaves.leaf import Leaf
+from fabrics.diffGeometry.diffMap import (DifferentialMap,
+                                          DynamicDifferentialMap)
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.speedControl import Damper
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+from fabrics.helpers.constants import eps
+from fabrics.helpers.exceptions import ExpressionSparseError
+from fabrics.helpers.functions import is_sparse, parse_symbolic_input
+from fabrics.helpers.geometric_primitives import Sphere
+from fabrics.helpers.variables import Variables
+from fabrics.planner.configuration_classes import (FabricPlannerConfig,
+                                                   ProblemConfiguration)
+
 
 class InvalidRotationAnglesError(Exception):
     pass
