@@ -32,7 +32,7 @@ class DifferentialMap:
 
     def concretize(self) -> None:
         self._funs = CasadiFunctionWrapper(
-            "funs", self._vars.asDict(), {"phi": self._phi, "J": self._J, "Jdot": self._Jdot}
+            "funs", self._vars, {"phi": self._phi, "J": self._J, "Jdot": self._Jdot}
         )
 
     def params(self) -> dict:
@@ -84,7 +84,7 @@ class DynamicDifferentialMap(DifferentialMap):
 
     def concretize(self) -> None:
         self._funs = CasadiFunctionWrapper(
-            "funs", self._vars.asDict(), {"x_rel": self._phi, "xdot_rel": self._phi_dot}
+            "funs", self._vars, {"x_rel": self._phi, "xdot_rel": self._phi_dot}
         )
 
     def forward(self, **kwargs):

@@ -1,4 +1,6 @@
+from typing import Union
 import casadi as ca
+import numpy as np
 from copy import deepcopy
 
 class ParameterNotFoundError(Exception):
@@ -6,13 +8,16 @@ class ParameterNotFoundError(Exception):
 
 
 class Variables(object):
-    def __init__(self, state_variables=None, parameters=None):
+    def __init__(self, state_variables=None, parameters=None, parameters_values=None):
         if state_variables is None:
             state_variables = {}
         if parameters is None:
             parameters = {}
+        if parameters_values is None:
+            parameters_values = {}
         self._state_variables = state_variables
         self._parameters = parameters
+        self._parameters_values = parameters_values
         if len(state_variables) > 0:
             self._state_variable_names = list(state_variables.keys())
         if len(parameters) > 0:
@@ -27,11 +32,23 @@ class Variables(object):
     def parameters(self) -> dict:
         return self._parameters
 
+    def parameters_values(self) -> dict:
+        return self._parameters_values
+
     def add_parameter(self, name: str, value: ca.SX) -> None:
         self._parameters[name] = value
 
+    def add_parameter_value(self, name: str, value: Union[float, np.ndarray]) -> None:
+        if name not in self._parameters:
+            raise ParameterNotFoundError(f"Parameter {name} not in parameters")
+        self._parameters_values[name] = value
+
     def add_parameters(self, parameter_dict: dict) -> None:
         self._parameters.update(parameter_dict)
+
+    def add_parameters_values(self, parameter_dict: dict) -> None:
+        for parameter_name, parameter_value in parameter_dict.items():
+            self.add_parameter_value(parameter_name, parameter_value)
 
     def set_parameters(self, parameters):
         self._parameters = parameters
@@ -94,8 +111,12 @@ class Variables(object):
                     joined_parameters[new_key] = value
             else:
                 joined_parameters[key] = value
-
-        return Variables(state_variables=joined_state_variables, parameters=joined_parameters)
+        joined_parameters_values = {**self.parameters_values(), **b.parameters_values()}
+        return Variables(
+            state_variables=joined_state_variables,
+            parameters=joined_parameters,
+            parameters_values=joined_parameters_values,
+        )
 
     def len(self):
         return len(self._parameters.values()) + len(
