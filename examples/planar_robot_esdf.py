@@ -157,8 +157,8 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="panda_link0",
-        end_link="panda_link4",
+        root_link="panda_link0",
+        end_links="panda_link4",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -192,7 +192,7 @@ def run_planar_robot_esdf(n_steps=5000, render=True):
         #pos_link4_fun = planner._forward_kinematics._fks["panda_link4"]
         #pos_link4 = pos_link4_fun(pos_joints)[1:3, 3]  # only return (y, z)
         pos_link4 = planner._forward_kinematics.numpy(
-            pos_joints, 'panda_link0', 'panda_link4', positionOnly=True
+            pos_joints, 'panda_link4', position_only=True
         )[1:3]
         proj_rgb, _ = get_top_view_image(save=False, load_only=True)
         edf_phi, edf_gradient_x, edf_gradient_y = edf(

@@ -131,8 +131,8 @@ def set_planner(goal: GoalComposition):
     degrees_of_freedom = 3
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="world",
-        end_link="base_link",
+        root_link="world",
+        end_links="base_link",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,

@@ -3,19 +3,18 @@ import numpy as np
 import os
 import yaml
 
-from forwardkinematics.fksCommon.fk_creator import FkCreator
-
 from mpscenes.goals.goal_composition import GoalComposition
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+from forwardkinematics.planarFks.point_fk import PointFk
 
 def test_creation():
-    fk = FkCreator("pointRobot").fk()
+    fk = PointFk()
     ParameterizedFabricPlanner(2, fk)
 
 @pytest.fixture
 def planner():
-    fk = FkCreator("pointRobot").fk()
+    fk = PointFk()
     return ParameterizedFabricPlanner(2, fk)
 
 @pytest.fixture

@@ -1,18 +1,25 @@
+import os
 import logging
 import gymnasium as gym
 import numpy as np
+import pybullet
 
-from forwardkinematics.fksCommon.fk_creator import FkCreator
+from robotmodels.utils.robotmodel import RobotModel
 
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.sensors.full_sensor import FullSensor
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
+
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 
 from fabrics.planner.non_holonomic_parameterized_planner import NonHolonomicParameterizedFabricPlanner
 
+albert_model = RobotModel('albert')
+urdf_file = albert_model.get_urdf_path()
+urdf_file_fk = os.path.join(os.path.dirname(__file__), "albert.urdf")
 
 logging.basicConfig(level=logging.INFO)
 """
@@ -33,7 +40,7 @@ def initalize_environment(render):
     """
     robots = [
         GenericDiffDriveRobot(
-            urdf="albert.urdf",
+            urdf=urdf_file,
             mode="acc",
             actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
             castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
@@ -65,7 +72,7 @@ def initalize_environment(render):
             "weight": 1.0,
             "is_primary_goal": True,
             "indices": [0, 1, 2],
-            "parent_link" : 'origin',
+            "parent_link" : 'world',
             "child_link" : 'panda_hand',
             "desired_position": [4.0, -1.2, 1.0],
             "epsilon" : 0.1,
@@ -113,7 +120,14 @@ def set_planner(goal: GoalComposition):
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 2) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
-    forward_kinematics = FkCreator(robot_type).fk()
+    with open(urdf_file_fk, "r", encoding="utf-8") as file:
+        urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        root_link="world",
+        end_links="panda_hand",
+    )
+
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             forward_kinematics,
@@ -121,7 +135,7 @@ def set_planner(goal: GoalComposition):
             collision_finsler=collision_finsler,
             l_offset="0.1/ca.norm_2(xdot)",
     )
-    collision_links = ["base_link", "base_tip_link", 'panda_link1', 'panda_link4', 'panda_link6', 'panda_hand']
+    collision_links = ["top_mount_bottom", 'panda_link1', 'panda_link4', 'panda_link6', 'panda_hand']
     self_collision_pairs = {}
     boxer_limits = [
             [-10, 10],
@@ -170,6 +184,16 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             ob_robot['joint_state']['forward_velocity'][0],
             ob_robot['joint_state']['velocity'][2]
         ])
+        q = ob_robot["joint_state"]["position"][:-2]
+        fk_hand = planner._forward_kinematics.numpy(q, 'panda_hand', position_only=True)
+        print(fk_hand)
+        index = 15
+        name = pybullet.getJointInfo(1, index)
+        print(name[12])
+
+        link_position = np.array(pybullet.getLinkState(1,index)[0])
+        print(link_position)
+        print(f'difference : {link_position - fk_hand}')
         qudot = np.concatenate((qudot, ob_robot['joint_state']['velocity'][3:-2]))
         arguments = dict(
             q=ob_robot["joint_state"]["position"][:-2],
@@ -185,8 +209,7 @@ def run_albert_reacher_example(n_steps=10000, render=True):
             m_arm=1.0,
             x_obst_0=ob_robot['FullSensor']['obstacles'][2]['position'],
             radius_obst_0=ob_robot['FullSensor']['obstacles'][2]['size'],
-            radius_body_base_link=0.8,
-            radius_body_base_tip_link=0.3,
+            radius_body_top_mount_bottom=0.8,
             radius_body_panda_link1=0.1,
             radius_body_panda_link4=0.1,
             radius_body_panda_link6=0.15,

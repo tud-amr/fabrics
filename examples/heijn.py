@@ -107,8 +107,8 @@ def set_planner(goal: GoalComposition):
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink='odom',
-        end_link=[
+        root_link='odom',
+        end_links=[
             'front_link',
             'collision_link_front_right',
             'collision_link_front_left',

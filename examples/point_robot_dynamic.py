@@ -100,8 +100,8 @@ def set_planner(goal: GoalComposition):
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="world",
-        end_link="base_link",
+        root_link="world",
+        end_links="base_link",
     )
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"

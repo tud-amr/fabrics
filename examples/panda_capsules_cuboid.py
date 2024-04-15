@@ -136,8 +136,8 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="panda_link0",
-        end_link="panda_link8",
+        root_link="panda_link0",
+        end_links="panda_link8",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -148,7 +148,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
     for i in CAPSULE_LINKS:
         tf, link_name, _, _, length = setup_collision_links_panda(i)
         tf_capsule_origin =  forward_kinematics.casadi(
-            q, "panda_link0", link_name, tf
+            q, link_name, link_transformation=tf,
         ) 
         # planner.add_capsule_sphere_geometry(
         #     "obst_1", f"capsule_{i}", tf_capsule_origin, length
