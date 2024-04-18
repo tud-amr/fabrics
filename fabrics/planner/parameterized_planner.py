@@ -1,50 +1,48 @@
-from dataclasses import dataclass, field
-import deprecation
-from typing import Dict, Optional, List
 import logging
+from copy import deepcopy
+from typing import Dict, List, Optional
+
 import casadi as ca
+import deprecation
+import numpy as np
+
 from forwardkinematics.fksCommon.fk import ForwardKinematics
 from forwardkinematics.urdfFks.urdfFk import LinkNotInURDFError
-import numpy as np
-from copy import deepcopy
-from fabrics.helpers.geometric_primitives import Sphere
-from fabrics.helpers.exceptions import ExpressionSparseError
-from fabrics import __version__
-
-from fabrics.helpers.variables import Variables
-from fabrics.helpers.constants import eps
-from fabrics.helpers.functions import is_sparse, parse_symbolic_input
-
-from fabrics.diffGeometry.diffMap import DifferentialMap, DynamicDifferentialMap
-from fabrics.diffGeometry.energy import Lagrangian
-from fabrics.diffGeometry.geometry import Geometry
-from fabrics.diffGeometry.energized_geometry import WeightedGeometry
-from fabrics.diffGeometry.speedControl import Damper
-
-from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
-
-from fabrics.components.energies.execution_energies import ExecutionLagrangian
-from fabrics.components.leaves.leaf import Leaf
-from fabrics.components.leaves.attractor import GenericAttractor
-from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
-from fabrics.components.leaves.dynamic_geometry import DynamicObstacleLeaf, GenericDynamicGeometryLeaf
-from fabrics.components.leaves.geometry import (AvoidanceLeaf, CapsuleSphereLeaf,
-                                                ObstacleLeaf, LimitLeaf,
-                                                PlaneConstraintGeometryLeaf,
-                                                SelfCollisionLeaf,
-                                                GenericGeometryLeaf,
-                                                ESDFGeometryLeaf,
-                                                SphereCuboidLeaf,
-                                                CapsuleCuboidLeaf)
 from mpscenes.goals.goal_composition import GoalComposition
 from mpscenes.goals.sub_goal import SubGoal
-
-from forwardkinematics.fksCommon.fk_creator import FkCreator
-from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
-
 from pyquaternion import Quaternion
 
-from fabrics.planner.configuration_classes import FabricPlannerConfig, ProblemConfiguration
+from fabrics import __version__
+from fabrics.components.energies.execution_energies import ExecutionLagrangian
+from fabrics.components.leaves.attractor import GenericAttractor
+from fabrics.components.leaves.dynamic_attractor import GenericDynamicAttractor
+from fabrics.components.leaves.dynamic_geometry import (
+    DynamicObstacleLeaf, GenericDynamicGeometryLeaf)
+from fabrics.components.leaves.geometry import (AvoidanceLeaf,
+                                                CapsuleCuboidLeaf,
+                                                CapsuleSphereLeaf,
+                                                ESDFGeometryLeaf,
+                                                GenericGeometryLeaf, LimitLeaf,
+                                                ObstacleLeaf,
+                                                PlaneConstraintGeometryLeaf,
+                                                SelfCollisionLeaf,
+                                                SphereCuboidLeaf)
+from fabrics.components.leaves.leaf import Leaf
+from fabrics.diffGeometry.diffMap import (DifferentialMap,
+                                          DynamicDifferentialMap)
+from fabrics.diffGeometry.energized_geometry import WeightedGeometry
+from fabrics.diffGeometry.energy import Lagrangian
+from fabrics.diffGeometry.geometry import Geometry
+from fabrics.diffGeometry.speedControl import Damper
+from fabrics.helpers.casadiFunctionWrapper import CasadiFunctionWrapper
+from fabrics.helpers.constants import eps
+from fabrics.helpers.exceptions import ExpressionSparseError
+from fabrics.helpers.functions import is_sparse, parse_symbolic_input
+from fabrics.helpers.geometric_primitives import Sphere
+from fabrics.helpers.variables import Variables
+from fabrics.planner.configuration_classes import (FabricPlannerConfig,
+                                                   ProblemConfiguration)
+
 
 class InvalidRotationAnglesError(Exception):
     pass
@@ -258,18 +256,10 @@ class ParameterizedFabricPlanner(object):
     def get_forward_kinematics(self, link_name, position_only: bool = True) -> ca.SX:
         if isinstance(link_name, ca.SX):
             return link_name
-        if isinstance(self._forward_kinematics, GenericURDFFk):
-            fk = self._forward_kinematics.fk(
-                self._variables.position_variable(),
-                self._forward_kinematics._rootLink,
-                link_name,
-                positionOnly=position_only
-            )
-        else:
-            fk = self._forward_kinematics.fk(
+        fk = self._forward_kinematics.casadi(
                 self._variables.position_variable(),
                 link_name,
-                positionOnly=position_only
+                position_only=position_only
             )
         return fk
 
@@ -512,6 +502,11 @@ class ParameterizedFabricPlanner(object):
             return
         for link_name, collision_link in self._problem_configuration.robot_representation.collision_links.items():
             fk = self.get_forward_kinematics(link_name, position_only=False)
+            if fk.shape == (3, 3):
+                fk_augmented = ca.SX.eye(4)
+                fk_augmented[0:2, 0:2] = fk[0:2, 0:2]
+                fk_augmented[0:2, 3] = fk[0:2, 2]
+                fk = fk_augmented
             if fk.shape == (4, 4) and is_sparse(fk[0:3, 3]):
                 message = (
                         f"Expression {fk[0:3, 3]} for link {link_name} "
@@ -526,13 +521,7 @@ class ParameterizedFabricPlanner(object):
                 )
                 logging.warning(message.format_map(locals()))
                 continue
-            if fk.shape != (4, 4):
-                fk_augmented = ca.SX(np.identity(4))
-                fk_augmented[0, 3] = fk[0]
-                fk_augmented[1, 3] = fk[1]
-                collision_link.set_origin(fk_augmented)
-            else:
-                collision_link.set_origin(fk)
+            collision_link.set_origin(fk)
             self._variables.add_parameters(collision_link.sym_parameters)
             self._variables.add_parameters_values(collision_link.parameters)
             for obstacle in self._problem_configuration.environment.obstacles:

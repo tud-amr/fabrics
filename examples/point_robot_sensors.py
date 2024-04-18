@@ -122,8 +122,8 @@ def set_planner(goal: GoalComposition):
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="world",
-        end_link="base_link",
+        root_link="world",
+        end_links="base_link",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,

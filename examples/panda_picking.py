@@ -157,8 +157,8 @@ def set_planner(degrees_of_freedom: int = 7):
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="panda_link0",
-        end_link="panda_leftfinger",
+        root_link="panda_link0",
+        end_links="panda_leftfinger",
     )
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,

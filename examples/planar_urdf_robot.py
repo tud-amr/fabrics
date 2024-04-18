@@ -119,7 +119,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 2):
         'panda',
         urdf=urdf,
         root_link='panda_link0',
-        end_link='panda_link4',
+        end_links='panda_link4',
     )
     q = planner.variables.position_variable()
     collision_links = ['panda_link1', 'panda_link4']

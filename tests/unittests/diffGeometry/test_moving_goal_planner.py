@@ -40,7 +40,7 @@ def movingGoalGeometry():
     qdot = ca.SX.sym("qdot", n)
     var_q = Variables(state_variables={'q': q, 'qdot': qdot})
     planarArmFk = PlanarArmFk(n)
-    phi_fk = planarArmFk.fk(q, n, positionOnly=True)
+    phi_fk = planarArmFk.casadi(q, n, position_only=True)
     dm_fk = DifferentialMap(phi_fk, var_q)
     geo_fk = geo.pull(dm_fk)
     return geo_rel, geo, geo_fk

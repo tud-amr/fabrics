@@ -1,8 +1,10 @@
+import os
 import logging
 import gymnasium as gym
 import numpy as np
 
-from forwardkinematics.fksCommon.fk_creator import FkCreator
+from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
+from robotmodels.utils.robotmodel import RobotModel
 
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.sensors.full_sensor import FullSensor
@@ -18,6 +20,9 @@ logging.basicConfig(level=logging.INFO)
 Fabrics example for the boxer robot.
 """
 
+boxer_model = RobotModel('boxer')
+urdf_file = boxer_model.get_urdf_path()
+
 def initalize_environment(render):
     """
     Initializes the simulation environment.
@@ -32,7 +37,7 @@ def initalize_environment(render):
     """
     robots = [
         GenericDiffDriveRobot(
-            urdf="boxer.urdf",
+            urdf=urdf_file,
             mode="acc",
             actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
             castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
@@ -106,7 +111,14 @@ def set_planner(goal: GoalComposition):
     # Optional reconfiguration of the planner with collision_geometry/finsler, remove for defaults.
     collision_geometry = "-2.0 / (x ** 2) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
-    forward_kinematics = FkCreator(robot_type).fk()
+    with open(urdf_file, "r", encoding="utf-8") as file:
+        urdf = file.read()
+    forward_kinematics = GenericURDFFk(
+        urdf,
+        root_link="base_link",
+        end_links="ee_link",
+        base_type="diffdrive",
+    )
     planner = NonHolonomicParameterizedFabricPlanner(
             degrees_of_freedom,
             forward_kinematics,

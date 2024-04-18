@@ -105,8 +105,8 @@ def set_planner(goal: GoalComposition) -> ParameterizedFabricPlanner:
         urdf = file.read()
     forward_kinematics = GenericURDFFk(
         urdf,
-        rootLink="world",
-        end_link="base_link",
+        root_link="world",
+        end_links="base_link",
     )
     collision_geometry = "-20.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
@@ -119,7 +119,7 @@ def set_planner(goal: GoalComposition) -> ParameterizedFabricPlanner:
     # The planner hides all the logic behind the function set_components.
     q = planner.variables.position_variable()
     tf_capsule_origin =  forward_kinematics.casadi(
-        q, "world", 'base_link', link_transformation=TF
+        q, 'base_link', link_transformation=TF
     ) 
     planner.add_capsule_cuboid_geometry(
         "obst_cuboid_0", "capsule_0", tf_capsule_origin, CAP_LENGTH
