@@ -67,8 +67,14 @@ def c2np(input_file: str, output_file: str):
             line = line.split('=')[0] + ' = np.tanh(' + re.findall('\((.*)\)', line)[0] + ')'
         if 'fmax' in line:
             line = line.split('=')[0] + ' = np.fmax(' + re.findall('\((.*)\)', line)[0] + ')'
-
+        if 'cos' in line:
+            line = line.split('=')[0] + ' = np.cos(' + re.findall('\((.*)\)', line)[0] + ')'
+        if 'sin' in line:
+            line = line.split('=')[0] + ' = np.sin(' + re.findall('\((.*)\)', line)[0] + ')'
+        if 'casadi_fabs' in line:
+            line = line.split('=')[0] + ' = np.abs(' + re.findall('\((.*)\)', line)[0] + ')'
         line = line.replace('  ', '    ')
+
 
 
 
