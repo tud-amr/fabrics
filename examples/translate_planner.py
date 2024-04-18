@@ -11,7 +11,7 @@ planner.export_as_c(simple_planner.c')
 Then you can use this example to test the numpy function for parallelization.
 """
 
-#python_code = c2np('planner.c', 'planner.py' )
+python_code = c2np('planner.c', 'planner.py' )
 from planner import casadi_f0_numpy
 
 N = 300
