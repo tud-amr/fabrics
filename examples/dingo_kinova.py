@@ -46,11 +46,11 @@ def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 8):
     )
     radius_ring = 0.3
     obstacles = []
-    obstacle_resolution = n_cube_obst
+    obstacle_resolution = n_cube_obst -1
     goal_orientation = [-0.366, 0.0, 0.0, 0.3305]
     rotation_matrix = quaternionic.array(goal_orientation).to_rotation_matrix
     whole_position = [0.1, 0.6, 0.8]
-    for i in range(obstacle_resolution + 1):
+    for i in range(obstacle_resolution):
         angle = i/obstacle_resolution * 2.*np.pi
         origin_position = [
             0.0,
@@ -63,6 +63,12 @@ def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 8):
             "geometry": {"position": position.tolist(), "length": 0.1, "width": 0.1, "height": 0.1},
         }
         obstacles.append(BoxObstacle(name="staticObst", content_dict=static_obst_dict))
+
+    static_obst_dict = {
+            "type": "box",
+            "geometry": {"position": [0.0, 0.0, 0.1], "length": 0.4, "width": 0.4, "height": 0.2},
+        }
+    obstacles.append(BoxObstacle(name="staticObst", content_dict=static_obst_dict))
 
     goal_dict = {
         "subgoal0": {
@@ -78,7 +84,7 @@ def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 8):
     }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
     
-    pos0 = np.array([0.0, 0.8, -1.5, 2.0, 0.0, 0.0])
+    pos0 = np.array([-1.0, -1.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     env.reset(pos=pos0)
     env.add_sensor(full_sensor, [0])
     for obst in obstacles:
@@ -86,9 +92,9 @@ def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 8):
     for sub_goal in goal.sub_goals():
         env.add_goal(sub_goal)
     env.set_spaces()
-    collision_radii = {12: 0.1, 13:0.1, 14:0.1, 15: 0.1, 16: 0.1, 17: 0.1}
+    collision_radii = {3:0.35, 12: 0.1, 13:0.1, 14:0.1, 15: 0.1, 16: 0.1, 17: 0.1}
     for collision_link_nr in collision_radii.keys():
-         env.add_collision_link(0, collision_link_nr, shape_type='sphere', size=[0.10])
+         env.add_collision_link(0, collision_link_nr, shape_type='sphere', size=[collision_radii[collision_link_nr]])
     return (env, goal)
 
 
@@ -123,6 +129,7 @@ def set_planner(goal: GoalComposition, n_obst: int, n_cube_obst:int, degrees_of_
         forward_kinematics,
     )
     collision_links = [
+        "base_link_y",
         "arm_arm_link",
         "arm_forearm_link",
         "arm_lower_wrist_link",
@@ -165,10 +172,6 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
     action = np.zeros(dof)
     ob, *_ = env.step(action)
 
-    rot_matrix = np.array([[-0.339, -0.784306, -0.51956],
-                           [-0.0851341, 0.57557, -0.813309],
-                           [0.936926, -0.23148, -0.261889]])
-
     for w in range(n_steps):
         ob_robot = ob['robot_0']
         #  x_obsts_cuboid is a np.array of shape (n_cube_obst, 3)
@@ -181,8 +184,9 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
             qdot=ob_robot["joint_state"]["velocity"],
             x_obsts_cuboid=x_obsts,
             size_obsts_cuboid=size_obsts,
-            x_goal_0=ob_robot['FullSensor']['goals'][total_obst+3]['position'],
-            weight_goal_0=ob_robot['FullSensor']['goals'][total_obst+3]['weight'],
+            x_goal_0=ob_robot['FullSensor']['goals'][total_obst+2]['position'],
+            weight_goal_0=ob_robot['FullSensor']['goals'][total_obst+2]['weight'],
+            radius_body_base_link_y = 0.35,
             radius_body_arm_arm_link = 0.1,
             radius_body_arm_forearm_link = 0.1,
             radius_body_arm_lower_wrist_link = 0.1,
