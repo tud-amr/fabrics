@@ -23,6 +23,7 @@ pytest = "6.2.5"
 deprecation = "^2.1.0"
 forwardkinematics = ">=1.1.4,<1.2"
 robotmodels = { git = "https://github.com/maxspahn/robotmodels.git"}
+matplotlib = "^3.7.0"
 
 [tool.poetry.group.dev]
 optional = true
