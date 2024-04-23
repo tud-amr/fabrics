@@ -192,6 +192,16 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
     # 'x_obst_cuboid_1': SX([x_obst_cuboid_1_0, x_obst_cuboid_1_1, x_obst_cuboid_1_2]),
     # 'x_obst_cuboid_2': SX([x_obst_cuboid_2_0, x_obst_cuboid_2_1, x_obst_cuboid_2_2]),
 
+    radius_body_arm_arm_link_n = np.repeat(np.array([0.1]), N)
+    radius_body_arm_end_effector_link_n = np.repeat(np.array([0.1]), N)
+    radius_body_arm_forearm_link_n = np.repeat(np.array([0.1]), N)
+    radius_body_arm_lower_wrist_link_n = np.repeat(np.array([0.1]), N)
+    radius_body_arm_upper_wrist_link_n = np.repeat(np.array([0.1]), N)
+    radius_body_base_link_y_n = np.repeat(np.array([0.35]), N)
+    size_obsts_cuboid_0_n = np.repeat(size_obsts[0].reshape(-1,1), N, axis=1)
+    size_obsts_cuboid_1_n = np.repeat(size_obsts[1].reshape(-1,1), N, axis=1)
+    size_obsts_cuboid_2_n = np.repeat(size_obsts[2].reshape(-1,1), N, axis=1)
+
     action = np.zeros(dof)
     ob, *_ = env.step(action)
 
@@ -207,15 +217,6 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
         #  repeat in columns
         q_n = np.repeat(ob_robot["joint_state"]["position"].reshape(-1,1), N, axis=1)
         qdot_n = np.repeat(ob_robot["joint_state"]["velocity"].reshape(-1,1), N, axis=1)
-        radius_body_arm_arm_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_end_effector_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_forearm_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_lower_wrist_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_upper_wrist_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_base_link_y_n = np.repeat(np.array([0.35]), N)
-        size_obsts_cuboid_0_n = np.repeat(size_obsts[0].reshape(-1,1), N, axis=1)
-        size_obsts_cuboid_1_n = np.repeat(size_obsts[1].reshape(-1,1), N, axis=1)
-        size_obsts_cuboid_2_n = np.repeat(size_obsts[2].reshape(-1,1), N, axis=1)
         weight_goal_0_n = np.repeat(np.array([ob_robot['FullSensor']['goals'][total_obst+2]['weight']]), N)
         x_goal_0_n = np.repeat(ob_robot['FullSensor']['goals'][total_obst+2]['position'].reshape(-1,1), N, axis=1)
         x_obst_cuboid_0_n = np.repeat(x_obsts[0].reshape(-1,1), N, axis=1)
@@ -251,15 +252,35 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
 
 
 if __name__ == "__main__":
-    dof = 9
-    res = run_kinova_example(n_steps=1000, render=True, dof=dof)
+
+    res = run_kinova_example(n_steps=5000, render=False, dof=9)
+
+    mean_single_env_time = 0.27/1000
     comp_time = np.array(res["comp_time"])
     Ns = np.array(res["Ns"])
+    comp_time_loop = Ns * mean_single_env_time
+    
     #  plot the computation time as a function of Ns
     average_time_per_N = comp_time/Ns
     fig, ax = plt.subplots()
     ax.plot(Ns, comp_time*1000)
+    ax.plot(Ns, comp_time_loop*1000, 'r--')
     ax.set_xlabel("N in parallel")
-    ax.set_ylabel("computation time (ms)")
+    ax.set_ylabel("TOTAL computation time (ms)")
+    ax.legend(["parallel computation (numpy)", "approx loop computation (casadi)"])
     ax.grid()
     fig.savefig("images/computation_time.png")
+
+    # plot the average computation time per N
+    fig, ax = plt.subplots()
+    ax.plot(Ns, average_time_per_N*1000)
+    ax.axhline(y=mean_single_env_time*1000, color='r', linestyle='--')
+    ax.set_xlabel("N in parallel")
+    ax.set_ylabel("average computation time per N (ms)")
+    ax.set_yscale('log')
+    ax.grid(True, which="both", linestyle="-", linewidth=0.5)
+    ax.minorticks_on()
+    ax.grid(True, which="minor", linestyle="--", linewidth=0.5)
+    ax.legend(["average computation time per N", "single avg computation time casadi (ms)"])
+    fig.savefig("images/average_computation_time_per_N.png")
+
