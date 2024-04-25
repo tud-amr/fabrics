@@ -14,11 +14,8 @@ from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
 
-# ROBOTTYPE = 'kinova'
-# ROBOTMODEL = 'gen3_6dof'
-
-absolute_path = os.path.dirname(os.path.abspath(__file__))
-URDF_FILE = os.path.join(absolute_path, "dingo_kinova/urdf/dingo_kinova.urdf") # we are already in the examples folder
+robot_model = RobotModel('dingo_kinova', model_name='dingo_kinova')
+URDF_FILE = robot_model.get_urdf_path()
 
 
 def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 8):

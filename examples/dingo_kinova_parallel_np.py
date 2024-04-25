@@ -16,10 +16,8 @@ from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 from fabrics.helpers.translation import c2np
 
-
-absolute_path = os.path.dirname(os.path.abspath(__file__))
-URDF_FILE = os.path.join(absolute_path, "dingo_kinova/urdf/dingo_kinova.urdf") # we are already in the examples folder
-
+robot_model = RobotModel('dingo_kinova', model_name='dingo_kinova')
+URDF_FILE = robot_model.get_urdf_path()
 
 def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 3):
     """
@@ -169,9 +167,9 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
     total_obst = nr_obst + n_cube_obst
     (env, goal) = initalize_environment(render, nr_obst=nr_obst, n_cube_obst=n_cube_obst)
     planner = set_planner(goal, n_obst=nr_obst, n_cube_obst=n_cube_obst, degrees_of_freedom=dof)
-    # planner.export_as_c('planner.c')
-    # python_code = c2np('planner.c', 'c_code/planner.py' )
-    from c_code.planner import casadi_f0_numpy
+    planner.export_as_c('planner.c')
+    python_code = c2np('planner.c', 'generated_code/planner_np.py' )
+    from examples.generated_code.planner_np import casadi_f0_numpy
 
     # inputs from fabrics/helpers/casadiFunctionWrapper.py (they are in alphabetical order)
 
@@ -192,16 +190,6 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
     # 'x_obst_cuboid_1': SX([x_obst_cuboid_1_0, x_obst_cuboid_1_1, x_obst_cuboid_1_2]),
     # 'x_obst_cuboid_2': SX([x_obst_cuboid_2_0, x_obst_cuboid_2_1, x_obst_cuboid_2_2]),
 
-    radius_body_arm_arm_link_n = np.repeat(np.array([0.1]), N)
-    radius_body_arm_end_effector_link_n = np.repeat(np.array([0.1]), N)
-    radius_body_arm_forearm_link_n = np.repeat(np.array([0.1]), N)
-    radius_body_arm_lower_wrist_link_n = np.repeat(np.array([0.1]), N)
-    radius_body_arm_upper_wrist_link_n = np.repeat(np.array([0.1]), N)
-    radius_body_base_link_y_n = np.repeat(np.array([0.35]), N)
-    size_obsts_cuboid_0_n = np.repeat(size_obsts[0].reshape(-1,1), N, axis=1)
-    size_obsts_cuboid_1_n = np.repeat(size_obsts[1].reshape(-1,1), N, axis=1)
-    size_obsts_cuboid_2_n = np.repeat(size_obsts[2].reshape(-1,1), N, axis=1)
-
     action = np.zeros(dof)
     ob, *_ = env.step(action)
 
@@ -217,7 +205,18 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
         #  repeat in columns
         q_n = np.repeat(ob_robot["joint_state"]["position"].reshape(-1,1), N, axis=1)
         qdot_n = np.repeat(ob_robot["joint_state"]["velocity"].reshape(-1,1), N, axis=1)
+
+        radius_body_arm_arm_link_n = np.repeat(np.array([0.1]), N)
+        radius_body_arm_end_effector_link_n = np.repeat(np.array([0.1]), N)
+        radius_body_arm_forearm_link_n = np.repeat(np.array([0.1]), N)
+        radius_body_arm_lower_wrist_link_n = np.repeat(np.array([0.1]), N)
+        radius_body_arm_upper_wrist_link_n = np.repeat(np.array([0.1]), N)
+        radius_body_base_link_y_n = np.repeat(np.array([0.35]), N)
+        size_obsts_cuboid_0_n = np.repeat(size_obsts[0].reshape(-1,1), N, axis=1)
+        size_obsts_cuboid_1_n = np.repeat(size_obsts[1].reshape(-1,1), N, axis=1)
+        size_obsts_cuboid_2_n = np.repeat(size_obsts[2].reshape(-1,1), N, axis=1)
         weight_goal_0_n = np.repeat(np.array([ob_robot['FullSensor']['goals'][total_obst+2]['weight']]), N)
+        
         x_goal_0_n = np.repeat(ob_robot['FullSensor']['goals'][total_obst+2]['position'].reshape(-1,1), N, axis=1)
         x_obst_cuboid_0_n = np.repeat(x_obsts[0].reshape(-1,1), N, axis=1)
         x_obst_cuboid_1_n = np.repeat(x_obsts[1].reshape(-1,1), N, axis=1)
@@ -252,14 +251,13 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
 
 
 if __name__ == "__main__":
-
-    res = run_kinova_example(n_steps=5000, render=False, dof=9)
+    res = run_kinova_example(n_steps=1000, render=False, dof=9)
 
     mean_single_env_time = 0.27/1000
     comp_time = np.array(res["comp_time"])
     Ns = np.array(res["Ns"])
     comp_time_loop = Ns * mean_single_env_time
-    
+
     #  plot the computation time as a function of Ns
     average_time_per_N = comp_time/Ns
     fig, ax = plt.subplots()
