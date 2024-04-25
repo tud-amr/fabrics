@@ -23,7 +23,6 @@ pytest = "6.2.5"
 deprecation = "^2.1.0"
 forwardkinematics = ">=1.1.4,<1.2"
 robotmodels = { git = "https://github.com/maxspahn/robotmodels.git"}
-matplotlib = "^3.7.0"
 
 [tool.poetry.group.dev]
 optional = true
@@ -49,6 +48,18 @@ optional = true
 planarenvs = "^1.4"
 urdfenvs = {extras = ["mujoco"], version = "^0.9.9"}
 mujoco = "^3.1.2"
+
+[tool.poetry.group.parallelized]
+optional = true
+
+[tool.poetry.group.parallelized.dependencies]
+matplotlib = "^3.7.0"
+torch = {version = "^2.3.0+cu118", source = "pytorch-gpu"}
+
+[[tool.poetry.source]]
+name = "pytorch-gpu"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
