@@ -1,6 +1,7 @@
 import os
 import time
 import numpy as np
+import torch
 import tqdm
 import matplotlib.pyplot as plt
 import quaternionic
@@ -15,9 +16,11 @@ from mpscenes.obstacles.box_obstacle import BoxObstacle
 from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 from fabrics.helpers.translation import c2np
+from fabrics.helpers.translation_torch import c2torch
 
 robot_model = RobotModel('dingo_kinova', model_name='dingo_kinova')
 URDF_FILE = robot_model.get_urdf_path()
+TENSOR_DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 3):
     """
@@ -96,23 +99,7 @@ def initalize_environment(render=True, nr_obst: int = 0, n_cube_obst:int = 3):
     return (env, goal)
 
 def set_planner(goal: GoalComposition, n_obst: int, n_cube_obst:int, degrees_of_freedom: int):
-    """
-    Initializes the fabric planner for the kuka robot.
 
-    This function defines the forward kinematics for collision avoidance,
-    and goal reaching. These components are fed into the fabrics planner.
-
-    In the top section of this function, an example for optional reconfiguration
-    can be found. Commented by default.
-
-    Params
-    ----------
-    goal: StaticSubGoal
-        The goal to the motion planning problem.
-    degrees_of_freedom: int
-        Degrees of freedom of the robot (default = 7)
-    """
-    # robot_model = RobotModel('kinova', model_name='gen3_6dof')
     urdf_file = URDF_FILE
     with open(urdf_file, "r", encoding="utf-8") as file:
         urdf = file.read()
@@ -160,7 +147,8 @@ def set_planner(goal: GoalComposition, n_obst: int, n_cube_obst:int, degrees_of_
     return planner
 
 def run_kinova_example(n_steps=5000, render=True, dof=3+6):
-    comp_time = []
+    comp_time_torch = []
+    comp_time_numpy = []
     Ns = []
     nr_obst = 0
     n_cube_obst = 3
@@ -168,7 +156,9 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
     (env, goal) = initalize_environment(render, nr_obst=nr_obst, n_cube_obst=n_cube_obst)
     planner = set_planner(goal, n_obst=nr_obst, n_cube_obst=n_cube_obst, degrees_of_freedom=dof)
     planner.export_as_c('planner.c')
-    python_code = c2np('planner.c', 'generated_code/planner_np.py' )
+    # python_code = c2torch('planner.c', 'generated_code/planner_torch.py' )
+    print("WARNING: Uncomment the c2torch and c2np function to regenerate the python code.")
+    from examples.generated_code.planner_torch import casadi_f0_torch
     from examples.generated_code.planner_np import casadi_f0_numpy
 
     # inputs from fabrics/helpers/casadiFunctionWrapper.py (they are in alphabetical order)
@@ -195,36 +185,37 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
     
     for w in tqdm.tqdm(range(n_steps)):
         t0 = time.perf_counter()
-        N = int((w+1)*2)
+        N = int((w+1)*100)
         ob_robot = ob['robot_0']
         #  x_obsts_cuboid is a np.array of shape (n_cube_obst, 3)
         #  size_obsts_cuboid is a np.array of shape (n_cube_obst, 3), 3: length", "width", "height ?
         x_obsts = [ob_robot['FullSensor']['obstacles'][i+2]['position'] for i in range(n_cube_obst)]
         size_obsts = [ob_robot['FullSensor']['obstacles'][i+2]['size'] for i in range(n_cube_obst)]
 
-        # Variables that do not change
-        radius_body_arm_arm_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_end_effector_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_forearm_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_lower_wrist_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_arm_upper_wrist_link_n = np.repeat(np.array([0.1]), N)
-        radius_body_base_link_y_n = np.repeat(np.array([0.35]), N)
-        size_obsts_cuboid_0_n = np.repeat(size_obsts[0].reshape(-1,1), N, axis=1)
-        size_obsts_cuboid_1_n = np.repeat(size_obsts[1].reshape(-1,1), N, axis=1)
-        size_obsts_cuboid_2_n = np.repeat(size_obsts[2].reshape(-1,1), N, axis=1)
-        weight_goal_0_n = np.repeat(np.array([ob_robot['FullSensor']['goals'][total_obst+2]['weight']]), N)
+        # Variables that do not change (consider defining them outside the loop)
+        link_radius10 = torch.full((N,), 0.1).to(TENSOR_DEVICE)
+        radius_body_arm_arm_link_n = link_radius10
+        radius_body_arm_end_effector_link_n = link_radius10
+        radius_body_arm_forearm_link_n = link_radius10
+        radius_body_arm_lower_wrist_link_n = link_radius10
+        radius_body_arm_upper_wrist_link_n = link_radius10
+        radius_body_base_link_y_n = link_radius10*3.5
+        size_obsts_cuboid_0_n = torch.tensor(np.repeat(size_obsts[0].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        size_obsts_cuboid_1_n = torch.tensor(np.repeat(size_obsts[1].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        size_obsts_cuboid_2_n = torch.tensor(np.repeat(size_obsts[2].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        weight_goal_0_n = torch.tensor(np.repeat(np.array([ob_robot['FullSensor']['goals'][total_obst+2]['weight']]), N), device=TENSOR_DEVICE)
 
         #  Variables that may change:.repeat in columns
-        q_n = np.repeat(ob_robot["joint_state"]["position"].reshape(-1,1), N, axis=1)
-        qdot_n = np.repeat(ob_robot["joint_state"]["velocity"].reshape(-1,1), N, axis=1)
+        q_n = torch.tensor(np.repeat(ob_robot["joint_state"]["position"].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        qdot_n = torch.tensor(np.repeat(ob_robot["joint_state"]["velocity"].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
 
-        x_goal_0_n = np.repeat(ob_robot['FullSensor']['goals'][total_obst+2]['position'].reshape(-1,1), N, axis=1)
-        x_obst_cuboid_0_n = np.repeat(x_obsts[0].reshape(-1,1), N, axis=1)
-        x_obst_cuboid_1_n = np.repeat(x_obsts[1].reshape(-1,1), N, axis=1)
-        x_obst_cuboid_2_n = np.repeat(x_obsts[2].reshape(-1,1), N, axis=1)
+        x_goal_0_n = torch.tensor(np.repeat(ob_robot['FullSensor']['goals'][total_obst+2]['position'].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        x_obst_cuboid_0_n = torch.tensor(np.repeat(x_obsts[0].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        x_obst_cuboid_1_n = torch.tensor(np.repeat(x_obsts[1].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
+        x_obst_cuboid_2_n = torch.tensor(np.repeat(x_obsts[2].reshape(-1,1), N, axis=1), device=TENSOR_DEVICE)
 
-        t1 = time.perf_counter()
-        action_n = casadi_f0_numpy(
+        t1_torch = time.perf_counter()
+        action_tensor = casadi_f0_torch(
             q_n,
             qdot_n,
             radius_body_arm_arm_link_n,
@@ -242,46 +233,71 @@ def run_kinova_example(n_steps=5000, render=True, dof=3+6):
             x_obst_cuboid_1_n,
             x_obst_cuboid_2_n
         )
-        t2 = time.perf_counter()
-        comp_time.append(t2-t1)
+        t2_torch = time.perf_counter()
+
+        t1_np = time.perf_counter()
+        action_np = casadi_f0_numpy(
+            q_n.cpu().numpy(),
+            qdot_n.cpu().numpy(),
+            radius_body_arm_arm_link_n.cpu().numpy(),
+            radius_body_arm_end_effector_link_n.cpu().numpy(),
+            radius_body_arm_forearm_link_n.cpu().numpy(),
+            radius_body_arm_lower_wrist_link_n.cpu().numpy(),
+            radius_body_arm_upper_wrist_link_n.cpu().numpy(),
+            radius_body_base_link_y_n.cpu().numpy(),
+            size_obsts_cuboid_0_n.cpu().numpy(),
+            size_obsts_cuboid_1_n.cpu().numpy(),
+            size_obsts_cuboid_2_n.cpu().numpy(),
+            weight_goal_0_n.cpu().numpy(),
+            x_goal_0_n.cpu().numpy(),
+            x_obst_cuboid_0_n.cpu().numpy(),
+            x_obst_cuboid_1_n.cpu().numpy(),
+            x_obst_cuboid_2_n.cpu().numpy(),
+        )
+        t2_np = time.perf_counter()
+
+        comp_time_torch.append(t2_torch-t1_torch)
+        comp_time_numpy.append(t2_np-t1_np)
         Ns.append(N)
-        ob, *_ = env.step(action_n[0])
+        ob, *_ = env.step(action_tensor[0].cpu().numpy())
     
     env.close()
-    return {"comp_time": comp_time, "Ns": Ns}
+    return {"comp_time_torch": comp_time_torch, "Ns": Ns, "comp_time_numpy": comp_time_numpy}
 
 
 if __name__ == "__main__":
-    res = run_kinova_example(n_steps=250, render=False, dof=9)
+    res = run_kinova_example(n_steps=200, render=True, dof=9)
 
     mean_single_env_time = 0.27/1000
-    comp_time = np.array(res["comp_time"])
+    comp_time_torch = np.array(res["comp_time_torch"])
+    comp_time_numpy = np.array(res["comp_time_numpy"])
     Ns = np.array(res["Ns"])
     comp_time_loop = Ns * mean_single_env_time
 
     #  plot the computation time as a function of Ns
-    average_time_per_N = comp_time/Ns
+    average_time_per_N_torch = comp_time_torch/Ns
+    average_time_per_N_numpy = comp_time_numpy/Ns
     fig, ax = plt.subplots()
-    ax.plot(Ns, comp_time*1000)
-    ax.plot(Ns, comp_time_loop*1000, 'r--')
+    ax.plot(Ns, comp_time_torch*1000, color='orange')
+    ax.plot(Ns, comp_time_numpy*1000, 'b--')
     ax.set_xlabel("N in parallel")
     ax.set_ylabel("TOTAL computation time (ms)")
-    ax.legend(["parallel computation (numpy)", "approx loop computation (casadi)"])
+    ax.legend(["parallel computation (Troch)", "parallel computation (Numpy)"])
     ax.grid()
-    ax.set_title("Computation using Numpy arrays")
-    fig.savefig("images/computation_time.png")
+    ax.set_title(f"Computation using Troch tensors {TENSOR_DEVICE} vs Numpy")
+    fig.savefig("images/computation_time_torchVSnp.png")
 
     # plot the average computation time per N
     fig, ax = plt.subplots()
-    ax.plot(Ns, average_time_per_N*1000)
-    ax.axhline(y=mean_single_env_time*1000, color='r', linestyle='--')
+    ax.plot(Ns, average_time_per_N_torch*1000, color='orange')
+    ax.plot(Ns, average_time_per_N_numpy*1000, color='blue', linestyle='--')
     ax.set_xlabel("N in parallel")
     ax.set_ylabel("average computation time per N (ms)")
     ax.set_yscale('log')
     ax.grid(True, which="both", linestyle="-", linewidth=0.5)
     ax.minorticks_on()
     ax.grid(True, which="minor", linestyle="--", linewidth=0.5)
-    ax.set_title("Computation using Numpy arrays")
-    ax.legend(["average computation time per N", "single avg computation time casadi (ms)"])
-    fig.savefig("images/average_computation_time_per_N.png")
+    ax.set_title(f"Computation using Troch tensors {TENSOR_DEVICE} vs Numpy")
+    ax.legend(["average time per N] (torch)", "average time per (Numpy)"])
+    fig.savefig("images/average_computation_time_torchVSnp_per_N.png")
 
