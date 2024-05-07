@@ -21,7 +21,8 @@ pynput = "^1.7.6"
 vector = "^1.1.1"
 pytest = "6.2.5"
 deprecation = "^2.1.0"
-forwardkinematics = "^1.2.2"
+forwardkinematics = {git = "https://github.com/maxspahn/forwardKinematics", rev = "develop"}
+robotmodels = "^0.1.6"
 
 [tool.poetry.group.dev]
 optional = true

@@ -37,7 +37,7 @@ problem:
     - -1.86750
     - -3.14158
     upper_limits:
-    - 3.14158
+    - 0.3
     - 1.25664
     - 1.60570
     - 3.14158
@@ -51,7 +51,7 @@ problem:
     self_collision_pairs:
 fabrics:
   limit_geometry: -1.0 / (x ** 1) * xdot ** 2
-  limit_finsler: 1.0/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot**2
+  limit_finsler: 0.05/(x**2) * xdot**2
   collision_geometry: -0.2 / (x ** 1) * xdot ** 2
   collision_finsler:  0.2/(x**2) * (-0.5 * (ca.sign(xdot) - 1)) * xdot ** 2
 

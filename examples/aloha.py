@@ -1,9 +1,9 @@
 import sys
+import time
 import gymnasium as gym
 import numpy as np
 import yaml
-import pprint
-from copy import deepcopy
+import matplotlib.pyplot as plt
 
 from robotmodels.utils.robotmodel import RobotModel
 
@@ -20,7 +20,21 @@ from mpscenes.obstacles.box_obstacle import BoxObstacle
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 
-CONFIG_FILE = "aloha_joint_space_config.yaml"
+MODE = 'jointspace' # eespace or jointspace
+if MODE == 'eespace':
+    CONFIG_FILE = "aloha_config.yaml"
+    GOALS = [
+        [0.3, -0.36, 0.36],
+        [0.3, -0.36, 0.36],
+    ]
+    WEIGHT=50
+else:
+    CONFIG_FILE = "aloha_joint_space_config.yaml"
+    GOALS= [
+        [ 0.7 , -0.96,  1.16,  0.  , -0.3 ,  0.],
+        [ 0.  , -0.96,  1.16,  0.  , -0.3 ,  0.],
+    ]
+    WEIGHT=50
 with open(CONFIG_FILE, 'r') as config_file:
     config = yaml.safe_load(config_file)
     CONFIG_PROBLEM = config['problem']
@@ -38,13 +52,6 @@ def initalize_environment(robot_model: RobotModel, render: bool = True):
     Adds obstacles and goal visualizaion to the environment based and
     steps the simulation once.
     """
-    full_sensor = FullSensor(
-            goal_mask=["position", "weight"],
-            obstacle_mask=['position', 'size'],
-            variance=0.0,
-            physics_engine_name='mujoco',
-    )
-    
 
     xml_file = robot_model.get_xml_path()
     robots  = [
@@ -120,14 +127,10 @@ def run_panda_example(n_steps=5000, render=True):
     planner = set_planner(robot_model)
     # planner.export_as_c("planner.c")
     pos0 = robot_model.home_cfg()
-    goals = [deepcopy(pos0[0:6]), deepcopy(pos0[8:14])]
-    goals[0][0] = 0.7
 
 
     action = np.concatenate((pos0[0:7], pos0[8:15]))
     ob, *_ = env.step(action)
-    action[0] = 0.1
-    action[7] = 0.05
     for i in range(1):
         ob, *_ = env.step(action)
         q = ob['robot_0']['joint_state']['position'][0:6]
@@ -142,30 +145,48 @@ def run_panda_example(n_steps=5000, render=True):
         [0, 1, 2, 3, 4, 5],
         [7, 8, 9, 10, 11, 12],
     ]
+    qs = np.zeros((n_steps, 6))
+    ts = np.zeros((n_steps, 1))
     for i in range(n_steps):
+        ts[i] = env.t
         ob_robot = ob['robot_0']
-        for robot_id in range(2):
+        for robot_id in range(1):
+            t0 = time.perf_counter()
             q=ob_robot["joint_state"]["position"][state_indices[robot_id]]
+            qs[i] = q
             qdot=ob_robot["joint_state"]["velocity"][state_indices[robot_id]]
             all_arguments = dict(
                 q=q,
                 qdot=qdot,
-                x_goal_0=goals[robot_id],
-                weight_goal_0=20,
+                x_goal_0=GOALS[robot_id],
+                weight_goal_0=WEIGHT,
             )
             qddot_des = planner.compute_action(**all_arguments)
             qdot_des = qdot + env.dt * qddot_des
-            q_des = q + env.dt * 1.0 * qdot_des + 0.0 * qdot
-            if i % 10 == 0:
-                error = np.round((q - goals[robot_id]) * 180/np.pi, 3)
-                fk_ee = planner._forward_kinematics.numpy(q, 'left_gripper_link', position_only=True)
-                fk_base = planner._forward_kinematics.numpy(q, 'left_base_link', position_only=True)
-                #print(f"fk[ee] = {fk_ee-fk_base}")
+            q_des = q + env.dt * (0.5 * qdot_des + 0.5 * qdot)
+            if i % 10 == -1:
+                if MODE == 'eespace':
+                    fk_ee = planner._forward_kinematics.numpy(q, 'left_gripper_link', position_only=True)
+                    fk_base = planner._forward_kinematics.numpy(q, 'left_base_link', position_only=True)
+                    fk = fk_ee-fk_base
+                    error = np.round(fk - GOALS[robot_id], 3)
+                else:
+                    error = np.round((q - GOALS[robot_id]) * 180/np.pi, 3)
                 print(f"error[{robot_id}] = {error}")
 
+            t1 = time.perf_counter()
+            print(f"Time for planning: {(t1-t0)*1000} ms")
+
             action[action_indices[robot_id]] = q_des
+            #action[action_indices[robot_id]] = GOALS[robot_id]
         ob, reward, terminated, truncated, info = env.step(action)
     env.close()
+    #np.save('pid_limit', qs)
+    pid_qs = np.load('pid_limit.npy')
+    plt.plot(ts, qs[:,0], label='fabric')
+    plt.plot(ts, pid_qs[:,0], label='p')
+    plt.legend()
+    plt.show()
     return {}
 
 
