@@ -3674,12 +3674,13 @@ files = [
 
 [[package]]
 name = "robotmodels"
-version = "0.1.2"
+version = "0.1.5"
 description = "A collection of robot models"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "robotmodels-0.1.2-py3-none-any.whl", hash = "sha256:ee05a1c764f96cc20322a5d70b79cc7fce64503ad4c1dfbd2b42653f8217d2fa"},
+    {file = "robotmodels-0.1.5-py3-none-any.whl", hash = "sha256:9a4f298e071cd1f6e537f53d9d5a01b3fd523193fd5f853e8d7babd7bd074069"},
+    {file = "robotmodels-0.1.5.tar.gz", hash = "sha256:1729cc4962762602f06be0fc83faac9536b4bd6584a3245b19063d06ce7f5e21"},
 ]
 
 [package.dependencies]
