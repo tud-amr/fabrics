@@ -44,7 +44,7 @@ class Spec:
             self._J_ref_inv = np.identity(self.x_ref().size()[0])
         if "J_ref" in kwargs:
             self._J_ref = kwargs.get("J_ref")
-            logging.warning("Casadi pseudo inverse is used in Lagrangian")
+            logging.debug("Casadi pseudo inverse is used in Lagrangian")
             self._J_ref_inv = ca.mtimes(ca.transpose(self._J_ref), ca.inv(ca.mtimes(self._J_ref, ca.transpose(self._J_ref)) + np.identity(self.x_ref().size()[0]) * eps))
         self._xdot_d = np.zeros(self.x().size()[0])
         self._vars.verify()
@@ -73,7 +73,7 @@ class Spec:
         return self._M
 
     def Minv(self):
-        logging.warning("Casadi pseudo inverse is used in spec")
+        logging.debug("Casadi pseudo inverse is used in spec")
         return ca.pinv(self._M + np.identity(self.x().size()[0]) * eps)
 
     def x(self):
