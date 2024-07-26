@@ -43,9 +43,6 @@ class CasadiFunctionWrapper(object):
             pickle.dump(self._argument_dictionary, f)
 
     def evaluate(self, **kwargs):
-        return self.evaluate_new(**kwargs)
-
-    def evaluate_new(self, **kwargs):
         self.process_inputs(**kwargs)
         try:
             output_dict = self._function(**self._argument_dictionary)
