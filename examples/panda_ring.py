@@ -159,7 +159,7 @@ def set_planner(goal: GoalComposition, degrees_of_freedom: int = 7, obstacle_res
             [-0.0175, 3.7525],
             [-2.8973, 2.8973]
         ]
-    collision_links = ['panda_link1', 'panda_link4', 'panda_link6', 'vacuum_link']
+    collision_links = ['panda_link4', 'panda_link6', 'vacuum_link']
     self_collision_pairs = {}
     # The planner hides all the logic behind the function set_components.
     planner.set_components(
@@ -207,7 +207,6 @@ def run_panda_ring_example(n_steps=5000, render=True, serialize=False, planner=N
             weight_goal_0=ob_robot["FullSensor"]["goals"][obstacle_resolution_ring+3]["weight"],
             x_goal_1=ob_robot["FullSensor"]["goals"][obstacle_resolution_ring+4]["position"],
             weight_goal_1=ob_robot["FullSensor"]["goals"][obstacle_resolution_ring+4]["weight"],
-            radius_body_panda_link1=0.1,
             radius_body_panda_link4=0.1,
             radius_body_panda_link6=0.15,
             radius_body_vacuum_link=0.1,
