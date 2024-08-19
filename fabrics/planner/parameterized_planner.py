@@ -754,12 +754,15 @@ class ParameterizedFabricPlanner(object):
         function = self._funs.function()
         function.save(file_name)
 
-    def export_as_c(self, file_name: str):
+
+    def export_as_c(self, file_name: str, file_path:str = ""):
         """
         Export the planner as c source code.
         """
-        function = self._funs.function()
-        function.generate(file_name)
+        gen = ca.CodeGenerator(file_name)
+        gen.add(self._funs.function())
+        gen.generate(file_path)
+
  
     """ RUNTIME METHODS """
 
