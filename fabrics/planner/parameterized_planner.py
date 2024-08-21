@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 from typing import Dict, List, Optional
+import os
 
 import casadi as ca
 import deprecation
@@ -754,12 +755,19 @@ class ParameterizedFabricPlanner(object):
         function = self._funs.function()
         function.save(file_name)
 
+
     def export_as_c(self, file_name: str):
         """
         Export the planner as c source code.
         """
-        function = self._funs.function()
-        function.generate(file_name)
+        filepath, filename = os.path.split(file_name)
+        if not filepath.endswith(os.sep):
+            filepath += os.sep
+        
+        gen = ca.CodeGenerator(filename)
+        gen.add(self._funs.function())
+        gen.generate(filepath)
+
  
     """ RUNTIME METHODS """
 
