@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fabrics"
-version = "0.9.6"
+version = "0.10.0"
 description = "Optimization fabrics in python."
 authors = ["Max Spahn <m.spahn@tudelft.nl>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ repository = "https://tud-amr/fabrics"
 keywords = ["robotics", "motion-planning", "geometry"]
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.10"
+python = "^3.10"
 casadi = ">=3.5.5"
 numpy = "^1.15.3"
 geomdl = "^5.3.1"
@@ -37,17 +37,20 @@ isort = "^5.13.2"
 optional = true
 
 [tool.poetry.group.tutorials.dependencies]
-planarenvs = "^1.4"
 matplotlib = "^3.7.0"
 jupyterlab = "^3.6.1"
+planarenvs = "^1.5.1"
 
 [tool.poetry.group.agents]
 optional = true
 
 [tool.poetry.group.agents.dependencies]
-planarenvs = "^1.4"
-urdfenvs = {extras = ["mujoco"], version = "^0.9.9"}
-mujoco = "^3.1.2"
+planarenvs = "^1.5.1"
+#urdfenvs = {extras = ["mujoco"], version = "^0.9.9"}
+urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop", extras = ["mujoco"]}
+dm-control = "^1.0.26"
+imageio = "^2.36.1"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
