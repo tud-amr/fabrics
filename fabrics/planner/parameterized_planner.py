@@ -187,14 +187,21 @@ class ParameterizedFabricPlanner(object):
         assert isinstance(geometry, Geometry)
         if not hasattr(self, '_forced_geometry'):
             self._forced_geometry = deepcopy(self._geometry)
+        self._forcing_term = geometry.pull(forward_map)
+        self._attractor_geometry = WeightedGeometry(
+            g=geometry, le=lagrangian
+        ).pull(forward_map)
+        self._attractor_geometry.concretize()
         self._forced_geometry += WeightedGeometry(
             g=geometry, le=lagrangian
         ).pull(forward_map)
+
         if prime_forcing_leaf:
             self._forced_variables = geometry._vars
             self._forced_forward_map = forward_map
         self._variables = self._variables + self._forced_geometry._vars
         self._geometry.concretize()
+        self._forcing_term.concretize()
         self._forced_geometry.concretize(ref_sign=self._ref_sign)
 
     def add_dynamic_forcing_geometry(
@@ -227,6 +234,7 @@ class ParameterizedFabricPlanner(object):
         self._forced_geometry.concretize(ref_sign=self._ref_sign)
 
     def set_execution_energy(self, execution_lagrangian: Lagrangian):
+        print(f"Setting exection energy")
         assert isinstance(execution_lagrangian, Lagrangian)
         composed_geometry = Geometry(s=self._geometry)
         self._execution_lagrangian = execution_lagrangian
@@ -240,8 +248,8 @@ class ParameterizedFabricPlanner(object):
                 g=forced_geometry, le=execution_lagrangian
             )
             self._forced_speed_controlled_geometry.concretize()
-        except AttributeError:
-            logging.warning("No damping")
+        except AttributeError as exception:
+            logging.warning(f"Error setting the execution energy {exception}")
 
     def set_speed_control(self):
         x_psi = self._forced_variables.position_variable()
@@ -257,6 +265,7 @@ class ParameterizedFabricPlanner(object):
     def get_forward_kinematics(self, link_name, position_only: bool = True) -> ca.SX:
         if isinstance(link_name, ca.SX):
             return link_name
+
         fk = self._forward_kinematics.casadi(
                 self._variables.position_variable(),
                 link_name,
@@ -626,8 +635,6 @@ class ParameterizedFabricPlanner(object):
             for joint_index in range(len(limits)):
                 self.add_limit_geometry(joint_index, limits[joint_index])
 
-        execution_energy = ExecutionLagrangian(self._variables)
-        self.set_execution_energy(execution_energy)
         if goal:
             self.set_goal_component(goal)
             # Adds default execution energy
@@ -635,6 +642,9 @@ class ParameterizedFabricPlanner(object):
             self.set_execution_energy(execution_energy)
             # Sets speed control
             self.set_speed_control()
+        else:
+            execution_energy = ExecutionLagrangian(self._variables)
+            self.set_execution_energy(execution_energy)
 
     def get_differential_map(self, sub_goal_index: int, sub_goal: SubGoal):
         if sub_goal.type() == 'staticJointSpaceSubGoal':
@@ -708,6 +718,31 @@ class ParameterizedFabricPlanner(object):
                 - ca.mtimes(self._forced_geometry.Minv(), self._target_velocity)
             )
             #xddot = self._forced_geometry._xddot
+        elif self._config.forcing_type in ['constantly_damped']:
+            #xddot = self._forced_geometry._xddot
+            #xddot -= self._forced_geometry._alpha * self._geometry._vars.velocity_variable()
+            #xddot = self._execution_geometry._xddot
+            #xddot -= self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
+            # The purely geometric term referred to as \tilde{h}
+            xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
+            # The forcing term coming from M_psi and f_psi
+            #xddot -= ca.mtimes(self._geometry.Minv(), ca.mtimes(self._attractor_geometry.M(),
+            #                                                    self._attractor_geometry.f()))
+            xddot -= ca.mtimes(self._geometry.Minv(), self._attractor_geometry.f())
+
+            # The damping term
+            #xddot += self._attractor_geometry._xddot
+            xddot -= self._damper._beta * self._geometry._vars.velocity_variable()
+            debug = -self._forcing_term._h
+
+            # Add forcing term
+            #x_psi = self._forced_variables.position_variable()
+            #distance_to_goal = ca.norm_2(x_psi)
+            #TODO: Wip in progress on the 2025-01-16
+        elif self._config.forcing_type in ['simply_damped']:
+            xddot = self._execution_geometry._xddot
+            xddot -= self._execution_geometry._alpha * self._geometry._vars.velocity_variable()
+            xddot -= self._damper._beta * self._geometry._vars.velocity_variable()
         elif self._config.forcing_type == 'execution-energy':
             logging.warn("No forcing term, using pure geoemtry with energization.")
             #xddot = self._geometry._xddot - self._geometry._alpha * self._geometry._vars.velocity_variable()
@@ -725,7 +760,7 @@ class ParameterizedFabricPlanner(object):
 
         if mode == 'acc':
             self._funs = CasadiFunctionWrapper(
-                "funs", self.variables, {"action": xddot}
+                "funs", self.variables, {"action": xddot, "debug": debug}
             )
         elif mode == 'vel':
             action = self._geometry.xdot() + time_step * xddot
@@ -781,7 +816,7 @@ class ParameterizedFabricPlanner(object):
         evaluations = self._funs.evaluate(**kwargs)
         action = evaluations["action"]
         # Debugging
-        #logging.debug(f"a_ex: {evaluations['a_ex']}")
+        #print(f"Forcing term : {evaluations['debug']}")
         #logging.debug(f"alhpa_forced_geometry: {evaluations['alpha_forced_geometry']}")
         #logging.debug(f"alpha_geometry: {evaluations['alpha_geometry']}")
         #logging.debug(f"beta : {evaluations['beta']}")

@@ -1,5 +1,4 @@
 import os
-import gymnasium as gym
 import numpy as np
 import time
 
@@ -14,12 +13,12 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
+import matplotlib.pyplot as plt
 
 # Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
 # mass to compute actions for a simulated 3D point mass.
 #
 # todo: tune behavior.
-
 DT = 0.01
 
 def initalize_environment(render):
@@ -56,12 +55,12 @@ def initalize_environment(render):
     )
     static_obst_dict = {
             "type": "sphere",
-            "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
+            "geometry": {"position": [20000.0, 0.8, 0.0], "radius": 1.0},
     }
     obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
     goal_dict = {
             "subgoal0": {
-                "weight": 2.5,
+                "weight": 0.25,
                 "is_primary_goal": True,
                 "indices": [0, 1],
                 "parent_link" : 'world',
@@ -73,7 +72,7 @@ def initalize_environment(render):
     }
     augmented_goal_dict = {
             "subgoal0": {
-                "weight": 2.5,
+                "weight": 0.25,
                 "is_primary_goal": True,
                 "indices": [0, 1, 2],
                 "parent_link" : 'world',
@@ -95,11 +94,12 @@ def initalize_environment(render):
         sensors=sensors,
         render=render,
         enforce_real_time=True,
+        dt = DT,
     ).unwrapped
 
     # Set the initial position and velocity of the point mass.
     pos0 = np.array([-2.0, 0.5, 0.0])
-    vel0 = np.array([0.1, 0.0, 0.0])
+    vel0 = np.array([1.0, 0.0, 0.0])
     # Definition of the obstacle.
     # Definition of the goal.
     env.reset(pos=pos0, vel=vel0)
@@ -132,11 +132,14 @@ def set_planner(goal: GoalComposition):
     )
     collision_geometry = "-2.0 / (x ** 1) * xdot ** 2"
     collision_finsler = "1.0/(x**2) * (1 - ca.heaviside(xdot))* xdot**2"
+    collision_finsler = "1.0/(x**2) * xdot**2"
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
         forward_kinematics,
         collision_geometry=collision_geometry,
-        collision_finsler=collision_finsler
+        collision_finsler=collision_finsler,
+        forcing_type = "constantly_damped",
+        damper_beta = "0.00",
     )
     collision_links = ["base_link"]
     # The planner hides all the logic behind the function set_components.
@@ -168,10 +171,15 @@ def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
     action = np.array([0.0, 0.0, 0.0])
     ob, *_ = env.step(action)
 
+    vels = []
+
     for _ in range(n_steps):
-        t0 = time.perf_counter()
+        t0 = time.time()
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
+        qdot=ob_robot["joint_state"]["velocity"]
+        vel = np.linalg.norm(qdot)
+        vels.append(vel)
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
@@ -181,14 +189,22 @@ def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][0]['size'],
             radius_body_base_link=np.array([0.2])
         )
-        t1 = time.perf_counter()
-        ob, *_, = env.step(action)
-        t2 = time.perf_counter()
+        t1 = time.time()
+        ob, _, done, _, info = env.step(action)
+        '''
+        if done or vel < 1e-3:
+            print(info)
+            break
+        '''
+        t2 = time.time()
         #print(f"Time step was actually {t2-t0}")
         #print(f"Time for compute was {t1-t0}")
-        print(f"Time for render was {t2-t1}")
+        #print(f"Time for render was {t2-t0}")w
+
+    plt.plot(vels)
+    plt.show()
     env.close()
     return {}
 
 if __name__ == "__main__":
-    res = run_point_robot_urdf(n_steps=10000, render=True)
+    res = run_point_robot_urdf(n_steps=int(1e1), render=True, enforce_real_time=False)
