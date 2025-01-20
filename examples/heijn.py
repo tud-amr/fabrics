@@ -31,8 +31,7 @@ def initalize_environment(render):
     robots = [
         GenericUrdfReacher(urdf=urdf_file, mode="acc"),
     ]
-    env: UrdfEnv = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped.unwrapped
     # Set the initial position and velocity of the robot.
