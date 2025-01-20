@@ -3,7 +3,6 @@ import sys
 import numpy as np
 from tqdm import tqdm
 import logging
-import time
 
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
@@ -16,7 +15,6 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.goals.goal_composition import GoalComposition
 
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-import matplotlib.pyplot as plt
 
 # Fabrics example for a 3D point mass robot. The fabrics planner uses a 2D point
 # mass to compute actions for a simulated 3D point mass.
@@ -207,7 +205,6 @@ def run_point_robot_urdf(T=100, render=True, enforce_real_time=True):
     n_steps = int(T/DT)
 
     for _ in tqdm(range(n_steps)):
-        t0 = time.time()
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
         qdot=ob_robot["joint_state"]["velocity"]
@@ -223,19 +220,11 @@ def run_point_robot_urdf(T=100, render=True, enforce_real_time=True):
             radius_obst_0=ob_robot['FullSensor']['obstacles'][0]['size'],
             radius_body_base_link=np.array([0.2])
         )
-        t1 = time.time()
         ob, _, done, _, info = env.step(action)
-        #print(f"action : {np.round(action, decimals=3)}, qdot : {np.round(qdot, decimals=3)}")
         if done or vel < 1e-3:
             print(info)
             break
-        t2 = time.time()
-        #print(f"Time step was actually {t2-t0}")
-        #print(f"Time for compute was {t1-t0}")
-        #print(f"Time for render was {t2-t0}")w
 
-    #plt.plot(times, vels)
-    #plt.show()
     env.close()
     return {}
 

@@ -8,7 +8,6 @@ from forwardkinematics.planarFks.point_fk import PointFk
 from mpscenes.goals.goal_composition import GoalComposition
 from planarenvs.point_robot.envs.acc import PointRobotAccEnv
 from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
-import matplotlib.pyplot as plt
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 
 
@@ -116,7 +115,7 @@ def set_planner(goal: GoalComposition):
     planner.concretize()
     return planner
 
-def run_planar_point(render: bool = False):
+def run_planar_point(n_steps = 1000, render: bool = False):
 
     (env, goal, obstacles) = initialize_environment(render=render)
     obstacle = obstacles[0]
@@ -127,8 +126,6 @@ def run_planar_point(render: bool = False):
     action = np.array([0.0, 0.0])
     ob, *_ = env.step(action)
     vels = []
-    T = 50
-    n_steps = int(T/DT)
     for i in tqdm(range(n_steps)):
 
         q = ob['joint_state']['position']
@@ -152,10 +149,9 @@ def run_planar_point(render: bool = False):
         if i > 100 and (done or np.linalg.norm(qdot) < 1e-4):
             print(info)
             break
-    plt.plot(vels)
-    plt_show_sec(2)
+    return {}
 
 
 if __name__ == "__main__":
     render = True if sys.argv[1] == 'render' else False
-    run_planar_point(render=render)
+    run_planar_point(n_steps=10000, render=render)
