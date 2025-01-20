@@ -32,8 +32,7 @@ def initalize_environment(render=True, nr_obst: int = 0):
     robots = [
         GenericUrdfReacher(urdf="iiwa7.urdf", mode="acc"),
     ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv  = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped
     full_sensor = FullSensor(

@@ -51,12 +51,12 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with agents
+        run: poetry install --no-interaction --no-root --with agents --with dev --with mujoco --with pybullet
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: poetry install --no-interaction --with agents --with dev
+        run: poetry install --no-interaction --with agents --with dev --with mujoco --with pybullet
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------

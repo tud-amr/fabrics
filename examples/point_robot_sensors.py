@@ -71,8 +71,7 @@ def initalize_environment(render):
     robots = [
         GenericUrdfReacher(urdf="point_robot.urdf", mode="acc"),
     ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv  = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped
 

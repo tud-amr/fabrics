@@ -46,10 +46,20 @@ optional = true
 
 [tool.poetry.group.agents.dependencies]
 planarenvs = "^1.5.1"
-#urdfenvs = {extras = ["mujoco"], version = "^0.9.9"}
-urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop", extras = ["mujoco"]}
+urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop"}
+
+[tool.poetry.group.mujoco]
+optional = true
+
+[tool.poetry.group.mujoco.dependencies]
 dm-control = "^1.0.26"
 imageio = "^2.36.1"
+
+[tool.poetry.group.pybullet]
+optional = true
+
+[tool.poetry.group.pybullet.dependencies]
+pybullet = "^3.2.1"
 
 
 [build-system]
