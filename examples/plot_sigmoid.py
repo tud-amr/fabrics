@@ -17,7 +17,7 @@ def exp_decay(x):
     y = (np.exp(1/x) - 1)/ (np.exp(1/x +1 ))
     return y
 
-def log(x, a=-2, b=-100, c=8):
+def log(x, a=-2, b=-100, c=50):
     y=a*np.log(1 + np.exp(b*x+c))
     return y
 
