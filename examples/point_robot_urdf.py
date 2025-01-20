@@ -1,10 +1,13 @@
 import os
+import sys
 import numpy as np
+from tqdm import tqdm
+import logging
 import time
 
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
-from robotmodels.utils.robotmodel import RobotModel
+from robotmodels.utils.robotmodel import RobotModel, LocalRobotModel
 from urdfenvs.generic_mujoco.generic_mujoco_env import GenericMujocoEnv
 from urdfenvs.generic_mujoco.generic_mujoco_robot import GenericMujocoRobot
 from urdfenvs.sensors.full_sensor import FullSensor
@@ -41,8 +44,17 @@ def initalize_environment(render: bool, enforce_real_time: bool):
         dt=0.01, robots=robots, render=render
     ).unwrapped
     '''
-    robot_model = RobotModel('pointRobot', 'pointRobot')
-    xml_file = robot_model.get_xml_path()
+    try:
+        robot_model = LocalRobotModel('pointRobotTuned', 'pointRobot')
+        xml_file = robot_model.get_xml_path()
+    except Exception as e:
+        robot_model = RobotModel('pointRobot', 'pointRobot')
+        robot_model.copy_model("pointRobotTuned")
+        logging.warning("A local copy of the robot model was made.")
+        logging.warning("For this example you have to change the kv gains to lower values kv=20, ctrlrange=5")
+        logging.warning("Change the values in the created model folder and run again.")
+        sys.exit()
+
     robots  = [
         GenericMujocoRobot(xml_file=xml_file, mode="vel"),
     ]
@@ -143,12 +155,12 @@ def set_planner(goal: GoalComposition):
         damper_beta = "0.00",
     )
     '''
-    collision_geometry = "-100/(1+ca.exp(4 * x - 3)) * (1 - ca.heaviside(xdot)) * xdot ** 2"
-    collision_geometry = "-100/(1+ca.exp(4 * x - 3)) * xdot ** 2"
-    collision_finsler = "100/(1+ca.exp(4 * x - 3)) * (1 - ca.heaviside(xdot)) * xdot ** 2"
+    collision_geometry = "-100/(1+ca.exp(3 * x - 1.5)) * (1 - ca.heaviside(xdot)) * xdot ** 2"
+    collision_geometry = "-100/(1+ca.exp(3 * x - 1.5)) * xdot ** 2"
+    collision_finsler = "100/(1+ca.exp(3 * x - 1.5)) * (1 - ca.heaviside(xdot)) * xdot ** 2"
     #collision_finsler = "100/(1+ca.exp(2 * x - 3)) * xdot ** 2"
 
-    attractor_potential: str = "1.0 * ca.dot(x, ca.mtimes(np.identity(2), x))"
+    attractor_potential: str = "1.5 * ca.dot(x, ca.mtimes(np.identity(2), x))"
     attractor_metric: str = "ca.SX(np.identity(x.size()[0]))"
     planner = ParameterizedFabricPlanner(
         degrees_of_freedom,
@@ -158,7 +170,7 @@ def set_planner(goal: GoalComposition):
         attractor_potential=attractor_potential,
         attractor_metric=attractor_metric,
         forcing_type = "simply_damped",
-        damper_beta = "5.0",
+        damper_beta = "3.5",
     )
     collision_links = ["base_link"]
     # The planner hides all the logic behind the function set_components.
@@ -171,7 +183,7 @@ def set_planner(goal: GoalComposition):
     return planner
 
 
-def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
+def run_point_robot_urdf(T=100, render=True, enforce_real_time=True):
     """
     Set the gym environment, the planner and run point robot example.
     The initial zero action step is needed to initialize the sensor in the
@@ -192,8 +204,9 @@ def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
 
     vels = []
     times = []
+    n_steps = int(T/DT)
 
-    for _ in range(n_steps):
+    for _ in tqdm(range(n_steps)):
         t0 = time.time()
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
@@ -212,6 +225,7 @@ def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
         )
         t1 = time.time()
         ob, _, done, _, info = env.step(action)
+        #print(f"action : {np.round(action, decimals=3)}, qdot : {np.round(qdot, decimals=3)}")
         if done or vel < 1e-3:
             print(info)
             break
@@ -220,10 +234,11 @@ def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
         #print(f"Time for compute was {t1-t0}")
         #print(f"Time for render was {t2-t0}")w
 
-    plt.plot(times, vels)
-    plt.show()
+    #plt.plot(times, vels)
+    #plt.show()
     env.close()
     return {}
 
 if __name__ == "__main__":
-    res = run_point_robot_urdf(n_steps=int(1e5), render=False, enforce_real_time=False)
+    render = True if sys.argv[1] == 'render' else False
+    res = run_point_robot_urdf(T=30, render=render, enforce_real_time=True)

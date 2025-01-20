@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+from tqdm import tqdm
 from typing import Tuple, List
 import numpy as np
 from forwardkinematics.planarFks.point_fk import PointFk
@@ -128,7 +129,7 @@ def run_planar_point(render: bool = False):
     vels = []
     T = 50
     n_steps = int(T/DT)
-    for i in range(n_steps):
+    for i in tqdm(range(n_steps)):
 
         q = ob['joint_state']['position']
         qdot = ob['joint_state']['velocity']
