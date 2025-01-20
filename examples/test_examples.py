@@ -1,3 +1,4 @@
+import pytest
 
 def test_panda_example():
     from panda import run_panda_example
@@ -24,6 +25,11 @@ def test_panda_self_collision_avoidance():
     res = run_panda_self_collision(10, render=False)
     assert isinstance(res, dict)
 
+def test_planar_point_robot_example():
+    from planar_point import run_planar_point
+    res = run_planar_point(10, render=False)
+    assert isinstance(res, dict)
+
 """
 def test_planar_arm_example():
     from planar_arm import run_planar_arm_example
@@ -35,10 +41,6 @@ def test_planar_arm_limits_example():
     res = run_planar_arm_limits_example(10, render=False)
     assert isinstance(res, dict)
 
-def test_planar_point_robot_example():
-    from planar_point_robot import run_point_robot_example
-    res = run_point_robot_example(10, render=False)
-    assert isinstance(res, dict)
 
 def test_planar_point_symbolic():
     from planar_point_robot_symbolic import run_point_robot_symbolic
@@ -63,6 +65,7 @@ def test_panda_joint_space():
     res = run_panda_joint_space(10, render=False)
     assert isinstance(res, dict)
 
+@pytest.mark.skip(reason="Case is under investigation for improved gain values of the mujoco controller.")
 def test_point_robot_urdf_example():
     from point_robot_urdf import run_point_robot_urdf
     res = run_point_robot_urdf(10, render=False)

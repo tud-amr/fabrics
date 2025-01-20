@@ -67,6 +67,7 @@ class WeightedGeometry(Spec):
             eps + ca.dot(xdot, ca.mtimes(self._le._S.M(), xdot))
         )
         self._alpha = -frac * ca.dot(xdot, self.f() - self._le._S.f())
+        self._alpha_fraction = eps + ca.dot(xdot, ca.mtimes(self._le._S.M(), xdot))
 
     def concretize(self, ref_sign: int = 1):
         self.computeAlpha(ref_sign=ref_sign)
