@@ -44,8 +44,7 @@ def initalize_environment(render=True, obstacle_resolution = 8):
     robots = [
         GenericUrdfReacher(urdf="panda.urdf", mode="acc"),
     ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv  = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped
     full_sensor = FullSensor(

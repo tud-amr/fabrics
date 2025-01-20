@@ -50,8 +50,7 @@ def initalize_environment(render):
             facing_direction = '-y',
         ),
     ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv  = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped
     full_sensor = FullSensor(

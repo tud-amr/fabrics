@@ -1,11 +1,13 @@
 import os
 import gymnasium as gym
 import numpy as np
+import time
 
 from forwardkinematics.urdfFks.generic_urdf_fk import GenericURDFFk
 
-from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+from robotmodels.utils.robotmodel import RobotModel
+from urdfenvs.generic_mujoco.generic_mujoco_env import GenericMujocoEnv
+from urdfenvs.generic_mujoco.generic_mujoco_robot import GenericMujocoRobot
 from urdfenvs.sensors.full_sensor import FullSensor
 
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
@@ -17,6 +19,8 @@ from fabrics.planner.parameterized_planner import ParameterizedFabricPlanner
 # mass to compute actions for a simulated 3D point mass.
 #
 # todo: tune behavior.
+
+DT = 0.01
 
 def initalize_environment(render):
     """
@@ -30,31 +34,33 @@ def initalize_environment(render):
     render
         Boolean toggle to set rendering on (True) or off (False).
     """
+    '''
     robots = [
         GenericUrdfReacher(urdf="pointRobot.urdf", mode="vel"),
     ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv  = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped
-    # Set the initial position and velocity of the point mass.
-    pos0 = np.array([-2.0, 0.5, 0.0])
-    vel0 = np.array([0.1, 0.0, 0.0])
+    '''
+    robot_model = RobotModel('pointRobot', 'pointRobot')
+    xml_file = robot_model.get_xml_path()
+    robots  = [
+        GenericMujocoRobot(xml_file=xml_file, mode="vel"),
+    ]
     full_sensor = FullSensor(
             goal_mask=["position", "weight"],
             obstacle_mask=["position", "size"],
             variance=0.0,
+            physics_engine_name='mujoco',
     )
-    # Definition of the obstacle.
     static_obst_dict = {
             "type": "sphere",
             "geometry": {"position": [2.0, 0.0, 0.0], "radius": 1.0},
     }
     obst1 = SphereObstacle(name="staticObst1", content_dict=static_obst_dict)
-    # Definition of the goal.
     goal_dict = {
             "subgoal0": {
-                "weight": 0.5,
+                "weight": 2.5,
                 "is_primary_goal": True,
                 "indices": [0, 1],
                 "parent_link" : 'world',
@@ -64,12 +70,38 @@ def initalize_environment(render):
                 "type": "staticSubGoal"
             }
     }
+    augmented_goal_dict = {
+            "subgoal0": {
+                "weight": 2.5,
+                "is_primary_goal": True,
+                "indices": [0, 1, 2],
+                "parent_link" : 'world',
+                "child_link" : 'base_link',
+                "desired_position": [3.5, 0.5, 0.0],
+                "epsilon" : 0.1,
+                "type": "staticSubGoal"
+            }
+    }
     goal = GoalComposition(name="goal", content_dict=goal_dict)
+    augmented_goal = GoalComposition(name='goal_aug', content_dict=augmented_goal_dict)
+    goal_list = [augmented_goal.sub_goals()[0]]
+    obstacle_list = [obst1]
+    sensors = [full_sensor]
+    env: GenericMujocoEnv = GenericMujocoEnv(
+        robots=robots,
+        obstacles=obstacle_list,
+        goals=goal_list,
+        sensors=sensors,
+        render=render,
+        enforce_real_time=True,
+    ).unwrapped
+
+    # Set the initial position and velocity of the point mass.
+    pos0 = np.array([-2.0, 0.5, 0.0])
+    vel0 = np.array([0.1, 0.0, 0.0])
+    # Definition of the obstacle.
+    # Definition of the goal.
     env.reset(pos=pos0, vel=vel0)
-    env.add_sensor(full_sensor, [0])
-    env.add_goal(goal.sub_goals()[0])
-    env.add_obstacle(obst1)
-    env.set_spaces()
     return (env, goal)
 
 
@@ -112,11 +144,11 @@ def set_planner(goal: GoalComposition):
         goal=goal,
         number_obstacles=1,
     )
-    planner.concretize(mode='vel', time_step=0.01)
+    planner.concretize(mode='vel', time_step=DT)
     return planner
 
 
-def run_point_robot_urdf(n_steps=10000, render=True):
+def run_point_robot_urdf(n_steps=10000, render=True, enforce_real_time=True):
     """
     Set the gym environment, the planner and run point robot example.
     The initial zero action step is needed to initialize the sensor in the
@@ -136,18 +168,24 @@ def run_point_robot_urdf(n_steps=10000, render=True):
     ob, *_ = env.step(action)
 
     for _ in range(n_steps):
+        t0 = time.perf_counter()
         # Calculate action with the fabric planner, slice the states to drop Z-axis [3] information.
         ob_robot = ob['robot_0']
         action = planner.compute_action(
             q=ob_robot["joint_state"]["position"],
             qdot=ob_robot["joint_state"]["velocity"],
-            x_goal_0=ob_robot['FullSensor']['goals'][2]['position'][0:2],
-            weight_goal_0=ob_robot['FullSensor']['goals'][2]['weight'],
-            x_obst_0=ob_robot['FullSensor']['obstacles'][3]['position'],
-            radius_obst_0=ob_robot['FullSensor']['obstacles'][3]['size'],
+            x_goal_0=ob_robot['FullSensor']['goals'][0]['position'][0:2],
+            weight_goal_0=ob_robot['FullSensor']['goals'][0]['weight'],
+            x_obst_0=ob_robot['FullSensor']['obstacles'][0]['position'],
+            radius_obst_0=ob_robot['FullSensor']['obstacles'][0]['size'],
             radius_body_base_link=np.array([0.2])
         )
+        t1 = time.perf_counter()
         ob, *_, = env.step(action)
+        t2 = time.perf_counter()
+        #print(f"Time step was actually {t2-t0}")
+        #print(f"Time for compute was {t1-t0}")
+        print(f"Time for render was {t2-t1}")
     env.close()
     return {}
 

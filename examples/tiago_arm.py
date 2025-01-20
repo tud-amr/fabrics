@@ -50,8 +50,7 @@ def initalize_environment(render=True):
             spawn_offset = np.array([-0.1764081, 0.0, 0.1]),
         ),
     ]
-    env: UrdfEnv  = gym.make(
-        "urdf-env-v0",
+    env: UrdfEnv  = UrdfEnv(
         dt=0.01, robots=robots, render=render
     ).unwrapped
     full_sensor = FullSensor(
