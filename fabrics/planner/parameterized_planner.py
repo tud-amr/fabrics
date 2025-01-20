@@ -746,7 +746,7 @@ class ParameterizedFabricPlanner(object):
 
         if mode == 'acc':
             self._funs = CasadiFunctionWrapper(
-                "funs", self.variables, {"action" : xxdot}
+                "funs", self.variables, {"action" : xddot}
             )
         elif mode == 'vel':
             action = self._geometry.xdot() + time_step * xddot
